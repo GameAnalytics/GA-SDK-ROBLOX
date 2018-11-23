@@ -1,2 +1,11 @@
-# GA-SDK-ROBLOX
-Repository for GameAnalytics Roblox SDK
+GA-SDK-ROBLOX
+=============
+
+GameAnalytics Roblox SDK.
+
+Documentation can be found [here](https://gameanalytics.com/docs/roblox-sdk).
+
+Changelog
+---------
+**1.0.0**
+* initial release
