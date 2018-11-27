@@ -332,7 +332,7 @@ local function isSdkReady(options)
 	end
 	
 	-- Is SDK enabled
-	if needsInitialized and playerId and not state.isEnabled(playerId) then
+	if needsInitialized and playerId and not state:isEnabled(playerId) then
 		if shouldWarn then
 			logger:w(message .. "SDK is disabled")
 		end
