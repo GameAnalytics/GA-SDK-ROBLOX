@@ -8,7 +8,7 @@
 			<string name="ScriptGuid">{5892391e-961e-4dca-a30e-fbc69fc02bcf}</string>
 			<ProtectedString name="Source"><![CDATA[--[[
 
-    Thanks for using the official GameAnalytics Roblox SDK module!
+    Thanks for using the official GameAnalytics Roblox SDK module (based on gillern's GameAnalytics module)!
 
     To start using the plugin, follow these steps:
 
@@ -332,7 +332,7 @@ local function isSdkReady(options)
 	end
 	
 	-- Is SDK enabled
-	if needsInitialized and playerId and not state.isEnabled(playerId) then
+	if needsInitialized and playerId and not state:isEnabled(playerId) then
 		if shouldWarn then
 			logger:w(message .. "SDK is disabled")
 		end
@@ -1249,7 +1249,7 @@ function validation:validateEventIdLength(eventId)
 	end
 	
 	local count = 0
-	for s in string.gmatch(eventId, ":") do
+	for s in string.gmatch(eventId, "([^:]+)") do
 		count = count + 1
 		if count > 5 then
 			return false
@@ -1268,7 +1268,7 @@ function validation:validateEventIdCharacters(eventId)
 	end
 	
 	local count = 0
-	for s in string.gmatch(eventId, ":") do
+	for s in string.gmatch(eventId, "([^:]+)") do
 		count = count + 1
 		if count > 5 then
 			return false
@@ -1730,7 +1730,7 @@ local function processRequestResponse(response, requestId)
 	local body = response.Body
 	
 	if not body or string.len(body) == 0 then
-		logger:d(requestId .. " request. failed. Might be no connection. Status code: " + tostring(statusCode))
+		logger:d(requestId .. " request. failed. Might be no connection. Status code: " .. tostring(statusCode))
 		return http_api.EGAHTTPApiResponse.NoResponse
 	end
 	
@@ -3633,7 +3633,7 @@ function events:addResourceEvent(playerId, flowType, currency, amount, itemType,
 	
 	-- insert event specific values
 	local flowTypeString = resourceFlowTypeString(flowType)
-	eventDict["event_id"] = flowTypeString .. ":" + currency .. ":" .. itemType .. ":" .. itemId
+	eventDict["event_id"] = flowTypeString .. ":" .. currency .. ":" .. itemType .. ":" .. itemId
 	eventDict["category"] = CategoryResource
 	eventDict["amount"] = amount
 	
@@ -3775,7 +3775,7 @@ return events
 					<string name="Name">Version</string>
 					<string name="ScriptGuid">{45a79cc8-4a67-4b73-a13c-78bed9a79eb8}</string>
 					<ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.0.0"
+    SdkVersion = "1.0.1"
 }
 
 return version
