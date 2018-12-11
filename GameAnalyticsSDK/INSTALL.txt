@@ -1,0 +1,20 @@
+Thanks for using the official GameAnalytics Roblox SDK module (based on gillern's GameAnalytics module)!
+
+To start using the plugin, follow these steps:
+
+1. Create an account on gameanalytics.com and create a game
+2. Get your game key and secret key
+3. Add the keys to 'GameKey' and 'SecretKey' under GameAnalytics.Settings script
+4. Move the 'GameAnalytics' script (together with its children) under 'ServerStorage'
+5. Move the 'GameAnalyticsScript' script under 'ServerScriptService'
+6. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'
+7. You're ready!
+
+NOTE: The provided rojo.json in the repository is set up to perform steps 4, 5 and 6 automatically through the Rojo workflow.
+
+For details on how to send events and more with the SDK go to this page: https://gameanalytics.com/docs/item/roblox-sdk
+
+Resources:
+    Roblox SDK Docs: https://gameanalytics.com/docs/item/roblox-sdk
+    Account sign up: https://go.gameanalytics.com/signup
+    Support: https://gameanalytics.com/contact
