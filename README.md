@@ -3,7 +3,7 @@ GA-SDK-ROBLOX
 
 GameAnalytics Roblox SDK.
 
-Documentation can be found [here](https://gameanalytics.com/docs/roblox-sdk).
+Documentation can be found [here](https://gameanalytics.com/docs/item/roblox-sdk).
 
 Changelog
 ---------
