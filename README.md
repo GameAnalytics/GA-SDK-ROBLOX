@@ -5,7 +5,7 @@ GameAnalytics Roblox SDK.
 
 Documentation can be found [here](https://gameanalytics.com/docs/item/roblox-sdk).
 
-## Requirements
+#### Requirements
 * rojo (optional, but needed if you want to automatically sync the source files inside the GameAnalyticsSDK folder into your Roblox project)
 
 Changelog
