@@ -54,35 +54,39 @@ if script.Parent.ClassName ~= "ServerScriptService" then
 	return 
 end
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 --Filtering
-if not game.ReplicatedStorage:FindFirstChild("GameAnalyticsFiltering") then
+if not ReplicatedStorage:FindFirstChild("GameAnalyticsFiltering") then
     --Create
     local f = Instance.new("RemoteFunction")
     f.Name = "GameAnalyticsFiltering"
-    f.Parent = game.ReplicatedStorage
+    f.Parent = ReplicatedStorage
 end
 
-if not game.ReplicatedStorage:FindFirstChild("GameAnalyticsSendMessage") then
+if not ReplicatedStorage:FindFirstChild("GameAnalyticsSendMessage") then
     --Create
     local f = Instance.new("RemoteEvent")
     f.Name = "GameAnalyticsSendMessage"
-    f.Parent = game.ReplicatedStorage
+    f.Parent = ReplicatedStorage
 end
 
-if not game.ReplicatedStorage:FindFirstChild("GameAnalyticsCommandCenter") then
+if not ReplicatedStorage:FindFirstChild("GameAnalyticsCommandCenter") then
     --Create
     local f = Instance.new("RemoteEvent")
     f.Name = "GameAnalyticsCommandCenter"
-    f.Parent = game.ReplicatedStorage
+    f.Parent = ReplicatedStorage
 end
 
 --Modules
-local GameAnalytics = require(game.ServerStorage.GameAnalytics)
-local Settings = require(game.ServerStorage.GameAnalytics.Settings)
-local logger = require(game.ServerStorage.GameAnalytics.Logger)
-local store = require(game.ServerStorage.GameAnalytics.Store)
+local ServerStorage = game:GetService("ServerStorage")
+local GameAnalytics = require(ServerStorage.GameAnalytics)
+local Settings = require(ServerStorage.GameAnalytics.Settings)
+local logger = require(ServerStorage.GameAnalytics.Logger)
+local store = require(ServerStorage.GameAnalytics.Store)
 local LS = game:GetService("LogService")
 local MKT = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
 local ProductCache = {}
 
 --Error Logging
@@ -93,13 +97,13 @@ LS.MessageOut:Connect(function(message, messageType)
     if messageType ~= Enum.MessageType.MessageError then return end
 
 	local m = message
-	if string.len(m) > 8192 then
+	if #m > 8192 then
 		m = string.sub(m, 1, 8192)
 	end
 	
 	local key = m
-	if string.len(key) > 50 then
-		m = string.sub(key, 1, 50)
+	if #key > 50 then
+		key = string.sub(key, 1, 50)
 	end
 	
 	local ErrorData = store:GetErrorData(key)
@@ -129,8 +133,11 @@ LS.MessageOut:Connect(function(message, messageType)
 		return
 	end
 
-    --Report
-	GameAnalytics:addErrorEvent(GameAnalytics.EGAErrorSeverity.Error, m)
+    --Report (use nil for playerId as real player id is not available)
+	GameAnalytics:addErrorEvent(nil, {
+		severity = GameAnalytics.EGAErrorSeverity.Error,
+		message = m
+	})
 	
 	-- increment error count
 	ErrorData.count = ErrorData.count + 1
@@ -146,48 +153,26 @@ if Settings.EnableVerboseLog then
 	GameAnalytics:setEnabledVerboseLog(Settings.EnableVerboseLog)
 end
 
-if table.getn(Settings.AvailableCustomDimensions01) > 0 then
+if #Settings.AvailableCustomDimensions01 > 0 then
 	GameAnalytics:configureAvailableCustomDimensions01(Settings.AvailableCustomDimensions01)
 end
-if table.getn(Settings.AvailableCustomDimensions02) > 0 then
+if #Settings.AvailableCustomDimensions02 > 0 then
 	GameAnalytics:configureAvailableCustomDimensions02(Settings.AvailableCustomDimensions02)
 end
-if table.getn(Settings.AvailableCustomDimensions03) > 0 then
+if #Settings.AvailableCustomDimensions03 > 0 then
 	GameAnalytics:configureAvailableCustomDimensions03(Settings.AvailableCustomDimensions03)
 end
-if table.getn(Settings.AvailableResourceCurrencies) > 0 then
+if #Settings.AvailableResourceCurrencies > 0 then
 	GameAnalytics:configureAvailableResourceCurrencies(Settings.AvailableResourceCurrencies)
 end
-if table.getn(Settings.AvailableResourceItemTypes) > 0 then
+if #Settings.AvailableResourceItemTypes > 0 then
 	GameAnalytics:configureAvailableResourceItemTypes(Settings.AvailableResourceItemTypes)
 end
-if string.len(Settings.Build) > 0 then
+if #Settings.Build > 0 then
 	GameAnalytics:configureBuild(Settings.Build)
 end
 
 if Settings.AutomaticSendBusinessEvents then
-	--Record Developer Products
-	MKT.ProcessReceipt = function(Info)
-	
-	    --Variables
-	    local Player = game.Players:GetPlayerByUserId(Info.PlayerId)
-	    local ProductInfo = ProductCache[Info.ProductId]
-	
-	    --Cache
-	    if not ProductInfo then
-	
-	        --Get
-	        ProductInfo = MKT:GetProductInfo(Info.ProductId, Enum.InfoType.Product)
-	        ProductCache[Info.ProductId] = ProductInfo
-	    end
-	
-		GameAnalytics:addBusinessEvent(Info.PlayerId, {
-			amount = Info.CurrencySpent,
-			itemType = "DeveloperProduct",
-			itemId = ProductInfo.Name
-		})
-	end
-	
 	--Record Gamepasses. NOTE: This doesn't record gamepass purchases if a player buys it from the website
 	MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
 	
@@ -219,23 +204,23 @@ GameAnalytics:initialize({
 })
 
 -- Fire for players already in game
-for _, Player in pairs(game.Players:GetPlayers()) do
+for _, Player in pairs(Players:GetPlayers()) do
     GameAnalytics:PlayerJoined(Player)
 end
 
 -- New Players
-game.Players.PlayerAdded:Connect(function(Player)
+Players.PlayerAdded:Connect(function(Player)
     GameAnalytics:PlayerJoined(Player)
 end)
 
 -- Players leaving
-game.Players.PlayerRemoving:Connect(function(Player)
+Players.PlayerRemoving:Connect(function(Player)
     GameAnalytics:PlayerRemoved(Player)
 end)]]></ProtectedString>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
-		<Item class="LocalScript" referent="RBX5496a668ed3341c4b77c9f2886062ca5">
+		<Item class="LocalScript" referent="RBX2c137b7ba6304818858396f8d88fd655">
 			<Properties>
 				<bool name="Disabled">false</bool>
 				<Content name="LinkedSource"><null></null></Content>
@@ -251,8 +236,9 @@ end)]]></ProtectedString>
 if script.Parent.ClassName ~= "PlayerScripts" then warn("GameAnalytics: Disabled client") return end
 
 --Variables
-local GameAnalyticsFiltering = game.ReplicatedStorage:WaitForChild("GameAnalyticsFiltering")
-local GameAnalyticsSendMessage = game.ReplicatedStorage:WaitForChild("GameAnalyticsSendMessage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GameAnalyticsFiltering = ReplicatedStorage:WaitForChild("GameAnalyticsFiltering")
+local GameAnalyticsSendMessage = ReplicatedStorage:WaitForChild("GameAnalyticsSendMessage")
 
 --Services
 local GS = game:GetService("GuiService")
@@ -263,7 +249,7 @@ function getPlatform()
 
     if (GS:IsTenFootInterface()) then
         return "Console"
-    elseif (UIS.TouchEnabled) then
+    elseif (UIS.TouchEnabled and not UIS.MouseEnabled) then
         return "Mobile"
     else
         return "Desktop"
@@ -312,6 +298,10 @@ local validation = require(script.Validation)
 local store = require(script.Store)
 local events = require(script.Events)
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local MKT = game:GetService("MarketplaceService")
+local ProductCache = {}
 
 local GameAnalyticsFiltering
 
@@ -608,7 +598,7 @@ function ga:PlayerJoined(Player)
     --Variables
     local PlayerData = store:GetPlayerData(Player)
 	
-    GameAnalyticsFiltering = GameAnalyticsFiltering or game.ReplicatedStorage:WaitForChild("GameAnalyticsFiltering")
+    GameAnalyticsFiltering = GameAnalyticsFiltering or ReplicatedStorage:WaitForChild("GameAnalyticsFiltering")
     local PlayerPlatform = GameAnalyticsFiltering:InvokeClient(Player)
 
     --Fill Data
@@ -634,7 +624,7 @@ function ga:PlayerJoined(Player)
             wait(store.AutoSaveData)
 
             --Validate
-            if (not Player) or (Player.Parent ~= game.Players) then return end
+            if (not Player) or (Player.Parent ~= Players) then return end
 
             --Save
             store:SavePlayerData(Player)
@@ -651,6 +641,26 @@ function ga:PlayerRemoved(Player)
     store:SavePlayerData(Player)
 
     ga:endSession(Player.UserId)
+end
+
+function ga:ProcessReceiptCallback(Info)
+
+    --Variables
+    local Player = Players:GetPlayerByUserId(Info.PlayerId)
+    local ProductInfo = ProductCache[Info.ProductId]
+
+    --Cache
+    if not ProductInfo then
+        --Get
+        ProductInfo = MKT:GetProductInfo(Info.ProductId, Enum.InfoType.Product)
+        ProductCache[Info.ProductId] = ProductInfo
+    end
+
+	ga:addBusinessEvent(Info.PlayerId, {
+		amount = Info.CurrencySpent,
+		itemType = "DeveloperProduct",
+		itemId = ProductInfo.Name
+	})
 end
 
 return ga
@@ -965,14 +975,14 @@ function validation:validateArrayOfStrings(maxCount, maxStringLength, allowNoVal
 	end
 	
 	-- check if empty
-	if not allowNoValues and table.getn(arrayOfStrings) == 0 then
+	if not allowNoValues and #arrayOfStrings == 0 then
 		logger:w(arrayTag .. " validation failed: array cannot be empty.")
 		return false
 	end
 	
 	-- check if exceeding max count
-	if maxCount > 0 and table.getn(arrayOfStrings) > maxCount then
-		logger:w(arrayTag .. " validation failed: array cannot exceed " .. tostring(maxCount) .. " values. It has " .. table.getn(arrayOfStrings) .. " values.")
+	if maxCount > 0 and #arrayOfStrings > maxCount then
+		logger:w(arrayTag .. " validation failed: array cannot exceed " .. tostring(maxCount) .. " values. It has " .. #arrayOfStrings .. " values.")
 		return false
 	end
 	
@@ -980,7 +990,7 @@ function validation:validateArrayOfStrings(maxCount, maxStringLength, allowNoVal
 	for _,arrayString in pairs(arrayOfStrings) do
 		local stringLength = 0
 		if arrayString then
-			stringLength = string.len(arrayString)
+			stringLength = #arrayString
 		end
 		
 		-- check if empty (not allowed)
@@ -1013,7 +1023,7 @@ function validation:validateShortString(shortString, canBeEmpty)
 		return true
 	end
 	
-	if utilities:isStringNullOrEmpty(shortString) or string.len(shortString) > 32 then
+	if utilities:isStringNullOrEmpty(shortString) or #shortString > 32 then
 		return false
 	end
 	
@@ -1021,8 +1031,8 @@ function validation:validateShortString(shortString, canBeEmpty)
 end
 
 function validation:validateKeys(gameKey, secretKey)
-	if string.find(gameKey, "^[A-Za-z0-9]+$") and string.len(gameKey) == 32 then
-		if string.find(secretKey, "^[A-Za-z0-9]+$") and string.len(secretKey) == 40 then
+	if string.find(gameKey, "^[A-Za-z0-9]+$") and #gameKey == 32 then
+		if string.find(secretKey, "^[A-Za-z0-9]+$") and #secretKey == 40 then
 			return true
 		end
 	end
@@ -1066,7 +1076,7 @@ function validation:validateCurrency(currency)
 		return false
 	end
 	
-	if string.find(currency, "^[A-Z]+$") and string.len(currency) == 3 then
+	if string.find(currency, "^[A-Z]+$") and #currency == 3 then
 		return true
 	end
 	return false
@@ -1081,7 +1091,7 @@ function validation:validateEventPartLength(eventPart, allowNull)
 		return false
 	end
 	
-	if string.len(eventPart) == 0 or string.len(eventPart) > 64 then
+	if #eventPart == 0 or #eventPart > 64 then
 		return false
 	end
 	return true
@@ -1254,7 +1264,7 @@ function validation:validateEventIdLength(eventId)
 		if count > 5 then
 			return false
 		end
-		if string.len(s) > 64 then
+		if #s > 64 then
 			return false
 		end
 	end
@@ -1302,7 +1312,7 @@ function validation:validateLongString(longString, canBeEmpty)
 		return true
 	end
 	
-	if utilities:isStringNullOrEmpty(longString) or string.len(longString) > 8192 then
+	if utilities:isStringNullOrEmpty(longString) or #longString > 8192 then
 		return false
 	end
 	
@@ -1328,7 +1338,7 @@ return validation
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX0c9953db4b9544eb96659e1dbe84eb47">
+			<Item class="ModuleScript" referent="RBX402c80bc23ae4c6b9cd3718ffddbc0df">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">State</string>
@@ -1353,6 +1363,7 @@ local store = require(script.Parent.Store)
 local settings = require(script.Parent.Settings)
 local events = require(script.Parent.Events)
 local HTTP = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GameAnalyticsCommandCenter
 
 local function getClientTsAdjusted(playerId)
@@ -1383,7 +1394,7 @@ local function populateConfigurations(playerId)
 				local end_ts = configuration["end"] or math.huge
 				local client_ts_adjusted = getClientTsAdjusted(playerId)
 
-				if string.len(key) > 0 and configuration["value"] and client_ts_adjusted > start_ts and client_ts_adjusted < end_ts then
+				if #key > 0 and configuration["value"] and client_ts_adjusted > start_ts and client_ts_adjusted < end_ts then
 					PlayerData.Configurations[key] = configuration["value"]
 					logger:d("configuration added: key=" .. configuration["key"] .. ", value=" .. configuration["value"])
 				end
@@ -1392,7 +1403,7 @@ local function populateConfigurations(playerId)
 	end
 
 	PlayerData.CommandCenterIsReady = true
-	GameAnalyticsCommandCenter = GameAnalyticsCommandCenter or game.ReplicatedStorage:WaitForChild("GameAnalyticsCommandCenter")
+	GameAnalyticsCommandCenter = GameAnalyticsCommandCenter or ReplicatedStorage:WaitForChild("GameAnalyticsCommandCenter")
 	GameAnalyticsCommandCenter:FireAllClients()
 end
 
@@ -1603,11 +1614,11 @@ return state
 					<ProtectedString name="Source"><![CDATA[local utilities = {}
 
 function utilities:isStringNullOrEmpty(s)
-	return (not s) or string.len(s) == 0
+	return (not s) or #s == 0
 end
 
 function utilities:stringArrayContainsString(array, search)
-	if table.getn(array) == 0 then
+	if #array == 0 then
 		return false
 	end
 	
@@ -1729,7 +1740,7 @@ local function processRequestResponse(response, requestId)
 	local statusCode = response.StatusCode
 	local body = response.Body
 	
-	if not body or string.len(body) == 0 then
+	if not body or #body == 0 then
 		logger:d(requestId .. " request. failed. Might be no connection. Status code: " .. tostring(statusCode))
 		return http_api.EGAHTTPApiResponse.NoResponse
 	end
@@ -1840,7 +1851,7 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
 end
 
 function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
-	if not eventArray or table.getn(eventArray) == 0 then
+	if not eventArray or #eventArray == 0 then
 		logger:d("sendEventsInArray called with missing eventArray")
 		return
 	end
@@ -2652,6 +2663,7 @@ local Bit = require(lockbox.util.bit);
 local String = string;
 local Math = math;
 local Queue = require(lockbox.util.queue);
+local heartbeat = game:GetService("RunService").Heartbeat
 
 local CONSTANTS = {
    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -2721,6 +2733,7 @@ local SHA2_256 = function()
 	local public = {};
 
 	local processBlock = function()
+		
 		local a = h0;
 		local b = h1;
 		local c = h2;
@@ -2729,20 +2742,27 @@ local SHA2_256 = function()
 		local f = h5;
 		local g = h6;
 		local h = h7;
-
+		
 		local w = {};
-
 		for i=0,15 do
 			w[i] = bytes2word(queue.pop(),queue.pop(),queue.pop(),queue.pop());
 		end
 
+		heartbeat:Wait()
+
 		for i=16,63 do
+			if i%20 == 0 then
+				heartbeat:Wait()
+			end
 			local s0 = XOR(RROT(w[i-15],7), XOR(RROT(w[i-15],18), RSHIFT(w[i-15],3)));
 			local s1 = XOR(RROT(w[i-2],17), XOR(RROT(w[i-2], 19), RSHIFT(w[i-2],10)));
 			w[i] = AND(w[i-16] + s0 + w[i-7] + s1, 0xFFFFFFFF);
 		end
 
 		for i=0,63 do
+			if i%12 == 0 then
+				heartbeat:Wait()
+			end
 			local s1 = XOR(RROT(e,6), XOR(RROT(e,11),RROT(e,25)));
 			local ch = XOR(AND(e,f), AND(NOT(e),g));
 			local temp1 = h + s1 + ch + CONSTANTS[i+1] + w[i];
@@ -2768,6 +2788,7 @@ local SHA2_256 = function()
 		h5 = AND(h5 + f, 0xFFFFFFFF);
 		h6 = AND(h6 + g, 0xFFFFFFFF);
 		h7 = AND(h7 + h, 0xFFFFFFFF);
+		heartbeat:Wait()
 	end
 
 	public.init = function()
@@ -2786,11 +2807,12 @@ local SHA2_256 = function()
 	end
 
 	public.update = function(bytes)
+		
 		for b in bytes do
 			queue.push(b);
 			if queue.size() >= 64 then processBlock(); end
 		end
-
+		
 		return public;
 	end
 
@@ -3316,7 +3338,7 @@ function store:SaveErrorData(ErrorKey, ErrorData)
     --Save
 	if not RunService:IsStudio() then
 		local success, err = pcall(function()
-			store.PlayerDS:SetAsync(ErrorKey, ErrorData)
+			store.ErrorDS:SetAsync(ErrorKey, ErrorData)
 		end)
 	end
 end
@@ -3358,21 +3380,28 @@ local function addDimensionsToEvent(playerId, eventData)
 		return
 	end
 	
+	if not playerId then 
+		return
+	end
+	
 	local PlayerData = store.PlayerCache[playerId]
 	
 	-- add to dict (if not nil)
-	if PlayerData.CurrentCustomDimension01 and string.len(PlayerData.CurrentCustomDimension01) > 0 then
+	if PlayerData.CurrentCustomDimension01 and #PlayerData.CurrentCustomDimension01 > 0 then
 		eventData["custom_01"] = PlayerData.CurrentCustomDimension01
 	end
-	if PlayerData.CurrentCustomDimension02 and string.len(PlayerData.CurrentCustomDimension02) > 0 then
+	if PlayerData.CurrentCustomDimension02 and #PlayerData.CurrentCustomDimension02 > 0 then
 		eventData["custom_02"] = PlayerData.CurrentCustomDimension02
 	end
-	if PlayerData.CurrentCustomDimension03 and string.len(PlayerData.CurrentCustomDimension03) > 0 then
+	if PlayerData.CurrentCustomDimension03 and #PlayerData.CurrentCustomDimension03 > 0 then
 		eventData["custom_03"] = PlayerData.CurrentCustomDimension03
 	end
 end
 
 local function getClientTsAdjusted(playerId)
+	if not playerId then
+		return os.time()
+	end
 	local PlayerData = store.PlayerCache[playerId]
 	local clientTs = os.time()
 	local clientTsAdjustedInteger = clientTs + PlayerData.ClientServerTimeOffset
@@ -3384,14 +3413,28 @@ local function getClientTsAdjusted(playerId)
 end
 
 local function getEventAnnotations(playerId)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData
+	local id
+	
+	if playerId then
+		id = playerId
+		PlayerData = store.PlayerCache[playerId]
+	else
+		id = "DummyId"
+		PlayerData = {
+			OS = "uwp_desktop 0.0.0",
+			Platform = "uwp_desktop",
+			SessionID = 1,
+			Sessions = 1
+		}
+	end
 	
 	local annotations = {
 		-- ---- REQUIRED ----
 		-- collector event API version
 		["v"] = 2,
 		-- User identifier
-		["user_id"] = tostring(playerId),
+		["user_id"] = tostring(id),
 		-- Client Timestamp (the adjusted timestamp)
 		["client_ts"] = getClientTsAdjusted(playerId),
 		-- SDK version
@@ -3451,25 +3494,25 @@ local function processEvents()
 	local queue = cloneTable(store.EventsQueue) 
 	store.EventsQueue = {}
 	
-	if table.getn(queue) == 0 then
+	if #queue == 0 then
 		logger:i("Event queue: No events to send")
 		return
 	end
 	
 	-- Log
-	logger:i("Event queue: Sending " .. tostring(table.getn(queue)) .. " events.")
+	logger:i("Event queue: Sending " .. tostring(#queue) .. " events.")
 	
 	local eventsResult = http_api:sendEventsInArray(settings.GameKey, settings.SecretKey, queue)
 	local statusCode = eventsResult.statusCode
 	local responseBody = eventsResult.body
 	
 	if statusCode == http_api.EGAHTTPApiResponse.Ok and responseBody then
-		logger:i("Event queue: " .. tostring(table.getn(queue)) .. " events sent.")
+		logger:i("Event queue: " .. tostring(#queue) .. " events sent.")
 	else
 		if statusCode == http_api.EGAHTTPApiResponse.NoResponse then
 			logger:w("Event queue: Failed to send events to collector - Retrying next time")
 			for _,e in pairs(queue) do
-				if table.getn(store.EventsQueue) < 500 then
+				if #store.EventsQueue < 500 then
 					table.insert(store.EventsQueue, e)
 				else
 					break
@@ -3477,7 +3520,7 @@ local function processEvents()
 			end
 		else
 			if statusCode == http_api.EGAHTTPApiResponse.BadRequest and responseBody then
-				logger:w("Event queue: " .. tostring(table.getn(queue)) .. " events sent. " .. tostring(table.getn(responseBody)) .. " events failed GA server validation.")
+				logger:w("Event queue: " .. tostring(#queue) .. " events sent. " .. tostring(#responseBody) .. " events failed GA server validation.")
 			else
 				logger:w("Event queue: Failed to send events.")
 			end
