@@ -1,7 +1,7 @@
 <roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
 	<External>null</External>
 	<External>nil</External>
-	<Item class="ModuleScript" referent="RBX8974c04760aa450abe7972105198c714">
+	<Item class="ModuleScript" referent="RBX9458932bace642db879620549e540a6e">
 		<Properties>
 			<Content name="LinkedSource"><null></null></Content>
 			<string name="Name">GameAnalyticsSDK</string>
@@ -36,7 +36,7 @@ return module
 ]]></ProtectedString>
 			<BinaryString name="Tags"></BinaryString>
 		</Properties>
-		<Item class="Script" referent="RBX98fe53ac00314a3388ab825d2b65aaa1">
+		<Item class="Script" referent="RBX851b932ddcfa4e8c9c5008753cea29a5">
 			<Properties>
 				<bool name="Disabled">false</bool>
 				<Content name="LinkedSource"><null></null></Content>
@@ -267,7 +267,7 @@ GameAnalyticsFiltering.OnClientInvoke = getPlatform
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
-		<Item class="ModuleScript" referent="RBX2536bfc8ae2c49799587fd186b222d08">
+		<Item class="ModuleScript" referent="RBX5289c63c89894eb59ae4ab6b49f90bee">
 			<Properties>
 				<Content name="LinkedSource"><null></null></Content>
 				<string name="Name">GameAnalytics</string>
@@ -667,7 +667,7 @@ return ga
 ]]></ProtectedString>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXf8fd7bf091ef44c7b8249d150d387dc8">
+			<Item class="ModuleScript" referent="RBX88ce99ed4bfa4470841b5e369ebf2bc3">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Logger</string>
@@ -768,7 +768,7 @@ return logger
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX45ee3b48a71644be891cfc27698c4166">
+			<Item class="ModuleScript" referent="RBXe7f001015fc443bd97376871983ccc5b">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Threading</string>
@@ -894,7 +894,7 @@ return threading
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBXbaf9277cb683430fbfb69ca6707a07bd">
+			<Item class="ModuleScript" referent="RBXff0e4eba005d41079cfec09c829c625a">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Validation</string>
@@ -1606,7 +1606,7 @@ return state
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX71cf5f3981a7429dba80250325350f0c">
+			<Item class="ModuleScript" referent="RBX491874fbb8e145f8bfedab5e8082a6ab">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Utilities</string>
@@ -1636,7 +1636,7 @@ return utilities
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX5b542d24e9d8493e9420f551fbc2f53c">
+			<Item class="ModuleScript" referent="RBX16ca7fe166d44a598b34e40d1e4ce56e">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Settings</string>
@@ -1662,7 +1662,7 @@ return settings
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBXfeeecf52e7d4477d9be1180530738136">
+			<Item class="ModuleScript" referent="RBX63d986edfd2f4014b8793f5bc910a021">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">HttpApi</string>
@@ -1934,12 +1934,12 @@ return http_api
 ]]></ProtectedString>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="Folder" referent="RBX7332c496e82e428681a062ec17e27546">
+				<Item class="Folder" referent="RBX407ae8e59a8c4bfa92131f75e695975e">
 					<Properties>
 						<string name="Name">Encoding</string>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX96668bff40b542ccb1b29c1ec8e77cf6">
+					<Item class="ModuleScript" referent="RBX5228b501206748fba3308add3030293c">
 						<Properties>
 							<Content name="LinkedSource"><null></null></Content>
 							<string name="Name">lockbox</string>
@@ -1953,12 +1953,12 @@ end
 return lockbox]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="Folder" referent="RBXb31263308a784cfcbe356a96ce03d1e3">
+						<Item class="Folder" referent="RBX1e235f312d0244f5a43f1ddd923c8747">
 							<Properties>
 								<string name="Name">mac</string>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
-							<Item class="ModuleScript" referent="RBXf2a070178a134c338e58011907b4cca9">
+							<Item class="ModuleScript" referent="RBX315a4615760241feaea7e1d069de4c2f">
 								<Properties>
 									<Content name="LinkedSource"><null></null></Content>
 									<string name="Name">hmac</string>
@@ -2056,12 +2056,12 @@ return HMAC;
 								</Properties>
 							</Item>
 						</Item>
-						<Item class="Folder" referent="RBXb90cc1434e474e61959775c4337c5ba6">
+						<Item class="Folder" referent="RBX2ab8c63daba24e6a85ca306d4d68e523">
 							<Properties>
 								<string name="Name">util</string>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
-							<Item class="ModuleScript" referent="RBXeb8146ca00bd4d55977aa75a39a5d33d">
+							<Item class="ModuleScript" referent="RBX5bb6168682e74e9ca6d67cdf3e7378e4">
 								<Properties>
 									<Content name="LinkedSource"><null></null></Content>
 									<string name="Name">array</string>
@@ -2282,7 +2282,7 @@ return Array;
 									<BinaryString name="Tags"></BinaryString>
 								</Properties>
 							</Item>
-							<Item class="ModuleScript" referent="RBXa9de53a3970948f493aafe28754f2e76">
+							<Item class="ModuleScript" referent="RBXe070d26311594130bf5581cc1ab06b1c">
 								<Properties>
 									<Content name="LinkedSource"><null></null></Content>
 									<string name="Name">base64</string>
@@ -2450,7 +2450,7 @@ return Base64;
 									<BinaryString name="Tags"></BinaryString>
 								</Properties>
 							</Item>
-							<Item class="ModuleScript" referent="RBX97fb89f382e7442f8b82dbd7353434ed">
+							<Item class="ModuleScript" referent="RBXb67c9a94a92543309972b0180881712a">
 								<Properties>
 									<Content name="LinkedSource"><null></null></Content>
 									<string name="Name">queue</string>
@@ -2506,7 +2506,7 @@ return Queue;
 									<BinaryString name="Tags"></BinaryString>
 								</Properties>
 							</Item>
-							<Item class="ModuleScript" referent="RBX5b075f003b9e4268825b772cec437d85">
+							<Item class="ModuleScript" referent="RBXc435344346e445d78a41f507cf425f09">
 								<Properties>
 									<Content name="LinkedSource"><null></null></Content>
 									<string name="Name">stream</string>
@@ -2620,7 +2620,7 @@ return Stream;
 									<BinaryString name="Tags"></BinaryString>
 								</Properties>
 							</Item>
-							<Item class="ModuleScript" referent="RBXa0139fcb5cea4b9f8478dfc5e17f4378">
+							<Item class="ModuleScript" referent="RBX6ffee613350848028f81cd3cf9bdee0a">
 								<Properties>
 									<Content name="LinkedSource"><null></null></Content>
 									<string name="Name">bit</string>
@@ -2647,12 +2647,12 @@ return e
 								</Properties>
 							</Item>
 						</Item>
-						<Item class="Folder" referent="RBXe780ba5cbe184f009bbe48544bcf56a1">
+						<Item class="Folder" referent="RBX4622d50381ea4306af15bba406d53d92">
 							<Properties>
 								<string name="Name">digest</string>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
-							<Item class="ModuleScript" referent="RBX50a6461f4471479fba131a26a4d68f35">
+							<Item class="ModuleScript" referent="RBXa0bb8379de7147a89b658fcd7d71a3a6">
 								<Properties>
 									<Content name="LinkedSource"><null></null></Content>
 									<string name="Name">sha2_256</string>
@@ -2885,7 +2885,7 @@ return SHA2_256;
 							</Item>
 						</Item>
 					</Item>
-					<Item class="ModuleScript" referent="RBX93546abeefd44e80a825094106eff10a">
+					<Item class="ModuleScript" referent="RBX3147887344b84302baf0201f710653e1">
 						<Properties>
 							<Content name="LinkedSource"><null></null></Content>
 							<string name="Name">bit</string>
@@ -3242,7 +3242,7 @@ return M]]></ProtectedString>
 					</Item>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX722e8b16f844471082291a3f5ca34f62">
+			<Item class="ModuleScript" referent="RBX3c9d7010119e490baf82a835e6717ee0">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Store</string>
@@ -3348,7 +3348,7 @@ return store
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX33681662ea8246b0be4b257884fea252">
+			<Item class="ModuleScript" referent="RBXe6de719f67aa4c8dbcb79509df663580">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Events</string>
@@ -3438,7 +3438,7 @@ local function getEventAnnotations(playerId)
 		-- Client Timestamp (the adjusted timestamp)
 		["client_ts"] = getClientTsAdjusted(playerId),
 		-- SDK version
-		["sdk_version"] = "android " .. version.SdkVersion,
+		["sdk_version"] = "roblox " .. version.SdkVersion,
 		-- Operation system version
         ["os_version"] = PlayerData.OS,
 		-- Device make (hardcoded to apple)
@@ -3812,13 +3812,13 @@ return events
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBXe7351c7f04c44e1794244aa296c20037">
+			<Item class="ModuleScript" referent="RBX04c2b2c76ccb4bfca3d0d0df947bdab0">
 				<Properties>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Version</string>
 					<string name="ScriptGuid">{45a79cc8-4a67-4b73-a13c-78bed9a79eb8}</string>
 					<ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.0.1"
+    SdkVersion = "1.0.2"
 }
 
 return version
