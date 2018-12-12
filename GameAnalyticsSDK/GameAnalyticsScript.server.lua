@@ -125,27 +125,6 @@ if string.len(Settings.Build) > 0 then
 end
 
 if Settings.AutomaticSendBusinessEvents then
-    --Record Developer Products
-    MKT.ProcessReceipt = function(Info)
-
-        --Variables
-        local ProductInfo = ProductCache[Info.ProductId]
-
-        --Cache
-        if not ProductInfo then
-
-            --Get
-            ProductInfo = MKT:GetProductInfo(Info.ProductId, Enum.InfoType.Product)
-            ProductCache[Info.ProductId] = ProductInfo
-        end
-
-        GameAnalytics:addBusinessEvent(Info.PlayerId, {
-            amount = Info.CurrencySpent,
-            itemType = "DeveloperProduct",
-            itemId = ProductInfo.Name
-        })
-    end
-
     --Record Gamepasses. NOTE: This doesn't record gamepass purchases if a player buys it from the website
     MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
 
