@@ -71,7 +71,7 @@ end
 rshift = M.rshift
 
 function M.lshift(a,disp) -- Lua5.2 inspired
-  if disp < 0 then return rshift(a,-disp) end 
+  if disp < 0 then return rshift(a,-disp) end
   return (a * 2^disp) % 2^32
 end
 lshift = M.lshift

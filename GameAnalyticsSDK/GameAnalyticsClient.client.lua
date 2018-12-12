@@ -9,7 +9,7 @@ if script.Parent.ClassName ~= "PlayerScripts" then warn("GameAnalytics: Disabled
 
 --Variables
 local GameAnalyticsFiltering = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsFiltering")
-local GameAnalyticsSendMessage = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
+--local GameAnalyticsSendMessage = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
 
 --Services
 local GS = game:GetService("GuiService")
@@ -32,5 +32,5 @@ GameAnalyticsFiltering.OnClientInvoke = getPlatform
 
 -- debug stuff
 --GameAnalyticsSendMessage.OnClientEvent:Connect(function(chatProperties)
---	game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", chatProperties)
+--    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", chatProperties)
 --end)

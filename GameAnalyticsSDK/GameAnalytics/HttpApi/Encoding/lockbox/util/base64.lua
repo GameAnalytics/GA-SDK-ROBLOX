@@ -9,9 +9,9 @@ local Stream = require(lockbox.util.stream);
 local AND = Bit.band;
 local OR  = Bit.bor;
 local NOT = Bit.bnot;
-local XOR = Bit.bxor;
-local LROT = Bit.lrotate;
-local RROT = Bit.rrotate;
+--local XOR = Bit.bxor;
+--local LROT = Bit.lrotate;
+--local RROT = Bit.rrotate;
 local LSHIFT = Bit.lshift;
 local RSHIFT = Bit.rshift;
 
@@ -25,135 +25,135 @@ local SYMBOLS = {
 local LOOKUP = {};
 
 for k,v in pairs(SYMBOLS) do
-	LOOKUP[k]=v;
-	LOOKUP[v]=k;
+    LOOKUP[k]=v;
+    LOOKUP[v]=k;
 end
 
 
 local Base64 = {};
 
 Base64.fromStream = function(stream)
-	local bits = 0x00;
-	local bitCount = 0;
-	local base64 = {};
+    local bits = 0x00;
+    local bitCount = 0;
+    local base64 = {};
 
-	local byte = stream();
-	while byte ~= nil do
-		bits = OR(LSHIFT(bits,8),byte);
-		bitCount = bitCount + 8;
-		while bitCount >= 6 do
-			bitCount = bitCount - 6;
-			local temp = RSHIFT(bits,bitCount);
-			table.insert(base64,LOOKUP[temp]);
-			bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
-		end
-		byte = stream();
-	end
+    local byte = stream();
+    while byte ~= nil do
+        bits = OR(LSHIFT(bits,8),byte);
+        bitCount = bitCount + 8;
+        while bitCount >= 6 do
+            bitCount = bitCount - 6;
+            local temp = RSHIFT(bits,bitCount);
+            table.insert(base64,LOOKUP[temp]);
+            bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
+        end
+        byte = stream();
+    end
 
-	if (bitCount == 4) then
-		bits = LSHIFT(bits,2);
-		table.insert(base64,LOOKUP[bits]);
-		table.insert(base64,"=");
-	elseif (bitCount == 2) then
-		bits = LSHIFT(bits,4);
-		table.insert(base64,LOOKUP[bits]);
-		table.insert(base64,"==");
-	end
+    if (bitCount == 4) then
+        bits = LSHIFT(bits,2);
+        table.insert(base64,LOOKUP[bits]);
+        table.insert(base64,"=");
+    elseif (bitCount == 2) then
+        bits = LSHIFT(bits,4);
+        table.insert(base64,LOOKUP[bits]);
+        table.insert(base64,"==");
+    end
 
-	return table.concat(base64,"");
+    return table.concat(base64,"");
 end
 
 Base64.fromArray = function(array)
-	local bits = 0x00;
-	local bitCount = 0;
-	local base64 = {};
+    local bits = 0x00;
+    local bitCount = 0;
+    local base64 = {};
 
-	local ind = 1;
+    local ind = 1;
 
-	local byte = array[ind]; ind = ind + 1;
-	while byte ~= nil do
-		bits = OR(LSHIFT(bits,8),byte);
-		bitCount = bitCount + 8;
-		while bitCount >= 6 do
-			bitCount = bitCount - 6;
-			local temp = RSHIFT(bits,bitCount);
-			table.insert(base64,LOOKUP[temp]);
-			bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
-		end
-		byte = array[ind]; ind = ind + 1;
-	end
+    local byte = array[ind]; ind = ind + 1;
+    while byte ~= nil do
+        bits = OR(LSHIFT(bits,8),byte);
+        bitCount = bitCount + 8;
+        while bitCount >= 6 do
+            bitCount = bitCount - 6;
+            local temp = RSHIFT(bits,bitCount);
+            table.insert(base64,LOOKUP[temp]);
+            bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
+        end
+        byte = array[ind]; ind = ind + 1;
+    end
 
-	if (bitCount == 4) then
-		bits = LSHIFT(bits,2);
-		table.insert(base64,LOOKUP[bits]);
-		table.insert(base64,"=");
-	elseif (bitCount == 2) then
-		bits = LSHIFT(bits,4);
-		table.insert(base64,LOOKUP[bits]);
-		table.insert(base64,"==");
-	end
+    if (bitCount == 4) then
+        bits = LSHIFT(bits,2);
+        table.insert(base64,LOOKUP[bits]);
+        table.insert(base64,"=");
+    elseif (bitCount == 2) then
+        bits = LSHIFT(bits,4);
+        table.insert(base64,LOOKUP[bits]);
+        table.insert(base64,"==");
+    end
 
-	return table.concat(base64,"");	
+    return table.concat(base64,"");
 end
 
 Base64.fromString = function(string)
-	return Base64.fromArray(Array.fromString(string));
+    return Base64.fromArray(Array.fromString(string));
 end
 
 
 
 Base64.toStream = function(base64)
-	return Stream.fromArray(Base64.toArray(base64));
+    return Stream.fromArray(Base64.toArray(base64));
 end
 
 Base64.toArray = function(base64)
-	local bits = 0x00;
-	local bitCount = 0;
+    local bits = 0x00;
+    local bitCount = 0;
 
-	local bytes = {};
+    local bytes = {};
 
-	for c in String.gmatch(base64,".") do
-		if (c == "=") then
-			bits = RSHIFT(bits,2); bitCount = bitCount - 2;
-		else
-			bits = LSHIFT(bits,6); bitCount = bitCount + 6;
-			bits = OR(bits,LOOKUP[c]);
-		end
+    for c in String.gmatch(base64,".") do
+        if (c == "=") then
+            bits = RSHIFT(bits,2); bitCount = bitCount - 2;
+        else
+            bits = LSHIFT(bits,6); bitCount = bitCount + 6;
+            bits = OR(bits,LOOKUP[c]);
+        end
 
-		while(bitCount >= 8) do
-			bitCount = bitCount - 8;
-			local temp = RSHIFT(bits,bitCount);
-			table.insert(bytes,temp);
-			bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
-		end
-	end
-	
-	return bytes;
+        while(bitCount >= 8) do
+            bitCount = bitCount - 8;
+            local temp = RSHIFT(bits,bitCount);
+            table.insert(bytes,temp);
+            bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
+        end
+    end
+
+    return bytes;
 end
 
 Base64.toString = function(base64)
-	local bits = 0x00;
-	local bitCount = 0;
+    local bits = 0x00;
+    local bitCount = 0;
 
-	local chars = {};
+    local chars = {};
 
-	for c in String.gmatch(base64,".") do
-		if (c == "=") then
-			bits = RSHIFT(bits,2); bitCount = bitCount - 2;
-		else
-			bits = LSHIFT(bits,6); bitCount = bitCount + 6;
-			bits = OR(bits,LOOKUP[c]);
-		end
+    for c in String.gmatch(base64,".") do
+        if (c == "=") then
+            bits = RSHIFT(bits,2); bitCount = bitCount - 2;
+        else
+            bits = LSHIFT(bits,6); bitCount = bitCount + 6;
+            bits = OR(bits,LOOKUP[c]);
+        end
 
-		while(bitCount >= 8) do
-			bitCount = bitCount - 8;
-			local temp = RSHIFT(bits,bitCount);
-			table.insert(chars,String.char(temp));
-			bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
-		end
-	end
-	
-	return table.concat(chars,"");
+        while(bitCount >= 8) do
+            bitCount = bitCount - 8;
+            local temp = RSHIFT(bits,bitCount);
+            table.insert(chars,String.char(temp));
+            bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
+        end
+    end
+
+    return table.concat(chars,"");
 end
 
 return Base64;
