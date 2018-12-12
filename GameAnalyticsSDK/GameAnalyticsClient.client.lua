@@ -20,7 +20,7 @@ function getPlatform()
 
     if (GS:IsTenFootInterface()) then
         return "Console"
-    elseif (UIS.TouchEnabled) then
+    elseif (UIS.TouchEnabled and not UIS.MouseEnabled) then
         return "Mobile"
     else
         return "Desktop"
