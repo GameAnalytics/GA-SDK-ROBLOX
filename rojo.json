@@ -1,18 +1,18 @@
 {
-  "name": "GameAnalyticsSDK",
-  "servePort": 8000,
-  "partitions": {
-    "GameAnalytics": {
-      "path": "GameAnalyticsSDK/GameAnalytics",
-      "target": "ServerStorage.GameAnalytics"
-    },
-    "GameAnalyticsClient": {
-      "path": "GameAnalyticsSDK/GameAnalyticsClient.client.lua",
-      "target": "StarterPlayer.StarterPlayerScripts.GameAnalyticsClient"
-    },
-    "GameAnalyticsScript": {
-      "path": "GameAnalyticsSDK/GameAnalyticsScript.server.lua",
-      "target": "ServerScriptService.GameAnalyticsScript"
+    "name": "GameAnalyticsSDK",
+    "servePort": 8000,
+    "partitions": {
+        "GameAnalytics": {
+            "path": "GameAnalyticsSDK/GameAnalytics",
+            "target": "ServerStorage.GameAnalytics"
+        },
+        "GameAnalyticsClient": {
+            "path": "GameAnalyticsSDK/GameAnalyticsClient.client.lua",
+            "target": "StarterPlayer.StarterPlayerScripts.GameAnalyticsClient"
+        },
+        "GameAnalyticsScript": {
+            "path": "GameAnalyticsSDK/GameAnalyticsScript.server.lua",
+            "target": "ServerScriptService.GameAnalyticsScript"
+        }
     }
-  }
 }
