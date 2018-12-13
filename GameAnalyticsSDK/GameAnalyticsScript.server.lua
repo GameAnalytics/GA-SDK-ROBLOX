@@ -9,7 +9,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 --Validate
 if script.Parent.ClassName ~= "ServerScriptService" then
-    warn("GameAnalytics: Disabled server")
+    error("GameAnalytics: Disabled server")
     return
 end
 
@@ -43,59 +43,75 @@ local LS = game:GetService("LogService")
 local MKT = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ProductCache = {}
+local ONE_HOUR_IN_SECONDS = 3600
+local ErrorDS = {}
+local errorCountCache = {}
+local errorCountCacheKeys = {}
+
+spawn(function()
+    local currentHour = math.floor(os.time()/3600)
+    ErrorDS = store:GetErrorDataStore(currentHour)
+
+    while wait(ONE_HOUR_IN_SECONDS) do
+        currentHour = math.floor(os.time()/3600)
+        ErrorDS = store:GetErrorDataStore(currentHour)
+        errorCountCache = {}
+        errorCountCacheKeys = {}
+    end
+end)
+
+spawn(function()
+    while wait(store.AutoSaveData) do
+        for _, key in pairs(errorCountCacheKeys) do
+            local errorCount = errorCountCache[key]
+            local step = errorCount.currentCount - errorCount.countInDS
+            errorCountCache[key].countInDS = store:IncrementErrorCount(ErrorDS, key, step)
+            errorCountCache[key].currentCount = errorCountCache[key].countInDS
+        end
+    end
+end)
 
 --Error Logging
 LS.MessageOut:Connect(function(message, messageType)
 
     --Validate
-    if not Settings.ReportErrors then return end
-    if messageType ~= Enum.MessageType.MessageError then return end
+    if not Settings.ReportErrors then
+        return
+    end
+    if messageType ~= Enum.MessageType.MessageError then
+        return
+    end
 
     local m = message
-    if string.len(m) > 8192 then
+    if #m > 8192 then
         m = string.sub(m, 1, 8192)
     end
 
     local key = m
-    if string.len(key) > 50 then
-        m = string.sub(key, 1, 50)
+    if #key > 50 then
+        key = string.sub(key, 1, 50)
     end
 
-    local ErrorData = store:GetErrorData(key)
-    local now = os.time()
-    local hour_in_seconds = 3600
-
-    if not ErrorData then
-        ErrorData = {}
-    end
-
-    if not ErrorData.timestamp then
-        ErrorData.timestamp = os.time()
-    end
-
-    if not ErrorData.count then
-        ErrorData.count = 0
-    end
-
-    -- reset count after one hour
-    if now - ErrorData.timestamp > hour_in_seconds then
-        ErrorData.count = 0
-        ErrorData.timestamp = os.time()
+    if errorCountCache[key] == nil then
+        errorCountCacheKeys[#errorCountCacheKeys + 1] = key
+        errorCountCache[key] = {}
+        errorCountCache[key].countInDS = 0
+        errorCountCache[key].currentCount = 0
     end
 
     -- don't report error if limit has been exceeded
-    if ErrorData.count and ErrorData.count > Settings.MaxErrorsPerHour then
+    if errorCountCache[key].currentCount > Settings.MaxErrorsPerHour then
         return
     end
 
-    --Report
-    GameAnalytics:addErrorEvent(GameAnalytics.EGAErrorSeverity.Error, m)
+    --Report (use nil for playerId as real player id is not available)
+    GameAnalytics:addErrorEvent(nil, {
+        severity = GameAnalytics.EGAErrorSeverity.Error,
+        message = m
+    })
 
     -- increment error count
-    ErrorData.count = ErrorData.count + 1
-
-    -- save error count and timestamp
-    store:SaveErrorData(key, ErrorData)
+    errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
 end)
 
 if Settings.EnableInfoLog then
@@ -120,7 +136,7 @@ end
 if #Settings.AvailableResourceItemTypes > 0 then
     GameAnalytics:configureAvailableResourceItemTypes(Settings.AvailableResourceItemTypes)
 end
-if string.len(Settings.Build) > 0 then
+if #Settings.Build > 0 then
     GameAnalytics:configureBuild(Settings.Build)
 end
 

@@ -5,7 +5,10 @@
 --]]
 
 --Validate
-if script.Parent.ClassName ~= "PlayerScripts" then warn("GameAnalytics: Disabled client") return end
+if script.Parent.ClassName ~= "PlayerScripts" then
+    error("GameAnalytics: Disabled client")
+    return
+end
 
 --Variables
 local GameAnalyticsFiltering = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsFiltering")

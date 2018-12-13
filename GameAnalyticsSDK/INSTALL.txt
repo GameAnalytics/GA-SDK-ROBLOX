@@ -1,3 +1,5 @@
+--[[
+
 Thanks for using the official GameAnalytics Roblox SDK module (based on gillern's GameAnalytics module)!
 
 To start using the plugin, follow these steps:
@@ -16,5 +18,8 @@ For details on how to send events and more with the SDK go to this page: https:/
 
 Resources:
     Roblox SDK Docs: https://gameanalytics.com/docs/item/roblox-sdk
+    Github: https://github.com/GameAnalytics/GA-SDK-ROBLOX
     Account sign up: https://go.gameanalytics.com/signup
     Support: https://gameanalytics.com/contact
+
+--]]

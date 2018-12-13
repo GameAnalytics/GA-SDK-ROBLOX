@@ -3,7 +3,6 @@ local RunService = game:GetService("RunService")
 
 local store = {
     PlayerDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_PlayerDS_1.0.0"),
-    ErrorDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_ErrorDS_1.0.0"),
     AutoSaveData = 180, --Set to 0 to disable
     BasePlayerData = {
         Sessions = 0,
@@ -45,17 +44,17 @@ function store:GetPlayerData(Player)
     return PlayerData
 end
 
-function store:GetErrorData(Error)
-    local ErrorData
+function store:GetErrorDataStore(scope)
+    local ErrorDS
     local success, _ = pcall(function()
-        ErrorData = RunService:IsStudio() and {} or (store.ErrorDS:GetAsync(Error) or {})
+        ErrorDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_ErrorDS_1.0.0", scope)
     end)
 
     if not success then
-        ErrorData = {}
+        ErrorDS = {}
     end
 
-    return ErrorData
+    return ErrorDS
 end
 
 function store:SavePlayerData(Player)
@@ -81,17 +80,20 @@ function store:SavePlayerData(Player)
     end
 end
 
-function store:SaveErrorData(ErrorKey, ErrorData)
-    if not ErrorData then
+function store:IncrementErrorCount(ErrorDS, ErrorKey, step)
+    if not ErrorKey then
         return
     end
 
-    --Save
+    local count = 0
+    --Increment count
     if not RunService:IsStudio() then
         pcall(function()
-            store.PlayerDS:SetAsync(ErrorKey, ErrorData)
+            count = ErrorDS:IncrementAsync(ErrorKey, step)
         end)
     end
+
+    return count
 end
 
 return store

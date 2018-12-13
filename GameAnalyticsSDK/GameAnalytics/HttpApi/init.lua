@@ -71,7 +71,7 @@ local function processRequestResponse(response, requestId)
     local statusCode = response.StatusCode
     local body = response.Body
 
-    if not body or string.len(body) == 0 then
+    if not body or #body == 0 then
         logger:d(requestId .. " request. failed. Might be no connection. Status code: " .. tostring(statusCode))
         return http_api.EGAHTTPApiResponse.NoResponse
     end

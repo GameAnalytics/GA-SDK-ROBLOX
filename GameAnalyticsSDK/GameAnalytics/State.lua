@@ -47,7 +47,7 @@ local function populateConfigurations(playerId)
                 local end_ts = configuration["end"] or math.huge
                 local client_ts_adjusted = getClientTsAdjusted(playerId)
 
-                if string.len(key) > 0 and configuration["value"] and client_ts_adjusted > start_ts and client_ts_adjusted < end_ts then
+                if #key > 0 and configuration["value"] and client_ts_adjusted > start_ts and client_ts_adjusted < end_ts then
                     PlayerData.Configurations[key] = configuration["value"]
                     logger:d("configuration added: key=" .. configuration["key"] .. ", value=" .. configuration["value"])
                 end

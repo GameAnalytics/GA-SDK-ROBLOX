@@ -89,7 +89,7 @@ function validation:validateArrayOfStrings(maxCount, maxStringLength, allowNoVal
     for _,arrayString in pairs(arrayOfStrings) do
         local stringLength = 0
         if arrayString then
-            stringLength = string.len(arrayString)
+            stringLength = #arrayString
         end
 
         -- check if empty (not allowed)
@@ -122,7 +122,7 @@ function validation:validateShortString(shortString, canBeEmpty)
         return true
     end
 
-    if utilities:isStringNullOrEmpty(shortString) or string.len(shortString) > 32 then
+    if utilities:isStringNullOrEmpty(shortString) or #shortString > 32 then
         return false
     end
 
@@ -130,8 +130,8 @@ function validation:validateShortString(shortString, canBeEmpty)
 end
 
 function validation:validateKeys(gameKey, secretKey)
-    if string.find(gameKey, "^[A-Za-z0-9]+$") and string.len(gameKey) == 32 then
-        if string.find(secretKey, "^[A-Za-z0-9]+$") and string.len(secretKey) == 40 then
+    if string.find(gameKey, "^[A-Za-z0-9]+$") and #gameKey == 32 then
+        if string.find(secretKey, "^[A-Za-z0-9]+$") and #secretKey == 40 then
             return true
         end
     end
@@ -175,7 +175,7 @@ function validation:validateCurrency(currency)
         return false
     end
 
-    if string.find(currency, "^[A-Z]+$") and string.len(currency) == 3 then
+    if string.find(currency, "^[A-Z]+$") and #currency == 3 then
         return true
     end
     return false
@@ -190,7 +190,7 @@ function validation:validateEventPartLength(eventPart, allowNull)
         return false
     end
 
-    if string.len(eventPart) == 0 or string.len(eventPart) > 64 then
+    if #eventPart == 0 or #eventPart > 64 then
         return false
     end
     return true
@@ -363,7 +363,7 @@ function validation:validateEventIdLength(eventId)
         if count > 5 then
             return false
         end
-        if string.len(s) > 64 then
+        if #s > 64 then
             return false
         end
     end
@@ -411,7 +411,7 @@ function validation:validateLongString(longString, canBeEmpty)
         return true
     end
 
-    if utilities:isStringNullOrEmpty(longString) or string.len(longString) > 8192 then
+    if utilities:isStringNullOrEmpty(longString) or #longString > 8192 then
         return false
     end
 

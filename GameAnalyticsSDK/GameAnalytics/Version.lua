@@ -1,5 +1,5 @@
 local version = {
-    SdkVersion = "1.0.2"
+    SdkVersion = "roblox 1.0.3"
 }
 
 return version

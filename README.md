@@ -10,6 +10,11 @@ Documentation can be found [here](https://gameanalytics.com/docs/item/roblox-sdk
 
 Changelog
 ---------
+<!--(CHANGELOG_TOP)-->
+**1.0.3**
+* fixed automatic sending of error events
+* added script for generating rbxmx file
+
 **1.0.2**
 * fixed sha256 performance issues
 * added processReceiptCallback function to use within your own processReceipt method

@@ -28,13 +28,13 @@ local function addDimensionsToEvent(playerId, eventData)
     local PlayerData = store.PlayerCache[playerId]
 
     -- add to dict (if not nil)
-    if PlayerData.CurrentCustomDimension01 and string.len(PlayerData.CurrentCustomDimension01) > 0 then
+    if PlayerData.CurrentCustomDimension01 and #PlayerData.CurrentCustomDimension01 > 0 then
         eventData["custom_01"] = PlayerData.CurrentCustomDimension01
     end
-    if PlayerData.CurrentCustomDimension02 and string.len(PlayerData.CurrentCustomDimension02) > 0 then
+    if PlayerData.CurrentCustomDimension02 and #PlayerData.CurrentCustomDimension02 > 0 then
         eventData["custom_02"] = PlayerData.CurrentCustomDimension02
     end
-    if PlayerData.CurrentCustomDimension03 and string.len(PlayerData.CurrentCustomDimension03) > 0 then
+    if PlayerData.CurrentCustomDimension03 and #PlayerData.CurrentCustomDimension03 > 0 then
         eventData["custom_03"] = PlayerData.CurrentCustomDimension03
     end
 end
