@@ -40,7 +40,7 @@ local function isSdkReady(options)
     -- Is SDK initialized
     if needsInitialized and not state.Initialized then
         if shouldWarn then
-            logger:w(message .. "SDK is not initialized")
+            logger:w(message .. " SDK is not initialized")
         end
         return false
     end
@@ -48,7 +48,7 @@ local function isSdkReady(options)
     -- Is SDK enabled
     if needsInitialized and playerId and not state:isEnabled(playerId) then
         if shouldWarn then
-            logger:w(message .. "SDK is disabled")
+            logger:w(message .. " SDK is disabled")
         end
         return false
     end
@@ -56,7 +56,7 @@ local function isSdkReady(options)
     -- Is session started
     if needsInitialized and playerId and not state:sessionIsStarted(playerId) then
         if shouldWarn then
-            logger:w(message .. "Session has not started yet")
+            logger:w(message .. " Session has not started yet")
         end
         return false
     end
