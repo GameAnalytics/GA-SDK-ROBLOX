@@ -322,7 +322,7 @@ function events:addResourceEvent(playerId, flowType, currency, amount, itemType,
     -- Add custom dimensions
     addDimensionsToEvent(playerId, eventDict)
 
-    logger:i("Add RESOURCE event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemType .. "}")
+    logger:i("Add RESOURCE event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. "}")
 
     -- Send to store
     addEventToStore(playerId, eventDict)
