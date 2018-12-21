@@ -179,7 +179,7 @@ function ga:addBusinessEvent(playerId, options)
         local itemType = options["itemType"] or ""
         local itemId = options["itemId"] or ""
         local cartType = options["cartType"] or ""
-        local USDSpent = math.floor((amount * 0.7) * 0.35)
+        local USDSpent = math.floor((amount * 0.7) * 0.0035)
 
         events:addBusinessEvent(playerId, "USD", USDSpent, itemType, itemId, cartType)
     end)
