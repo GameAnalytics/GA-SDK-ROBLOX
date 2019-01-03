@@ -11,6 +11,9 @@ Documentation can be found [here](https://gameanalytics.com/docs/item/roblox-sdk
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.0.4**
+* small corrections
+
 **1.0.3**
 * fixed automatic sending of error events
 * added script for generating rbxmx file
