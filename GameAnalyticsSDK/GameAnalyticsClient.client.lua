@@ -1,15 +1,3 @@
---[[
-
-    NOTE: This script should be in game.StarterPlayer.StarterPlayerScripts
-
---]]
-
---Validate
-if script.Parent.ClassName ~= "PlayerScripts" then
-    error("GameAnalytics: Disabled client")
-    return
-end
-
 --Variables
 local GameAnalyticsFiltering = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsFiltering")
 --local GameAnalyticsSendMessage = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")

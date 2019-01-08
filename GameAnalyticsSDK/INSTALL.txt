@@ -8,7 +8,7 @@ To start using the plugin, follow these steps:
 2. Get your game key and secret key
 3. Add the keys to 'GameKey' and 'SecretKey' under GameAnalytics.Settings script
 4. Move the 'GameAnalytics' script (together with its children) under 'ServerStorage'
-5. Move the 'GameAnalyticsScript' script under 'ServerScriptService'
+5. Move the 'GameAnalyticsServer' script under 'ServerScriptService'
 6. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'
 7. You're ready!
 

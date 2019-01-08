@@ -11,6 +11,10 @@ Documentation can be found [here](https://gameanalytics.com/docs/item/roblox-sdk
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.0.5**
+* renamed GameAnalyticsScript to GameAnalyticsServer
+* removed script location restriction on GameAnalyticsClient
+
 **1.0.4**
 * small corrections
 

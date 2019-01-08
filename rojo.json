@@ -10,9 +10,9 @@
             "path": "GameAnalyticsSDK/GameAnalyticsClient.client.lua",
             "target": "StarterPlayer.StarterPlayerScripts.GameAnalyticsClient"
         },
-        "GameAnalyticsScript": {
-            "path": "GameAnalyticsSDK/GameAnalyticsScript.server.lua",
-            "target": "ServerScriptService.GameAnalyticsScript"
+        "GameAnalyticsServer": {
+            "path": "GameAnalyticsSDK/GameAnalyticsServer.server.lua",
+            "target": "ServerScriptService.GameAnalyticsServer"
         }
     }
 }

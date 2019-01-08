@@ -8,8 +8,8 @@ RBXMX_RELEASE_FILE = os.path.join(ROBLOX_DIR, "release", "GameAnalyticsSDK.rbxmx
 
 GAMEANALYTICSSDK_BODY = 'GameAnalyticsSDK_BODY'
 GAMEANALYTICSSDK_FILE = os.path.join(ROBLOX_GA_DIR, "init.lua")
-GAMEANALYTICSSCRIPT_BODY = 'GameAnalyticsScript_BODY'
-GAMEANALYTICSSCRIPT_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalyticsScript.server.lua")
+GAMEANALYTICSSCRIPT_BODY = 'GameAnalyticsServer_BODY'
+GAMEANALYTICSSCRIPT_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalyticsServer.server.lua")
 INSTALL_BODY = 'INSTALL_BODY'
 INSTALL_FILE = os.path.join(ROBLOX_GA_DIR, "INSTALL.txt")
 GAMEANALYTICSCLIENT_BODY = 'GameAnalyticsClient_BODY'

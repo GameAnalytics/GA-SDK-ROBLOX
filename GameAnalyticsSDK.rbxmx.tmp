@@ -13,9 +13,9 @@
             <Properties>
                 <bool name="Disabled">false</bool>
                 <Content name="LinkedSource"><null></null></Content>
-                <string name="Name">GameAnalyticsScript</string>
+                <string name="Name">GameAnalyticsServer</string>
                 <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
-                <ProtectedString name="Source"><![CDATA[GameAnalyticsScript_BODY]]></ProtectedString>
+                <ProtectedString name="Source"><![CDATA[GameAnalyticsServer_BODY]]></ProtectedString>
                 <BinaryString name="Tags"></BinaryString>
             </Properties>
         </Item>
