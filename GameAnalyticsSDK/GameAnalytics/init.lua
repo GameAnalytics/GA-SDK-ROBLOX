@@ -23,6 +23,7 @@ local state = require(script.State)
 local validation = require(script.Validation)
 local store = require(script.Store)
 local events = require(script.Events)
+local Settings = require(script.Settings)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local ProductCache = {}
@@ -301,6 +302,18 @@ function ga:setCustomDimension03(playerId, dimension)
         end
 
         state:setCustomDimension03(playerId, dimension)
+    end)
+end
+
+function ga:setEnabledReportErrors(flag)
+    threading:performTaskOnGAThread(function()
+        Settings.ReportErrors = flag
+    end)
+end
+
+function ga:setEnabledAutomaticSendBusinessEvents(flag)
+    threading:performTaskOnGAThread(function()
+        Settings.AutomaticSendBusinessEvents = flag
     end)
 end
 

@@ -9,7 +9,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 --Validate
 if script.Parent.ClassName ~= "ServerScriptService" then
-    error("GameAnalytics: Disabled server")
+    error("GameAnalytics: Disabled server. GameAnalyticsServer has to be located in game.ServerScriptService.")
     return
 end
 
@@ -114,62 +114,34 @@ LS.MessageOut:Connect(function(message, messageType)
     errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
 end)
 
-if Settings.EnableInfoLog then
-    GameAnalytics:setEnabledInfoLog(Settings.EnableInfoLog)
-end
-if Settings.EnableVerboseLog then
-    GameAnalytics:setEnabledVerboseLog(Settings.EnableVerboseLog)
-end
+--Record Gamepasses. NOTE: This doesn't record gamepass purchases if a player buys it from the website
+MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
 
-if #Settings.AvailableCustomDimensions01 > 0 then
-    GameAnalytics:configureAvailableCustomDimensions01(Settings.AvailableCustomDimensions01)
-end
-if #Settings.AvailableCustomDimensions02 > 0 then
-    GameAnalytics:configureAvailableCustomDimensions02(Settings.AvailableCustomDimensions02)
-end
-if #Settings.AvailableCustomDimensions03 > 0 then
-    GameAnalytics:configureAvailableCustomDimensions03(Settings.AvailableCustomDimensions03)
-end
-if #Settings.AvailableResourceCurrencies > 0 then
-    GameAnalytics:configureAvailableResourceCurrencies(Settings.AvailableResourceCurrencies)
-end
-if #Settings.AvailableResourceItemTypes > 0 then
-    GameAnalytics:configureAvailableResourceItemTypes(Settings.AvailableResourceItemTypes)
-end
-if #Settings.Build > 0 then
-    GameAnalytics:configureBuild(Settings.Build)
-end
+    --Validate
+    if not Settings.AutomaticSendBusinessEvents then
+        return
+    end
 
-if Settings.AutomaticSendBusinessEvents then
-    --Record Gamepasses. NOTE: This doesn't record gamepass purchases if a player buys it from the website
-    MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
+    --Validate
+    if not Purchased then return end
 
-        --Validate
-        if not Purchased then return end
+    --Variables
+    local GamepassInfo = ProductCache[ID]
 
-        --Variables
-        local GamepassInfo = ProductCache[ID]
+    --Cache
+    if not GamepassInfo then
 
-        --Cache
-        if not GamepassInfo then
+        --Get
+        GamepassInfo = MKT:GetProductInfo(ID, Enum.InfoType.GamePass)
+        ProductCache[ID] = GamepassInfo
+    end
 
-            --Get
-            GamepassInfo = MKT:GetProductInfo(ID, Enum.InfoType.GamePass)
-            ProductCache[ID] = GamepassInfo
-        end
-
-        GameAnalytics:addBusinessEvent(Player.UserId, {
-            amount = GamepassInfo.PriceInRobux,
-            itemType = "Gamepass",
-            itemId = GamepassInfo.Name
-        })
-    end)
-end
-
-GameAnalytics:initialize({
-    gameKey = Settings.GameKey,
-    secretKey = Settings.SecretKey
-})
+    GameAnalytics:addBusinessEvent(Player.UserId, {
+        amount = GamepassInfo.PriceInRobux,
+        itemType = "Gamepass",
+        itemId = GamepassInfo.Name
+    })
+end)
 
 -- Fire for players already in game
 for _, Player in pairs(Players:GetPlayers()) do

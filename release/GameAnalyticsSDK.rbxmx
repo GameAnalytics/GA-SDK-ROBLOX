@@ -28,7 +28,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 --Validate
 if script.Parent.ClassName ~= "ServerScriptService" then
-    error("GameAnalytics: Disabled server")
+    error("GameAnalytics: Disabled server. GameAnalyticsServer has to be located in game.ServerScriptService.")
     return
 end
 
@@ -133,6 +133,78 @@ LS.MessageOut:Connect(function(message, messageType)
     errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
 end)
 
+--Record Gamepasses. NOTE: This doesn't record gamepass purchases if a player buys it from the website
+MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
+
+    --Validate
+    if not Settings.AutomaticSendBusinessEvents then
+        return
+    end
+
+    --Validate
+    if not Purchased then return end
+
+    --Variables
+    local GamepassInfo = ProductCache[ID]
+
+    --Cache
+    if not GamepassInfo then
+
+        --Get
+        GamepassInfo = MKT:GetProductInfo(ID, Enum.InfoType.GamePass)
+        ProductCache[ID] = GamepassInfo
+    end
+
+    GameAnalytics:addBusinessEvent(Player.UserId, {
+        amount = GamepassInfo.PriceInRobux,
+        itemType = "Gamepass",
+        itemId = GamepassInfo.Name
+    })
+end)
+
+-- Fire for players already in game
+for _, Player in pairs(Players:GetPlayers()) do
+    GameAnalytics:PlayerJoined(Player)
+end
+
+-- New Players
+Players.PlayerAdded:Connect(function(Player)
+    GameAnalytics:PlayerJoined(Player)
+end)
+
+-- Players leaving
+Players.PlayerRemoving:Connect(function(Player)
+    GameAnalytics:PlayerRemoved(Player)
+end)
+]]></ProtectedString>
+                <BinaryString name="Tags"></BinaryString>
+            </Properties>
+        </Item>
+        <Item class="Script" referent="RBXa82cd927306847a28e2acd9083a150a5">
+            <Properties>
+                <bool name="Disabled">false</bool>
+                <Content name="LinkedSource"><null></null></Content>
+                <string name="Name">GameAnalyticsServerInitUsingSettings</string>
+                <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
+                <ProtectedString name="Source"><![CDATA[--[[
+
+    NOTE: This script should be in game.ServerScriptService
+
+--]]
+
+local ServerStorage = game:GetService("ServerStorage")
+
+--Validate
+if script.Parent.ClassName ~= "ServerScriptService" then
+    error("GameAnalytics: GameAnalyticsServerInitUsingSettings has to be located in game.ServerScriptService.")
+    return
+end
+
+--Modules
+local GameAnalytics = require(ServerStorage.GameAnalytics)
+local Settings = require(ServerStorage.GameAnalytics.Settings)
+local Players = game:GetService("Players")
+
 if Settings.EnableInfoLog then
     GameAnalytics:setEnabledInfoLog(Settings.EnableInfoLog)
 end
@@ -159,32 +231,6 @@ if #Settings.Build > 0 then
     GameAnalytics:configureBuild(Settings.Build)
 end
 
-if Settings.AutomaticSendBusinessEvents then
-    --Record Gamepasses. NOTE: This doesn't record gamepass purchases if a player buys it from the website
-    MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
-
-        --Validate
-        if not Purchased then return end
-
-        --Variables
-        local GamepassInfo = ProductCache[ID]
-
-        --Cache
-        if not GamepassInfo then
-
-            --Get
-            GamepassInfo = MKT:GetProductInfo(ID, Enum.InfoType.GamePass)
-            ProductCache[ID] = GamepassInfo
-        end
-
-        GameAnalytics:addBusinessEvent(Player.UserId, {
-            amount = GamepassInfo.PriceInRobux,
-            itemType = "Gamepass",
-            itemId = GamepassInfo.Name
-        })
-    end)
-end
-
 GameAnalytics:initialize({
     gameKey = Settings.GameKey,
     secretKey = Settings.SecretKey
@@ -194,16 +240,6 @@ GameAnalytics:initialize({
 for _, Player in pairs(Players:GetPlayers()) do
     GameAnalytics:PlayerJoined(Player)
 end
-
--- New Players
-Players.PlayerAdded:Connect(function(Player)
-    GameAnalytics:PlayerJoined(Player)
-end)
-
--- Players leaving
-Players.PlayerRemoving:Connect(function(Player)
-    GameAnalytics:PlayerRemoved(Player)
-end)
 ]]></ProtectedString>
                 <BinaryString name="Tags"></BinaryString>
             </Properties>
@@ -225,8 +261,9 @@ To start using the plugin, follow these steps:
 3. Add the keys to 'GameKey' and 'SecretKey' under GameAnalytics.Settings script
 4. Move the 'GameAnalytics' script (together with its children) under 'ServerStorage'
 5. Move the 'GameAnalyticsServer' script under 'ServerScriptService'
-6. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'
-7. You're ready!
+6. Move the 'GameAnalyticsServerInitUsingSettings' script under 'ServerScriptService' (optional, NOT needed if you want to programmatically initialize the SDK from your own script)
+7. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'
+8. You're ready!
 
 NOTE: The provided rojo.json in the repository is set up to perform steps 4, 5 and 6 automatically through the Rojo workflow.
 
@@ -310,6 +347,7 @@ local state = require(script.State)
 local validation = require(script.Validation)
 local store = require(script.Store)
 local events = require(script.Events)
+local Settings = require(script.Settings)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local ProductCache = {}
@@ -591,6 +629,18 @@ function ga:setCustomDimension03(playerId, dimension)
     end)
 end
 
+function ga:setEnabledReportErrors(flag)
+    threading:performTaskOnGAThread(function()
+        Settings.ReportErrors = flag
+    end)
+end
+
+function ga:setEnabledAutomaticSendBusinessEvents(flag)
+    threading:performTaskOnGAThread(function()
+        Settings.AutomaticSendBusinessEvents = flag
+    end)
+end
+
 function ga:getCommandCenterValueAsString(playerId, options)
     local key = options["key"] or ""
     local defaultValue = options["defaultValue"] or nil
@@ -784,24 +834,18 @@ local function processRequestResponse(response, requestId)
 
     if statusCode == 200 then
         return http_api.EGAHTTPApiResponse.Ok
-    end
-
-    if statusCode == 0 or statusCode == 401 then
+    elseif statusCode == 0 or statusCode == 401 then
         logger:d(requestId .. " request. 401 - Unauthorized.")
         return http_api.EGAHTTPApiResponse.Unauthorized
-    end
-
-    if statusCode == 400 then
+    elseif statusCode == 400 then
         logger:d(requestId .. " request. 400 - Bad Request.")
         return http_api.EGAHTTPApiResponse.BadRequest
-    end
-
-    if statusCode == 500 then
+    elseif statusCode == 500 then
         logger:d(requestId .. " request. 500 - Internal Server Error.")
         return http_api.EGAHTTPApiResponse.InternalServerError
+    else
+        return http_api.EGAHTTPApiResponse.UnknownResponseCode
     end
-
-    return http_api.EGAHTTPApiResponse.UnknownResponseCode
 end
 
 function http_api:initRequest(gameKey, secretKey, playerData, playerId)
@@ -2521,16 +2565,20 @@ local function addDimensionsToEvent(playerId, eventData)
         return
     end
 
+    if not playerId then
+        return
+    end
+
     local PlayerData = store.PlayerCache[playerId]
 
     -- add to dict (if not nil)
-    if PlayerData.CurrentCustomDimension01 and #PlayerData.CurrentCustomDimension01 > 0 then
+    if PlayerData and PlayerData.CurrentCustomDimension01 and #PlayerData.CurrentCustomDimension01 > 0 then
         eventData["custom_01"] = PlayerData.CurrentCustomDimension01
     end
-    if PlayerData.CurrentCustomDimension02 and #PlayerData.CurrentCustomDimension02 > 0 then
+    if PlayerData and PlayerData.CurrentCustomDimension02 and #PlayerData.CurrentCustomDimension02 > 0 then
         eventData["custom_02"] = PlayerData.CurrentCustomDimension02
     end
-    if PlayerData.CurrentCustomDimension03 and #PlayerData.CurrentCustomDimension03 > 0 then
+    if PlayerData and PlayerData.CurrentCustomDimension03 and #PlayerData.CurrentCustomDimension03 > 0 then
         eventData["custom_03"] = PlayerData.CurrentCustomDimension03
     end
 end
@@ -2983,7 +3031,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.0.5"
+    SdkVersion = "1.1.0"
 }
 
 return version

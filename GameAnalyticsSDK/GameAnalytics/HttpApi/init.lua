@@ -90,7 +90,6 @@ local function processRequestResponse(response, requestId)
     else
         return http_api.EGAHTTPApiResponse.UnknownResponseCode
     end
-    
 end
 
 function http_api:initRequest(gameKey, secretKey, playerData, playerId)

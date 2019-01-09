@@ -6,7 +6,9 @@
             <Content name="LinkedSource"><null></null></Content>
             <string name="Name">GameAnalyticsSDK</string>
             <string name="ScriptGuid">{7431f9d9-7538-46e6-a8c6-45d71ee7e57a}</string>
-            <ProtectedString name="Source"><![CDATA[GameAnalyticsSDK_BODY]]></ProtectedString>
+            <ProtectedString name="Source"><![CDATA[local module = {}
+return module
+]]></ProtectedString>
             <BinaryString name="Tags"></BinaryString>
         </Properties>
         <Item class="Script" referent="RBXa82cd927306847a28e2acd9083a050b2">
@@ -16,6 +18,16 @@
                 <string name="Name">GameAnalyticsServer</string>
                 <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
                 <ProtectedString name="Source"><![CDATA[GameAnalyticsServer_BODY]]></ProtectedString>
+                <BinaryString name="Tags"></BinaryString>
+            </Properties>
+        </Item>
+        <Item class="Script" referent="RBXa82cd927306847a28e2acd9083a150a5">
+            <Properties>
+                <bool name="Disabled">false</bool>
+                <Content name="LinkedSource"><null></null></Content>
+                <string name="Name">GameAnalyticsServerInitUsingSettings</string>
+                <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
+                <ProtectedString name="Source"><![CDATA[GameAnalyticsServerInitUsingSettings_BODY]]></ProtectedString>
                 <BinaryString name="Tags"></BinaryString>
             </Properties>
         </Item>

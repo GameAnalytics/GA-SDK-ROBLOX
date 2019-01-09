@@ -6,10 +6,10 @@ ROBLOX_GA_DIR = os.path.join(ROBLOX_DIR, "GameAnalyticsSDK")
 RBXMX_TMP_FILE = os.path.join(ROBLOX_DIR, "GameAnalyticsSDK.rbxmx.tmp")
 RBXMX_RELEASE_FILE = os.path.join(ROBLOX_DIR, "release", "GameAnalyticsSDK.rbxmx")
 
-GAMEANALYTICSSDK_BODY = 'GameAnalyticsSDK_BODY'
-GAMEANALYTICSSDK_FILE = os.path.join(ROBLOX_GA_DIR, "init.lua")
-GAMEANALYTICSSCRIPT_BODY = 'GameAnalyticsServer_BODY'
-GAMEANALYTICSSCRIPT_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalyticsServer.server.lua")
+GAMEANALYTICSSERVER_BODY = 'GameAnalyticsServer_BODY'
+GAMEANALYTICSSERVER_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalyticsServer.server.lua")
+GAMEANALYTICSSERVERINITUSINGSETTINGS_BODY = 'GameAnalyticsServerInitUsingSettings_BODY'
+GAMEANALYTICSSERVERINITUSINGSETTINGS_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalyticsServerInitUsingSettings.server.lua")
 INSTALL_BODY = 'INSTALL_BODY'
 INSTALL_FILE = os.path.join(ROBLOX_GA_DIR, "INSTALL.txt")
 GAMEANALYTICSCLIENT_BODY = 'GameAnalyticsClient_BODY'
@@ -63,14 +63,14 @@ def main():
         rbxmx_contents = rbxmx_tmp_file.read()
 
     file_contents = ""
-    with open(GAMEANALYTICSSDK_FILE, 'r') as file:
+    with open(GAMEANALYTICSSERVER_FILE, 'r') as file:
         file_contents = file.read()
-    rbxmx_contents = rbxmx_contents.replace(GAMEANALYTICSSDK_BODY, file_contents)
+    rbxmx_contents = rbxmx_contents.replace(GAMEANALYTICSSERVER_BODY, file_contents)
 
     file_contents = ""
-    with open(GAMEANALYTICSSCRIPT_FILE, 'r') as file:
+    with open(GAMEANALYTICSSERVERINITUSINGSETTINGS_FILE, 'r') as file:
         file_contents = file.read()
-    rbxmx_contents = rbxmx_contents.replace(GAMEANALYTICSSCRIPT_BODY, file_contents)
+    rbxmx_contents = rbxmx_contents.replace(GAMEANALYTICSSERVERINITUSINGSETTINGS_BODY, file_contents)
 
     file_contents = ""
     with open(INSTALL_FILE, 'r') as file:
