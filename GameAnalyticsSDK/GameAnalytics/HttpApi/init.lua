@@ -78,24 +78,19 @@ local function processRequestResponse(response, requestId)
 
     if statusCode == 200 then
         return http_api.EGAHTTPApiResponse.Ok
-    end
-
-    if statusCode == 0 or statusCode == 401 then
+    elseif statusCode == 0 or statusCode == 401 then
         logger:d(requestId .. " request. 401 - Unauthorized.")
         return http_api.EGAHTTPApiResponse.Unauthorized
-    end
-
-    if statusCode == 400 then
+    elseif statusCode == 400 then
         logger:d(requestId .. " request. 400 - Bad Request.")
         return http_api.EGAHTTPApiResponse.BadRequest
-    end
-
-    if statusCode == 500 then
+    elseif statusCode == 500 then
         logger:d(requestId .. " request. 500 - Internal Server Error.")
         return http_api.EGAHTTPApiResponse.InternalServerError
+    else
+        return http_api.EGAHTTPApiResponse.UnknownResponseCode
     end
-
-    return http_api.EGAHTTPApiResponse.UnknownResponseCode
+    
 end
 
 function http_api:initRequest(gameKey, secretKey, playerData, playerId)
