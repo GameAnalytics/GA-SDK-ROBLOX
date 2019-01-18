@@ -11,6 +11,9 @@ Documentation can be found [here](https://gameanalytics.com/docs/item/roblox-sdk
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.0**
+* added enable/disable event submission function
+
 **1.1.0**
 * moved settings related code in GameAnalyticsServer script into a new script called GameAnalyticsServerInitUsingSettings to allow manual initialization from own script (OPS look at new INSTALL instructions for new script)
 

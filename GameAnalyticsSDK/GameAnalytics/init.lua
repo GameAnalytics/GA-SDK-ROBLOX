@@ -154,6 +154,9 @@ end
 
 function ga:startNewSession(playerId)
     threading:performTaskOnGAThread(function()
+        if not state:isEventSubmissionEnabled() then
+            return
+        end
         if not state.Initialized then
             logger:w("Cannot start new session. SDK is not initialized yet.")
             return
@@ -165,12 +168,18 @@ end
 
 function ga:endSession(playerId)
     threading:performTaskOnGAThread(function()
+        if not state:isEventSubmissionEnabled() then
+            return
+        end
         state:endSession(playerId)
     end)
 end
 
 function ga:addBusinessEvent(playerId, options)
     threading:performTaskOnGAThread(function()
+        if not state:isEventSubmissionEnabled() then
+            return
+        end
         if not isSdkReady({playerId=playerId, needsInitialized=true, shouldWarn=true, message="Could not add business event"}) then
             return
         end
@@ -188,6 +197,9 @@ end
 
 function ga:addResourceEvent(playerId, options)
     threading:performTaskOnGAThread(function()
+        if not state:isEventSubmissionEnabled() then
+            return
+        end
         if not isSdkReady({playerId=playerId, needsInitialized=true, shouldWarn=true, message="Could not add resource event"}) then
             return
         end
@@ -205,6 +217,9 @@ end
 
 function ga:addProgressionEvent(playerId, options)
     threading:performTaskOnGAThread(function()
+        if not state:isEventSubmissionEnabled() then
+            return
+        end
         if not isSdkReady({playerId=playerId, needsInitialized=true, shouldWarn=true, message="Could not add progression event"}) then
             return
         end
@@ -222,6 +237,9 @@ end
 
 function ga:addDesignEvent(playerId, options)
     threading:performTaskOnGAThread(function()
+        if not state:isEventSubmissionEnabled() then
+            return
+        end
         if not isSdkReady({playerId=playerId, needsInitialized=true, shouldWarn=true, message="Could not add design event"}) then
             return
         end
@@ -236,6 +254,9 @@ end
 
 function ga:addErrorEvent(playerId, options)
     threading:performTaskOnGAThread(function()
+        if not state:isEventSubmissionEnabled() then
+            return
+        end
         if not isSdkReady({playerId=playerId, needsInitialized=true, shouldWarn=true, message="Could not add error event"}) then
             return
         end
@@ -268,6 +289,18 @@ function ga:setEnabledVerboseLog(flag)
         else
             logger:ii("Verbose logging disabled")
             logger:setVerboseLog(flag)
+        end
+    end)
+end
+
+function ga:setEnabledEventSubmission(flag)
+    threading:performTaskOnGAThread(function()
+        if flag then
+            state:setEventSubmission(flag)
+            logger:i("Event submission enabled")
+        else
+            logger:i("Event submission disabled")
+            state:setEventSubmission(flag)
         end
     end)
 end

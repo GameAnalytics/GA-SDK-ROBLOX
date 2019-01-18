@@ -7,6 +7,7 @@ local state = {
     _build = "",
     _gameKey = "",
     _secretKey = "",
+    _enableEventSubmission = true,
     Initialized = false
 }
 
@@ -158,6 +159,14 @@ function state:setBuild(build)
     logger:i("Set build version: " .. build)
 end
 
+function state:setEventSubmission(flag)
+    self._enableEventSubmission = flag
+end
+
+function state:isEventSubmissionEnabled()
+    return self._enableEventSubmission
+end
+
 function state:setCustomDimension01(playerId, dimension)
     local PlayerData = store.PlayerCache[playerId]
     PlayerData.CurrentCustomDimension01 = dimension
@@ -174,7 +183,9 @@ function state:setCustomDimension03(playerId, dimension)
 end
 
 function state:startNewSession(playerId)
-    logger:i("Starting a new session.")
+    if state:isEventSubmissionEnabled() then
+        logger:i("Starting a new session.")
+    end
     local PlayerData = store.PlayerCache[playerId]
 
     -- make sure the current custom dimensions are valid
@@ -227,11 +238,13 @@ function state:startNewSession(playerId)
     PlayerData.SessionID = HTTP:GenerateGUID(false):lower()
     PlayerData.SessionStart = getClientTsAdjusted(playerId)
 
-    events:addSessionStartEvent(playerId)
+    if state:isEventSubmissionEnabled() then
+        events:addSessionStartEvent(playerId)
+    end
 end
 
 function state:endSession(playerId)
-    if state.Initialized then
+    if state.Initialized and state:isEventSubmissionEnabled() then
         logger:i("Ending session.")
         if state:isEnabled(playerId) and state:sessionIsStarted(playerId) then
             events:addSessionEndEvent(playerId)
