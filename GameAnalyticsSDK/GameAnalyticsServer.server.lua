@@ -8,7 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 --Validate
-if script.Parent.ClassName ~= "ServerScriptService" then
+if not script:IsDescendantOf(game:GetService("ServerScriptService")) then
     error("GameAnalytics: Disabled server. GameAnalyticsServer has to be located in game.ServerScriptService.")
     return
 end
