@@ -11,6 +11,9 @@ Documentation can be found [here](https://gameanalytics.com/docs/item/roblox-sdk
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.1**
+* updated server scripts to just be descendants of ServerScriptService and not just direct child of ServerScriptService
+
 **1.2.0**
 * added enable/disable event submission function
 
