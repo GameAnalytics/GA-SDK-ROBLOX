@@ -7,7 +7,7 @@
 local ServerStorage = game:GetService("ServerStorage")
 
 --Validate
-if not script:IsDescendantOf(game.ServerScriptService) then
+if not script:IsDescendantOf(game:GetService("ServerScriptService")) then
     error("GameAnalytics: GameAnalyticsServerInitUsingSettings has to be located in game.ServerScriptService.")
     return
 end
