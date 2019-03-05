@@ -105,7 +105,7 @@ function state:setAvailableCustomDimensions01(availableCustomDimensions)
     end
 
     self._availableCustomDimensions01 = availableCustomDimensions
-
+    settings.AvailableCustomDimensions01 = availableCustomDimensions
     logger:i("Set available custom01 dimension values: (" .. table.concat(availableCustomDimensions, ", ") .. ")")
 end
 
@@ -115,7 +115,7 @@ function state:setAvailableCustomDimensions02(availableCustomDimensions)
     end
 
     self._availableCustomDimensions02 = availableCustomDimensions
-
+    settings.AvailableCustomDimensions02 = availableCustomDimensions
     logger:i("Set available custom02 dimension values: (" .. table.concat(availableCustomDimensions, ", ") .. ")")
 end
 
@@ -125,7 +125,7 @@ function state:setAvailableCustomDimensions03(availableCustomDimensions)
     end
 
     self._availableCustomDimensions03 = availableCustomDimensions
-
+    settings.AvailableCustomDimensions03 = availableCustomDimensions
     logger:i("Set available custom03 dimension values: (" .. table.concat(availableCustomDimensions, ", ") .. ")")
 end
 
@@ -135,6 +135,7 @@ function state:setAvailableResourceCurrencies(availableResourceCurrencies)
     end
 
     self._availableResourceCurrencies = availableResourceCurrencies
+    settings.AvailableResourceCurrencies = availableResourceCurrencies
 
     logger:i("Set available resource currencies: (" .. table.concat(availableResourceCurrencies, ", ") .. ")")
 end
@@ -145,6 +146,7 @@ function state:setAvailableResourceItemTypes(availableResourceItemTypes)
     end
 
     self._availableResourceItemTypes = availableResourceItemTypes
+    settings.AvailableResourceItemTypes = availableResourceItemTypes
 
     logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
 end
@@ -156,6 +158,7 @@ function state:setBuild(build)
     end
 
     self._build = build
+    settings.Build = build
     logger:i("Set build version: " .. build)
 end
 
