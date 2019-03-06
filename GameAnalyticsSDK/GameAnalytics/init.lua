@@ -313,6 +313,9 @@ function ga:setCustomDimension01(playerId, dimension)
             logger:w("Could not set custom01 dimension value to '" .. dimension .. "'. Value not found in available custom01 dimension values")
             return
         end
+        if not isSdkReady({playerId=playerId, needsInitialized=true, shouldWarn=true, message="Could not set custom01 dimension"}) then
+            return
+        end
 
         state:setCustomDimension01(playerId, dimension)
     end)
@@ -322,6 +325,9 @@ function ga:setCustomDimension02(playerId, dimension)
     threading:performTaskOnGAThread(function()
         if not validation:validateDimension(state._availableCustomDimensions02, dimension) then
             logger:w("Could not set custom02 dimension value to '" .. dimension .. "'. Value not found in available custom02 dimension values")
+            return
+        end
+        if not isSdkReady({playerId=playerId, needsInitialized=true, shouldWarn=true, message="Could not set custom02 dimension"}) then
             return
         end
 
@@ -335,7 +341,9 @@ function ga:setCustomDimension03(playerId, dimension)
             logger:w("Could not set custom03 dimension value to '" .. dimension .. "'. Value not found in available custom03 dimension values")
             return
         end
-
+        if not isSdkReady({playerId=playerId, needsInitialized=true, shouldWarn=true, message="Could not set custom03 dimension"}) then
+            return
+        end
         state:setCustomDimension03(playerId, dimension)
     end)
 end
@@ -367,6 +375,10 @@ function ga:getConfigurationsContentAsString(playerId)
 end
 
 function ga:PlayerJoined(Player)
+    if store.PlayerCache[Player.UserId] then
+        return
+    end
+
     --Variables
     local PlayerData = store:GetPlayerData(Player)
 
