@@ -146,9 +146,11 @@ function ga:initialize(options)
             return
         end
 
+        Settings.GameKey = gameKey
+        Settings.SecretKey = secretKey
+
         state.Initialized = true
         events:processEventQueue()
-
     end)
 end
 
