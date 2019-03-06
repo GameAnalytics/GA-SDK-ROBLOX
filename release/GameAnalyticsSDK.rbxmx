@@ -58,11 +58,13 @@ end
 local GameAnalytics = require(ServerStorage.GameAnalytics)
 local Settings = require(ServerStorage.GameAnalytics.Settings)
 local store = require(ServerStorage.GameAnalytics.Store)
+local state = require(ServerStorage.GameAnalytics.State)
 local LS = game:GetService("LogService")
 local MKT = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ProductCache = {}
 local ONE_HOUR_IN_SECONDS = 3600
+local MaxErrorsPerHour = 10
 local ErrorDS = {}
 local errorCountCache = {}
 local errorCountCacheKeys = {}
@@ -94,7 +96,7 @@ end)
 LS.MessageOut:Connect(function(message, messageType)
 
     --Validate
-    if not Settings.ReportErrors then
+    if not state.ReportErrors then
         return
     end
     if messageType ~= Enum.MessageType.MessageError then
@@ -119,7 +121,7 @@ LS.MessageOut:Connect(function(message, messageType)
     end
 
     -- don't report error if limit has been exceeded
-    if errorCountCache[key].currentCount > Settings.MaxErrorsPerHour then
+    if errorCountCache[key].currentCount > MaxErrorsPerHour then
         return
     end
 
@@ -137,7 +139,7 @@ end)
 MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
 
     --Validate
-    if not Settings.AutomaticSendBusinessEvents then
+    if not state.AutomaticSendBusinessEvents then
         return
     end
 
@@ -347,7 +349,6 @@ local state = require(script.State)
 local validation = require(script.Validation)
 local store = require(script.Store)
 local events = require(script.Events)
-local Settings = require(script.Settings)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local ProductCache = {}
@@ -429,7 +430,7 @@ function ga:configureAvailableResourceCurrencies(resourceCurrencies)
             return
         end
 
-        state:setAvailableResourceCurrencies(resourceCurrencies)
+        events:setAvailableResourceCurrencies(resourceCurrencies)
     end)
 end
 
@@ -440,7 +441,7 @@ function ga:configureAvailableResourceItemTypes(resourceItemTypes)
             return
         end
 
-        state:setAvailableResourceItemTypes(resourceItemTypes)
+        events:setAvailableResourceItemTypes(resourceItemTypes)
     end)
 end
 
@@ -451,7 +452,7 @@ function ga:configureBuild(build)
             return
         end
 
-        state:setBuild(build)
+        events:setBuild(build)
     end)
 end
 
@@ -469,6 +470,9 @@ function ga:initialize(options)
             logger:w("SDK failed initialize. Game key or secret key is invalid. Can only contain characters A-z 0-9, gameKey is 32 length, secretKey is 40 length. Failed keys - gameKey: " .. gameKey .. ", secretKey: " .. secretKey)
             return
         end
+
+        events.GameKey = gameKey
+        events.SecretKey = secretKey
 
         state.Initialized = true
         events:processEventQueue()
@@ -664,13 +668,13 @@ end
 
 function ga:setEnabledReportErrors(flag)
     threading:performTaskOnGAThread(function()
-        Settings.ReportErrors = flag
+        state.ReportErrors = flag
     end)
 end
 
 function ga:setEnabledAutomaticSendBusinessEvents(flag)
     threading:performTaskOnGAThread(function()
-        Settings.AutomaticSendBusinessEvents = flag
+        state.AutomaticSendBusinessEvents = flag
     end)
 end
 
@@ -766,7 +770,6 @@ return ga
     EnableVerboseLog = false,
     AutomaticSendBusinessEvents = true,
     ReportErrors = true,
-    MaxErrorsPerHour = 10,
     Build = "0.1",
     AvailableCustomDimensions01 = {},
     AvailableCustomDimensions02 = {},
@@ -2572,14 +2575,18 @@ return store
                     <string name="Name">Events</string>
                     <string name="ScriptGuid"></string>
                     <ProtectedString name="Source"><![CDATA[local events = {
-    ProcessEventsInterval = 8
+    ProcessEventsInterval = 8,
+    GameKey = "",
+    SecretKey = "",
+    _build = "",
+    _availableResourceCurrencies = {},
+    _availableResourceItemTypes = {},
 }
 
 local store = require(script.Parent.Store)
 local logger = require(script.Parent.Logger)
 local version = require(script.Parent.Version)
 local validation = require(script.Parent.Validation)
-local settings = require(script.Parent.Settings)
 local threading = require(script.Parent.Threading)
 local http_api = require(script.Parent.HttpApi)
 local utilities = require(script.Parent.Utilities)
@@ -2671,8 +2678,8 @@ local function getEventAnnotations(playerId)
         ["session_num"] = PlayerData.Sessions
     }
 
-    if validation:validateBuild(settings.Build) then
-        annotations["build"] = settings.Build
+    if validation:validateBuild(events._build) then
+        annotations["build"] = events._build
     end
 
     return annotations
@@ -2718,7 +2725,7 @@ local function processEvents()
     -- Log
     logger:i("Event queue: Sending " .. tostring(#queue) .. " events.")
 
-    local eventsResult = http_api:sendEventsInArray(settings.GameKey, settings.SecretKey, queue)
+    local eventsResult = http_api:sendEventsInArray(events.GameKey, events.SecretKey, queue)
     local statusCode = eventsResult.statusCode
     local responseBody = eventsResult.body
 
@@ -2787,6 +2794,36 @@ function events:processEventQueue()
     threading:scheduleTimer(events.ProcessEventsInterval, function()
         events:processEventQueue()
     end)
+end
+
+function events:setBuild(build)
+    if not validation:validateBuild(build) then
+        logger:w("Validation fail - configure build: Cannot be null, empty or above 32 length. String: " .. build)
+        return
+    end
+
+    self._build = build
+    logger:i("Set build version: " .. build)
+end
+
+function events:setAvailableResourceCurrencies(availableResourceCurrencies)
+    if not validation:validateResourceCurrencies(availableResourceCurrencies) then
+        return
+    end
+
+    self._availableResourceCurrencies = availableResourceCurrencies
+
+    logger:i("Set available resource currencies: (" .. table.concat(availableResourceCurrencies, ", ") .. ")")
+end
+
+function events:setAvailableResourceItemTypes(availableResourceItemTypes)
+    if not validation:validateResourceCurrencies(availableResourceItemTypes) then
+        return
+    end
+
+    self._availableResourceItemTypes = availableResourceItemTypes
+
+    logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
 end
 
 function events:addSessionStartEvent(playerId)
@@ -2877,7 +2914,7 @@ end
 
 function events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId)
     -- Validate event params
-    if not validation:validateResourceEvent(flowType, currency, amount, itemType, itemId, settings.AvailableResourceCurrencies, settings.AvailableResourceItemTypes) then
+    if not validation:validateResourceEvent(flowType, currency, amount, itemType, itemId, self._availableResourceCurrencies, self._availableResourceItemTypes) then
         -- TODO: add sdk error event
         return
     end
@@ -3064,7 +3101,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.2.1"
+    SdkVersion = "1.2.2"
 }
 
 return version
@@ -3081,20 +3118,16 @@ return version
     _availableCustomDimensions01 = {},
     _availableCustomDimensions02 = {},
     _availableCustomDimensions03 = {},
-    _availableResourceCurrencies = {},
-    _availableResourceItemTypes = {},
-    _build = "",
-    _gameKey = "",
-    _secretKey = "",
     _enableEventSubmission = true,
-    Initialized = false
+    Initialized = false,
+    ReportErrors = true,
+    AutomaticSendBusinessEvents = true
 }
 
 local validation = require(script.Parent.Validation)
 local logger = require(script.Parent.Logger)
 local http_api = require(script.Parent.HttpApi)
 local store = require(script.Parent.Store)
-local settings = require(script.Parent.Settings)
 local events = require(script.Parent.Events)
 local HTTP = game:GetService("HttpService")
 local GameAnalyticsCommandCenter
@@ -3208,36 +3241,6 @@ function state:setAvailableCustomDimensions03(availableCustomDimensions)
     logger:i("Set available custom03 dimension values: (" .. table.concat(availableCustomDimensions, ", ") .. ")")
 end
 
-function state:setAvailableResourceCurrencies(availableResourceCurrencies)
-    if not validation:validateResourceCurrencies(availableResourceCurrencies) then
-        return
-    end
-
-    self._availableResourceCurrencies = availableResourceCurrencies
-
-    logger:i("Set available resource currencies: (" .. table.concat(availableResourceCurrencies, ", ") .. ")")
-end
-
-function state:setAvailableResourceItemTypes(availableResourceItemTypes)
-    if not validation:validateResourceCurrencies(availableResourceItemTypes) then
-        return
-    end
-
-    self._availableResourceItemTypes = availableResourceItemTypes
-
-    logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
-end
-
-function state:setBuild(build)
-    if not validation:validateBuild(build) then
-        logger:w("Validation fail - configure build: Cannot be null, empty or above 32 length. String: " .. build)
-        return
-    end
-
-    self._build = build
-    logger:i("Set build version: " .. build)
-end
-
 function state:setEventSubmission(flag)
     self._enableEventSubmission = flag
 end
@@ -3270,7 +3273,7 @@ function state:startNewSession(playerId)
     -- make sure the current custom dimensions are valid
     state:validateAndFixCurrentDimensions(playerId)
 
-    local initResult = http_api:initRequest(settings.GameKey, settings.SecretKey, PlayerData, playerId)
+    local initResult = http_api:initRequest(events.GameKey, events.SecretKey, PlayerData, playerId)
     local statusCode = initResult.statusCode
     local responseBody = initResult.body
 

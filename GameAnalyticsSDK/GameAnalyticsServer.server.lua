@@ -39,11 +39,13 @@ end
 local GameAnalytics = require(ServerStorage.GameAnalytics)
 local Settings = require(ServerStorage.GameAnalytics.Settings)
 local store = require(ServerStorage.GameAnalytics.Store)
+local state = require(ServerStorage.GameAnalytics.State)
 local LS = game:GetService("LogService")
 local MKT = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ProductCache = {}
 local ONE_HOUR_IN_SECONDS = 3600
+local MaxErrorsPerHour = 10
 local ErrorDS = {}
 local errorCountCache = {}
 local errorCountCacheKeys = {}
@@ -75,7 +77,7 @@ end)
 LS.MessageOut:Connect(function(message, messageType)
 
     --Validate
-    if not Settings.ReportErrors then
+    if not state.ReportErrors then
         return
     end
     if messageType ~= Enum.MessageType.MessageError then
@@ -100,7 +102,7 @@ LS.MessageOut:Connect(function(message, messageType)
     end
 
     -- don't report error if limit has been exceeded
-    if errorCountCache[key].currentCount > Settings.MaxErrorsPerHour then
+    if errorCountCache[key].currentCount > MaxErrorsPerHour then
         return
     end
 
@@ -118,7 +120,7 @@ end)
 MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
 
     --Validate
-    if not Settings.AutomaticSendBusinessEvents then
+    if not state.AutomaticSendBusinessEvents then
         return
     end
 

@@ -2,20 +2,16 @@ local state = {
     _availableCustomDimensions01 = {},
     _availableCustomDimensions02 = {},
     _availableCustomDimensions03 = {},
-    _availableResourceCurrencies = {},
-    _availableResourceItemTypes = {},
-    _build = "",
-    _gameKey = "",
-    _secretKey = "",
     _enableEventSubmission = true,
-    Initialized = false
+    Initialized = false,
+    ReportErrors = true,
+    AutomaticSendBusinessEvents = true
 }
 
 local validation = require(script.Parent.Validation)
 local logger = require(script.Parent.Logger)
 local http_api = require(script.Parent.HttpApi)
 local store = require(script.Parent.Store)
-local settings = require(script.Parent.Settings)
 local events = require(script.Parent.Events)
 local HTTP = game:GetService("HttpService")
 local GameAnalyticsCommandCenter
@@ -129,36 +125,6 @@ function state:setAvailableCustomDimensions03(availableCustomDimensions)
     logger:i("Set available custom03 dimension values: (" .. table.concat(availableCustomDimensions, ", ") .. ")")
 end
 
-function state:setAvailableResourceCurrencies(availableResourceCurrencies)
-    if not validation:validateResourceCurrencies(availableResourceCurrencies) then
-        return
-    end
-
-    self._availableResourceCurrencies = availableResourceCurrencies
-
-    logger:i("Set available resource currencies: (" .. table.concat(availableResourceCurrencies, ", ") .. ")")
-end
-
-function state:setAvailableResourceItemTypes(availableResourceItemTypes)
-    if not validation:validateResourceCurrencies(availableResourceItemTypes) then
-        return
-    end
-
-    self._availableResourceItemTypes = availableResourceItemTypes
-
-    logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
-end
-
-function state:setBuild(build)
-    if not validation:validateBuild(build) then
-        logger:w("Validation fail - configure build: Cannot be null, empty or above 32 length. String: " .. build)
-        return
-    end
-
-    self._build = build
-    logger:i("Set build version: " .. build)
-end
-
 function state:setEventSubmission(flag)
     self._enableEventSubmission = flag
 end
@@ -191,7 +157,7 @@ function state:startNewSession(playerId)
     -- make sure the current custom dimensions are valid
     state:validateAndFixCurrentDimensions(playerId)
 
-    local initResult = http_api:initRequest(settings.GameKey, settings.SecretKey, PlayerData, playerId)
+    local initResult = http_api:initRequest(events.GameKey, events.SecretKey, PlayerData, playerId)
     local statusCode = initResult.statusCode
     local responseBody = initResult.body
 

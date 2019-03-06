@@ -177,11 +177,9 @@ stds.roblox = {
                 UnjoinFromOutsiders = read_write;
                 ZoomToExtents = read_write;
                 PrimaryPart = read_write_class;
-                BreakJoints = read_write;
                 GetBoundingBox = read_write;
                 GetExtentsSize = read_write;
                 GetPrimaryPartCFrame = read_write;
-                MakeJoints = read_write;
                 MoveTo = read_write;
                 SetPrimaryPartCFrame = read_write;
                 TranslateBy = read_write;
@@ -664,25 +662,25 @@ stds.roblox = {
 }
 
 stds.testez = {
-	read_globals = {
-		"describe",
-		"it", "itFOCUS", "itSKIP",
-		"FOCUS", "SKIP", "HACK_NO_XPCALL",
-		"expect",
-	}
+    read_globals = {
+        "describe",
+        "it", "itFOCUS", "itSKIP",
+        "FOCUS", "SKIP", "HACK_NO_XPCALL",
+        "expect",
+    }
 }
 
 stds.plugin = {
-	read_globals = {
-		"plugin",
-		"DebuggerManager",
-	}
+    read_globals = {
+        "plugin",
+        "DebuggerManager",
+    }
 }
 
-ignore = {}
+ignore = {"631"}
 
 std = "lua51+roblox"
 
 files["**/*.spec.lua"] = {
-	std = "+testez",
+    std = "+testez",
 }

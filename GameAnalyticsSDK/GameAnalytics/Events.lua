@@ -1,12 +1,16 @@
 local events = {
-    ProcessEventsInterval = 8
+    ProcessEventsInterval = 8,
+    GameKey = "",
+    SecretKey = "",
+    _build = "",
+    _availableResourceCurrencies = {},
+    _availableResourceItemTypes = {},
 }
 
 local store = require(script.Parent.Store)
 local logger = require(script.Parent.Logger)
 local version = require(script.Parent.Version)
 local validation = require(script.Parent.Validation)
-local settings = require(script.Parent.Settings)
 local threading = require(script.Parent.Threading)
 local http_api = require(script.Parent.HttpApi)
 local utilities = require(script.Parent.Utilities)
@@ -98,8 +102,8 @@ local function getEventAnnotations(playerId)
         ["session_num"] = PlayerData.Sessions
     }
 
-    if validation:validateBuild(settings.Build) then
-        annotations["build"] = settings.Build
+    if validation:validateBuild(events._build) then
+        annotations["build"] = events._build
     end
 
     return annotations
@@ -145,7 +149,7 @@ local function processEvents()
     -- Log
     logger:i("Event queue: Sending " .. tostring(#queue) .. " events.")
 
-    local eventsResult = http_api:sendEventsInArray(settings.GameKey, settings.SecretKey, queue)
+    local eventsResult = http_api:sendEventsInArray(events.GameKey, events.SecretKey, queue)
     local statusCode = eventsResult.statusCode
     local responseBody = eventsResult.body
 
@@ -214,6 +218,36 @@ function events:processEventQueue()
     threading:scheduleTimer(events.ProcessEventsInterval, function()
         events:processEventQueue()
     end)
+end
+
+function events:setBuild(build)
+    if not validation:validateBuild(build) then
+        logger:w("Validation fail - configure build: Cannot be null, empty or above 32 length. String: " .. build)
+        return
+    end
+
+    self._build = build
+    logger:i("Set build version: " .. build)
+end
+
+function events:setAvailableResourceCurrencies(availableResourceCurrencies)
+    if not validation:validateResourceCurrencies(availableResourceCurrencies) then
+        return
+    end
+
+    self._availableResourceCurrencies = availableResourceCurrencies
+
+    logger:i("Set available resource currencies: (" .. table.concat(availableResourceCurrencies, ", ") .. ")")
+end
+
+function events:setAvailableResourceItemTypes(availableResourceItemTypes)
+    if not validation:validateResourceCurrencies(availableResourceItemTypes) then
+        return
+    end
+
+    self._availableResourceItemTypes = availableResourceItemTypes
+
+    logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
 end
 
 function events:addSessionStartEvent(playerId)
@@ -304,7 +338,7 @@ end
 
 function events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId)
     -- Validate event params
-    if not validation:validateResourceEvent(flowType, currency, amount, itemType, itemId, settings.AvailableResourceCurrencies, settings.AvailableResourceItemTypes) then
+    if not validation:validateResourceEvent(flowType, currency, amount, itemType, itemId, self._availableResourceCurrencies, self._availableResourceItemTypes) then
         -- TODO: add sdk error event
         return
     end

@@ -23,7 +23,6 @@ local state = require(script.State)
 local validation = require(script.Validation)
 local store = require(script.Store)
 local events = require(script.Events)
-local Settings = require(script.Settings)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local ProductCache = {}
@@ -105,7 +104,7 @@ function ga:configureAvailableResourceCurrencies(resourceCurrencies)
             return
         end
 
-        state:setAvailableResourceCurrencies(resourceCurrencies)
+        events:setAvailableResourceCurrencies(resourceCurrencies)
     end)
 end
 
@@ -116,7 +115,7 @@ function ga:configureAvailableResourceItemTypes(resourceItemTypes)
             return
         end
 
-        state:setAvailableResourceItemTypes(resourceItemTypes)
+        events:setAvailableResourceItemTypes(resourceItemTypes)
     end)
 end
 
@@ -127,7 +126,7 @@ function ga:configureBuild(build)
             return
         end
 
-        state:setBuild(build)
+        events:setBuild(build)
     end)
 end
 
@@ -145,6 +144,9 @@ function ga:initialize(options)
             logger:w("SDK failed initialize. Game key or secret key is invalid. Can only contain characters A-z 0-9, gameKey is 32 length, secretKey is 40 length. Failed keys - gameKey: " .. gameKey .. ", secretKey: " .. secretKey)
             return
         end
+
+        events.GameKey = gameKey
+        events.SecretKey = secretKey
 
         state.Initialized = true
         events:processEventQueue()
@@ -340,13 +342,13 @@ end
 
 function ga:setEnabledReportErrors(flag)
     threading:performTaskOnGAThread(function()
-        Settings.ReportErrors = flag
+        state.ReportErrors = flag
     end)
 end
 
 function ga:setEnabledAutomaticSendBusinessEvents(flag)
     threading:performTaskOnGAThread(function()
-        Settings.AutomaticSendBusinessEvents = flag
+        state.AutomaticSendBusinessEvents = flag
     end)
 end
 

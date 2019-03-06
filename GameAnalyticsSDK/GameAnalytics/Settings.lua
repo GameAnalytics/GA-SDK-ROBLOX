@@ -3,7 +3,6 @@ local settings = {
     EnableVerboseLog = false,
     AutomaticSendBusinessEvents = true,
     ReportErrors = true,
-    MaxErrorsPerHour = 10,
     Build = "0.1",
     AvailableCustomDimensions01 = {},
     AvailableCustomDimensions02 = {},

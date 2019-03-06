@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.2**
+* bug fixes to manual configuration and initialization of sdk
+
 **1.2.1**
 * updated server scripts to just be descendants of ServerScriptService and not just direct child of ServerScriptService
 
