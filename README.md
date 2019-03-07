@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.3**
+* various bug fixes
+
 **1.2.2**
 * bug fixes to manual configuration and initialization of sdk
 
