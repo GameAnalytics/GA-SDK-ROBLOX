@@ -214,6 +214,7 @@ function state:endSession(playerId)
         logger:i("Ending session.")
         if state:isEnabled(playerId) and state:sessionIsStarted(playerId) then
             events:addSessionEndEvent(playerId)
+            store.PlayerCache[playerId] = nil
         end
     end
 end
