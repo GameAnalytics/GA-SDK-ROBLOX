@@ -61,6 +61,8 @@ local function getClientTsAdjusted(playerId)
     end
 end
 
+local DUMMY_SESSION_ID = HTTP:GenerateGUID(false):lower()
+
 local function getEventAnnotations(playerId)
     local PlayerData
     local id
@@ -73,7 +75,7 @@ local function getEventAnnotations(playerId)
         PlayerData = {
             OS = "uwp_desktop 0.0.0",
             Platform = "uwp_desktop",
-            SessionID = 1,
+            SessionID = DUMMY_SESSION_ID,
             Sessions = 1
         }
     end
