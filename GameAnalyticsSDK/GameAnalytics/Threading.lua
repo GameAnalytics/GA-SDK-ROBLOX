@@ -82,10 +82,23 @@ function threading:scheduleTimer(interval, callback)
         deadline = tick() + interval,
         seqNum = self._nextSeqNum
     }
-
     self._nextSeqNum = self._nextSeqNum + 1
-    self._blocks[#self._blocks + 1] = timedBlock
-    table.sort(self._blocks, compare)
+
+    if #self._blocks > 0 then
+        for i = #self._blocks, 1, -1
+        do
+            if not compare(timedBlock, self._blocks[i]) then
+                table.insert(self._blocks, i + 1, timedBlock)
+                break
+            end
+
+            if i == 1 then
+                table.insert(self._blocks, i, timedBlock)
+            end
+        end
+    else
+        self._blocks[#self._blocks + 1] = timedBlock
+    end
 end
 
 function threading:performTaskOnGAThread(callback)
@@ -103,10 +116,23 @@ function threading:performTaskOnGAThread(callback)
         deadline = tick(),
         seqNum = self._nextSeqNum
     }
-
     self._nextSeqNum = self._nextSeqNum + 1
-    self._blocks[#self._blocks + 1] = timedBlock
-    table.sort(self._blocks, compare)
+
+    if #self._blocks > 0 then
+        for i = #self._blocks, 1, -1
+        do
+            if not compare(timedBlock, self._blocks[i]) then
+                table.insert(self._blocks, i + 1, timedBlock)
+                break
+            end
+
+            if i == 1 then
+                table.insert(self._blocks, i, timedBlock)
+            end
+        end
+    else
+        self._blocks[#self._blocks + 1] = timedBlock
+    end
 end
 
 function threading:stopThread()

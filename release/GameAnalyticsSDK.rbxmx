@@ -56,7 +56,6 @@ end
 
 --Modules
 local GameAnalytics = require(ServerStorage.GameAnalytics)
-local Settings = require(ServerStorage.GameAnalytics.Settings)
 local store = require(ServerStorage.GameAnalytics.Store)
 local state = require(ServerStorage.GameAnalytics.State)
 local LS = game:GetService("LogService")
@@ -351,6 +350,7 @@ local store = require(script.Store)
 local events = require(script.Events)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
 local ProductCache = {}
 
 local GameAnalyticsFiltering
@@ -594,6 +594,22 @@ function ga:addErrorEvent(playerId, options)
         local message = options["message"] or ""
 
         events:addErrorEvent(playerId, severity, message)
+    end)
+end
+
+function ga:setEnabledDebugLog(flag)
+    threading:performTaskOnGAThread(function()
+        if RunService:IsStudio() then
+            if flag then
+                logger:setDebugLog(flag)
+                logger:i("Debug logging enabled")
+            else
+                logger:i("Debug logging disabled")
+                logger:setDebugLog(flag)
+            end
+        else
+            logger:i("setEnabledDebugLog can only be used in studio")
+        end
     end)
 end
 
@@ -2386,6 +2402,10 @@ local logger = {
     _debugEnabled = RunService:IsStudio()
 }
 
+function logger:setDebugLog(enabled)
+    self._debugEnabled = enabled
+end
+
 function logger:setInfoLog(enabled)
     self._infoLogEnabled = enabled
 end
@@ -3115,7 +3135,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.2.3"
+    SdkVersion = "1.2.4"
 }
 
 return version
@@ -3902,10 +3922,23 @@ function threading:scheduleTimer(interval, callback)
         deadline = tick() + interval,
         seqNum = self._nextSeqNum
     }
-
     self._nextSeqNum = self._nextSeqNum + 1
-    self._blocks[#self._blocks + 1] = timedBlock
-    table.sort(self._blocks, compare)
+
+    if #self._blocks > 0 then
+        for i = #self._blocks, 1, -1
+        do
+            if not compare(timedBlock, self._blocks[i]) then
+                table.insert(self._blocks, i + 1, timedBlock)
+                break
+            end
+
+            if i == 1 then
+                table.insert(self._blocks, i, timedBlock)
+            end
+        end
+    else
+        self._blocks[#self._blocks + 1] = timedBlock
+    end
 end
 
 function threading:performTaskOnGAThread(callback)
@@ -3923,10 +3956,23 @@ function threading:performTaskOnGAThread(callback)
         deadline = tick(),
         seqNum = self._nextSeqNum
     }
-
     self._nextSeqNum = self._nextSeqNum + 1
-    self._blocks[#self._blocks + 1] = timedBlock
-    table.sort(self._blocks, compare)
+
+    if #self._blocks > 0 then
+        for i = #self._blocks, 1, -1
+        do
+            if not compare(timedBlock, self._blocks[i]) then
+                table.insert(self._blocks, i + 1, timedBlock)
+                break
+            end
+
+            if i == 1 then
+                table.insert(self._blocks, i, timedBlock)
+            end
+        end
+    else
+        self._blocks[#self._blocks + 1] = timedBlock
+    end
 end
 
 function threading:stopThread()

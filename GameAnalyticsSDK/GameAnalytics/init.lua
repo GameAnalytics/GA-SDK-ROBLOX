@@ -25,6 +25,7 @@ local store = require(script.Store)
 local events = require(script.Events)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
 local ProductCache = {}
 
 local GameAnalyticsFiltering
@@ -268,6 +269,22 @@ function ga:addErrorEvent(playerId, options)
         local message = options["message"] or ""
 
         events:addErrorEvent(playerId, severity, message)
+    end)
+end
+
+function ga:setEnabledDebugLog(flag)
+    threading:performTaskOnGAThread(function()
+        if RunService:IsStudio() then
+            if flag then
+                logger:setDebugLog(flag)
+                logger:i("Debug logging enabled")
+            else
+                logger:i("Debug logging disabled")
+                logger:setDebugLog(flag)
+            end
+        else
+            logger:i("setEnabledDebugLog can only be used in studio")
+        end
     end)
 end
 

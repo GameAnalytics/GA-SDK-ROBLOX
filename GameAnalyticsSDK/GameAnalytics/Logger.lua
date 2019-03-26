@@ -7,6 +7,10 @@ local logger = {
     _debugEnabled = RunService:IsStudio()
 }
 
+function logger:setDebugLog(enabled)
+    self._debugEnabled = enabled
+end
+
 function logger:setInfoLog(enabled)
     self._infoLogEnabled = enabled
 end

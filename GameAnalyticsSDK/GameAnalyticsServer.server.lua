@@ -37,7 +37,6 @@ end
 
 --Modules
 local GameAnalytics = require(ServerStorage.GameAnalytics)
-local Settings = require(ServerStorage.GameAnalytics.Settings)
 local store = require(ServerStorage.GameAnalytics.Store)
 local state = require(ServerStorage.GameAnalytics.State)
 local LS = game:GetService("LogService")

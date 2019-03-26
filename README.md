@@ -13,6 +13,10 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.4**
+* added toggle function for debug logging in studio mode
+* threading performance fix
+
 **1.2.3**
 * various bug fixes
 
