@@ -33,9 +33,12 @@ local function run()
 
         while not threading._endThread do
             threading._canSafelyClose = false
+
             local timedBlock = getNextBlock()
             while timedBlock ~= nil do
-                timedBlock.block()
+                pcall(function()
+                    timedBlock.block()
+                end)
                 timedBlock = getNextBlock()
             end
 
