@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.8**
+* added missing files to rbxmx
+
 **1.2.7**
 * performance to enum lookups
 

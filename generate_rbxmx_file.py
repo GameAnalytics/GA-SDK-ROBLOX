@@ -54,6 +54,12 @@ VALIDATION_BODY = 'Validation_BODY'
 VALIDATION_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalytics", "Validation.lua")
 THREADING_BODY = 'Threading_BODY'
 THREADING_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalytics", "Threading.lua")
+GAERRORSEVERITY_BODY = 'GAErrorSeverity_BODY'
+GAERRORSEVERITY_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalytics", "GAErrorSeverity.lua")
+GAPROGRESSIONSTATUS_BODY = 'GAProgressionStatus_BODY'
+GAPROGRESSIONSTATUS_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalytics", "GAProgressionStatus.lua")
+GARESOURCEFLOWTYPE_BODY = 'GAResourceFlowType_BODY'
+GARESOURCEFLOWTYPE_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalytics", "GAResourceFlowType.lua")
 
 
 def main():
@@ -181,6 +187,21 @@ def main():
     with open(THREADING_FILE, 'r') as file:
         file_contents = file.read()
     rbxmx_contents = rbxmx_contents.replace(THREADING_BODY, file_contents)
+
+    file_contents = ""
+    with open(GAERRORSEVERITY_FILE, 'r') as file:
+        file_contents = file.read()
+    rbxmx_contents = rbxmx_contents.replace(GAERRORSEVERITY_BODY, file_contents)
+
+    file_contents = ""
+    with open(GAPROGRESSIONSTATUS_FILE, 'r') as file:
+        file_contents = file.read()
+    rbxmx_contents = rbxmx_contents.replace(GAPROGRESSIONSTATUS_BODY, file_contents)
+
+    file_contents = ""
+    with open(GARESOURCEFLOWTYPE_FILE, 'r') as file:
+        file_contents = file.read()
+    rbxmx_contents = rbxmx_contents.replace(GARESOURCEFLOWTYPE_BODY, file_contents)
 
     f = open(RBXMX_RELEASE_FILE, "w")
     f.write(rbxmx_contents)

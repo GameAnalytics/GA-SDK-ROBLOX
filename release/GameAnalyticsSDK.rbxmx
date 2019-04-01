@@ -3118,7 +3118,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.2.7"
+    SdkVersion = "1.2.8"
 }
 
 return version
@@ -3939,6 +3939,55 @@ function threading:stopThread()
 end
 
 return threading
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX99cd668c174048349f2ece6db3c8afd4">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">GAErrorSeverity</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local Table = require("Table")
+
+return Table.ReadOnly({
+    Debug = "Debug";
+    Info = "Info";
+    Warning = "Warning";
+    Error = "Error";
+    Critical = "Critical";
+})
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX9a762c40155746f09057ee57f778235c">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">GAProgressionStatus</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local Table = require("Table")
+
+return Table.ReadOnly({
+    Start = "Start";
+    Complete = "Complete";
+    Fail = "Fail";
+})
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBXeaa8109bf36e45c987ef4664347edc33">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">GAResourceFlowType</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local Table = require("Table")
+
+return Table.ReadOnly({
+    Source = "Source";
+    Sink = "Sink";
+})
 ]]></ProtectedString>
                     <BinaryString name="Tags"></BinaryString>
                 </Properties>
