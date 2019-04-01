@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.6**
+* added limit to how many events there can max be in the events queue
+
 **1.2.5**
 * added better error handling for thread task execution
 

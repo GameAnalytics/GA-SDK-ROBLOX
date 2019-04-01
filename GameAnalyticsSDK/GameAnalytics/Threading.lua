@@ -2,27 +2,22 @@ local threading = {
     _canSafelyClose = true,
     _endThread = false,
     _isRunning = false,
-    _nextSeqNum = 0,
-    _blocks = {}
+    _blocks = {},
+    _scheduledBlock = nil,
+    _hasScheduledBlockRun = true
 }
 
 local logger = require(script.Parent.Logger)
 local RunService = game:GetService("RunService")
 
-local function getNextBlock()
+local function getScheduledBlock()
     local now = tick()
-    if #threading._blocks ~= 0 and threading._blocks[1].deadline <= now then
-        return table.remove(threading._blocks, 1)
+
+    if not threading._hasScheduledBlockRun and threading._scheduledBlock ~= nil and threading._scheduledBlock.deadline <= now then
+        threading._hasScheduledBlockRun = true
+        return threading._scheduledBlock
     else
         return nil
-    end
-end
-
-local function compare(a, b)
-    if a.deadline == b.deadline then
-        return a.seqNum < b.seqNum
-    else
-        return a.deadline < b.deadline
     end
 end
 
@@ -34,12 +29,20 @@ local function run()
         while not threading._endThread do
             threading._canSafelyClose = false
 
-            local timedBlock = getNextBlock()
-            while timedBlock ~= nil do
+            if #threading._blocks ~= 0 then
+                for _,b in pairs(threading._blocks) do
+                    pcall(function()
+                        b.block()
+                    end)
+                end
+                threading._blocks = {}
+            end
+
+            local timedBlock = getScheduledBlock()
+            if timedBlock ~= nil then
                 pcall(function()
                     timedBlock.block()
                 end)
-                timedBlock = getNextBlock()
             end
 
             threading._canSafelyClose = true
@@ -82,25 +85,12 @@ function threading:scheduleTimer(interval, callback)
 
     local timedBlock = {
         block = callback,
-        deadline = tick() + interval,
-        seqNum = self._nextSeqNum
+        deadline = tick() + interval
     }
-    self._nextSeqNum = self._nextSeqNum + 1
 
-    if #self._blocks > 0 then
-        for i = #self._blocks, 1, -1
-        do
-            if not compare(timedBlock, self._blocks[i]) then
-                table.insert(self._blocks, i + 1, timedBlock)
-                break
-            end
-
-            if i == 1 then
-                table.insert(self._blocks, i, timedBlock)
-            end
-        end
-    else
-        self._blocks[#self._blocks + 1] = timedBlock
+    if self._hasScheduledBlockRun then
+        self._scheduledBlock = timedBlock
+        self._hasScheduledBlockRun = false
     end
 end
 
@@ -116,26 +106,9 @@ function threading:performTaskOnGAThread(callback)
 
     local timedBlock = {
         block = callback,
-        deadline = tick(),
-        seqNum = self._nextSeqNum
     }
-    self._nextSeqNum = self._nextSeqNum + 1
 
-    if #self._blocks > 0 then
-        for i = #self._blocks, 1, -1
-        do
-            if not compare(timedBlock, self._blocks[i]) then
-                table.insert(self._blocks, i + 1, timedBlock)
-                break
-            end
-
-            if i == 1 then
-                table.insert(self._blocks, i, timedBlock)
-            end
-        end
-    else
-        self._blocks[#self._blocks + 1] = timedBlock
-    end
+    self._blocks[#self._blocks + 1] = timedBlock
 end
 
 function threading:stopThread()

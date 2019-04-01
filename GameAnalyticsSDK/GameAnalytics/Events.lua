@@ -23,6 +23,8 @@ local CategoryResource = "resource"
 local CategoryProgression = "progression"
 local CategoryDesign = "design"
 local CategoryError = "error"
+local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
+local MAX_AGGREGATED_EVENTS = 2000
 
 local function addDimensionsToEvent(playerId, eventData)
     if not eventData then
@@ -127,21 +129,44 @@ local function addEventToStore(playerId, eventData)
     logger:ii("Event added to queue: " .. json)
 
     -- Add to store
-    table.insert(store.EventsQueue, ev)
+    store.EventsQueue[#store.EventsQueue + 1] = ev
 end
 
---Misc Functions
-local function cloneTable(t)
-    local c = {}
-    for i,v in pairs(t) do
-        c[i] = typeof(v) == "table" and cloneTable(v) or v
+local function dequeueMaxEvents()
+    if #store.EventsQueue <= MAX_EVENTS_TO_SEND_IN_ONE_BATCH then
+        local eventsQueue = store.EventsQueue
+        store.EventsQueue = {}
+        return eventsQueue
+    else
+        logger:w(("More than %d events queued! Sending %d."):format(MAX_EVENTS_TO_SEND_IN_ONE_BATCH, MAX_EVENTS_TO_SEND_IN_ONE_BATCH))
+
+        if #self.EventsQueue > MAX_AGGREGATED_EVENTS then
+            logger:w(("DROPPING EVENTS: More than %d events queued!"):format(MAX_AGGREGATED_EVENTS))
+        end
+
+        -- Expensive operation to get ordered events cleared out (O(n))
+        local eventsQueue = {}
+        for i=1, MAX_EVENTS_TO_SEND_IN_ONE_BATCH do
+            eventsQueue[i] = store.EventsQueue[i]
+        end
+
+        -- Shift everything down and overwrite old events
+        local eventCount = #self._events
+        for i=1, math.min(MAX_AGGREGATED_EVENTS, eventCount) do
+            store.EventsQueue[i] = store.EventsQueue[i + MAX_EVENTS_TO_SEND_IN_ONE_BATCH]
+        end
+
+        -- Clear additional events
+        for i=MAX_AGGREGATED_EVENTS+1, eventCount do
+            store.EventsQueue[i] = nil
+        end
+
+        return eventsQueue
     end
-    return c
 end
 
 local function processEvents()
-    local queue = cloneTable(store.EventsQueue)
-    store.EventsQueue = {}
+    local queue = dequeueMaxEvents()
 
     if #queue == 0 then
         logger:i("Event queue: No events to send")
@@ -161,8 +186,8 @@ local function processEvents()
         if statusCode == http_api.EGAHTTPApiResponse.NoResponse then
             logger:w("Event queue: Failed to send events to collector - Retrying next time")
             for _,e in pairs(queue) do
-                if #store.EventsQueue < 500 then
-                    table.insert(store.EventsQueue, e)
+                if #store.EventsQueue < MAX_AGGREGATED_EVENTS then
+                    store.EventsQueue[#store.EventsQueue + 1] = e
                 else
                     break
                 end
