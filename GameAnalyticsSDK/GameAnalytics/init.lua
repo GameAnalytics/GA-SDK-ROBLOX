@@ -1,20 +1,11 @@
+local GAResourceFlowType = require(script.GAResourceFlowType)
+local GAProgressionStatus = require(script.GAProgressionStatus)
+local GAErrorSeverity = require(script.GAErrorSeverity)
+
 local ga = {
-    EGAResourceFlowType = {
-        Source = 1,
-        Sink = 2
-    },
-    EGAProgressionStatus = {
-        Start = 1,
-        Complete = 2,
-        Fail = 3
-    },
-    EGAErrorSeverity = {
-        Debug = 1,
-        Info = 2,
-        Warning = 3,
-        Error = 4,
-        Critical = 5
-    }
+    EGAResourceFlowType = GAResourceFlowType,
+    EGAProgressionStatus = GAProgressionStatus,
+    EGAErrorSeverity = GAErrorSeverity
 }
 
 local logger = require(script.Logger)

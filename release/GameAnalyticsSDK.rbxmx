@@ -323,23 +323,14 @@ GameAnalyticsFiltering.OnClientInvoke = getPlatform
                 <Content name="LinkedSource"><null></null></Content>
                 <string name="Name">GameAnalytics</string>
                 <string name="ScriptGuid"></string>
-                <ProtectedString name="Source"><![CDATA[local ga = {
-    EGAResourceFlowType = {
-        Source = 1,
-        Sink = 2
-    },
-    EGAProgressionStatus = {
-        Start = 1,
-        Complete = 2,
-        Fail = 3
-    },
-    EGAErrorSeverity = {
-        Debug = 1,
-        Info = 2,
-        Warning = 3,
-        Error = 4,
-        Critical = 5
-    }
+                <ProtectedString name="Source"><![CDATA[local GAResourceFlowType = require(script.GAResourceFlowType)
+local GAProgressionStatus = require(script.GAProgressionStatus)
+local GAErrorSeverity = require(script.GAErrorSeverity)
+
+local ga = {
+    EGAResourceFlowType = GAResourceFlowType,
+    EGAProgressionStatus = GAProgressionStatus,
+    EGAErrorSeverity = GAErrorSeverity
 }
 
 local logger = require(script.Logger)
@@ -2622,6 +2613,9 @@ local validation = require(script.Parent.Validation)
 local threading = require(script.Parent.Threading)
 local http_api = require(script.Parent.HttpApi)
 local utilities = require(script.Parent.Utilities)
+local GAResourceFlowType = require(script.Parent.GAResourceFlowType)
+local GAProgressionStatus = require(script.Parent.GAProgressionStatus)
+local GAErrorSeverity = require(script.Parent.GAErrorSeverity)
 local HTTP = game:GetService("HttpService")
 
 local CategorySessionStart = "user"
@@ -2633,6 +2627,8 @@ local CategoryDesign = "design"
 local CategoryError = "error"
 local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
 local MAX_AGGREGATED_EVENTS = 2000
+
+
 
 local function addDimensionsToEvent(playerId, eventData)
     if not eventData then
@@ -2810,44 +2806,6 @@ local function processEvents()
     end
 end
 
-local function resourceFlowTypeString(flowType)
-    if flowType == 1 then
-        return "Source"
-    elseif flowType == 2 then
-        return "Sink"
-    else
-        return ""
-    end
-end
-
-local function progressionStatusString(progressionStatus)
-    if progressionStatus == 1 then
-        return "Start"
-    elseif progressionStatus == 2 then
-        return "Complete"
-    elseif progressionStatus == 3 then
-        return "Fail"
-    else
-        return ""
-    end
-end
-
-local function errorSeverityString(severity)
-    if severity == 1 then
-        return "debug"
-    elseif severity == 2 then
-        return "info"
-    elseif severity == 3 then
-        return "warning"
-    elseif severity == 4 then
-        return "error"
-    elseif severity == 5 then
-        return "critical"
-    else
-        return ""
-    end
-end
-
 function events:processEventQueue()
     processEvents()
     threading:scheduleTimer(events.ProcessEventsInterval, function()
@@ -2987,7 +2945,7 @@ function events:addResourceEvent(playerId, flowType, currency, amount, itemType,
     local eventDict = {}
 
     -- insert event specific values
-    local flowTypeString = resourceFlowTypeString(flowType)
+    local flowTypeString = GAResourceFlowType[flowType]
     eventDict["event_id"] = flowTypeString .. ":" .. currency .. ":" .. itemType .. ":" .. itemId
     eventDict["category"] = CategoryResource
     eventDict["amount"] = amount
@@ -3021,7 +2979,7 @@ function events:addProgressionEvent(playerId, progressionStatus, progression01, 
         progressionIdentifier = progression01 .. ":" .. progression02 .. ":" .. progression03
     end
 
-    local statusString = progressionStatusString(progressionStatus)
+    local statusString = GAProgressionStatus[progressionStatus]
 
     -- Append event specifics
     eventDict["category"] = CategoryProgression
@@ -3104,7 +3062,7 @@ function events:addErrorEvent(playerId, severity, message)
     -- Create empty eventData
     local eventData = {}
 
-    local severityString = errorSeverityString(severity)
+    local severityString = GAErrorSeverity[severity]
 
     eventData["category"] = CategoryError
     eventData["severity"] = severityString
@@ -3160,7 +3118,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.2.6"
+    SdkVersion = "1.2.7"
 }
 
 return version

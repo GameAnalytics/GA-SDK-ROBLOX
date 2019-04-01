@@ -14,6 +14,9 @@ local validation = require(script.Parent.Validation)
 local threading = require(script.Parent.Threading)
 local http_api = require(script.Parent.HttpApi)
 local utilities = require(script.Parent.Utilities)
+local GAResourceFlowType = require(script.Parent.GAResourceFlowType)
+local GAProgressionStatus = require(script.Parent.GAProgressionStatus)
+local GAErrorSeverity = require(script.Parent.GAErrorSeverity)
 local HTTP = game:GetService("HttpService")
 
 local CategorySessionStart = "user"
@@ -25,6 +28,8 @@ local CategoryDesign = "design"
 local CategoryError = "error"
 local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
 local MAX_AGGREGATED_EVENTS = 2000
+
+
 
 local function addDimensionsToEvent(playerId, eventData)
     if not eventData then
@@ -202,44 +207,6 @@ local function processEvents()
     end
 end
 
-local function resourceFlowTypeString(flowType)
-    if flowType == 1 then
-        return "Source"
-    elseif flowType == 2 then
-        return "Sink"
-    else
-        return ""
-    end
-end
-
-local function progressionStatusString(progressionStatus)
-    if progressionStatus == 1 then
-        return "Start"
-    elseif progressionStatus == 2 then
-        return "Complete"
-    elseif progressionStatus == 3 then
-        return "Fail"
-    else
-        return ""
-    end
-end
-
-local function errorSeverityString(severity)
-    if severity == 1 then
-        return "debug"
-    elseif severity == 2 then
-        return "info"
-    elseif severity == 3 then
-        return "warning"
-    elseif severity == 4 then
-        return "error"
-    elseif severity == 5 then
-        return "critical"
-    else
-        return ""
-    end
-end
-
 function events:processEventQueue()
     processEvents()
     threading:scheduleTimer(events.ProcessEventsInterval, function()
@@ -379,7 +346,7 @@ function events:addResourceEvent(playerId, flowType, currency, amount, itemType,
     local eventDict = {}
 
     -- insert event specific values
-    local flowTypeString = resourceFlowTypeString(flowType)
+    local flowTypeString = GAResourceFlowType[flowType]
     eventDict["event_id"] = flowTypeString .. ":" .. currency .. ":" .. itemType .. ":" .. itemId
     eventDict["category"] = CategoryResource
     eventDict["amount"] = amount
@@ -413,7 +380,7 @@ function events:addProgressionEvent(playerId, progressionStatus, progression01, 
         progressionIdentifier = progression01 .. ":" .. progression02 .. ":" .. progression03
     end
 
-    local statusString = progressionStatusString(progressionStatus)
+    local statusString = GAProgressionStatus[progressionStatus]
 
     -- Append event specifics
     eventDict["category"] = CategoryProgression
@@ -496,7 +463,7 @@ function events:addErrorEvent(playerId, severity, message)
     -- Create empty eventData
     local eventData = {}
 
-    local severityString = errorSeverityString(severity)
+    local severityString = GAErrorSeverity[severity]
 
     eventData["category"] = CategoryError
     eventData["severity"] = severityString
