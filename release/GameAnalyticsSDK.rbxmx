@@ -3118,7 +3118,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.2.8"
+    SdkVersion = "1.2.9"
 }
 
 return version
@@ -3948,9 +3948,17 @@ return threading
                     <Content name="LinkedSource"><null></null></Content>
                     <string name="Name">GAErrorSeverity</string>
                     <string name="ScriptGuid"></string>
-                    <ProtectedString name="Source"><![CDATA[local Table = require("Table")
+                    <ProtectedString name="Source"><![CDATA[local function readonlytable(table)
+   return setmetatable({}, {
+     __index = table,
+     __newindex = function(t, k, v)
+                    error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
+                  end,
+     __metatable = false
+   });
+end
 
-return Table.ReadOnly({
+return readonlytable({
     Debug = "Debug";
     Info = "Info";
     Warning = "Warning";
@@ -3966,9 +3974,17 @@ return Table.ReadOnly({
                     <Content name="LinkedSource"><null></null></Content>
                     <string name="Name">GAProgressionStatus</string>
                     <string name="ScriptGuid"></string>
-                    <ProtectedString name="Source"><![CDATA[local Table = require("Table")
+                    <ProtectedString name="Source"><![CDATA[local function readonlytable(table)
+   return setmetatable({}, {
+     __index = table,
+     __newindex = function(t, k, v)
+                    error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
+                  end,
+     __metatable = false
+   });
+end
 
-return Table.ReadOnly({
+return readonlytable({
     Start = "Start";
     Complete = "Complete";
     Fail = "Fail";
@@ -3982,9 +3998,17 @@ return Table.ReadOnly({
                     <Content name="LinkedSource"><null></null></Content>
                     <string name="Name">GAResourceFlowType</string>
                     <string name="ScriptGuid"></string>
-                    <ProtectedString name="Source"><![CDATA[local Table = require("Table")
+                    <ProtectedString name="Source"><![CDATA[local function readonlytable(table)
+   return setmetatable({}, {
+     __index = table,
+     __newindex = function(t, k, v)
+                    error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
+                  end,
+     __metatable = false
+   });
+end
 
-return Table.ReadOnly({
+return readonlytable({
     Source = "Source";
     Sink = "Sink";
 })
