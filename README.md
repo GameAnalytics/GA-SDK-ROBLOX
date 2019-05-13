@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.11**
+* fixed playerjoined method to not wait indefinitely in some cases
+
 **1.2.10**
 * fixed playerjoined method to not wait indefinitely in some cases
 

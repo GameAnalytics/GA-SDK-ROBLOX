@@ -403,7 +403,7 @@ function ga:PlayerJoined(Player)
 
     store.PlayerCache[Player.UserId] = PlayerData
 
-    PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or ("uwp_desktop")
+    PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or ("unknown")
     PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
     ga:startNewSession(Player.UserId)
