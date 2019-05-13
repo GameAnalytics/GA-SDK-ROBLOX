@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.12**
+* added Postie module to replace invokeclient call in playerjoined
+
 **1.2.11**
 * fixed playerjoined method to not wait indefinitely in some cases
 

@@ -13,20 +13,12 @@ if not script:IsDescendantOf(game:GetService("ServerScriptService")) then
     return
 end
 
---Filtering
-if not ReplicatedStorage:FindFirstChild("GameAnalyticsFiltering") then
-    --Create
-    local f = Instance.new("RemoteFunction")
-    f.Name = "GameAnalyticsFiltering"
-    f.Parent = ReplicatedStorage
-end
-
-if not ReplicatedStorage:FindFirstChild("GameAnalyticsSendMessage") then
-    --Create
-    local f = Instance.new("RemoteEvent")
-    f.Name = "GameAnalyticsSendMessage"
-    f.Parent = ReplicatedStorage
-end
+-- if not ReplicatedStorage:FindFirstChild("GameAnalyticsSendMessage") then
+--     --Create
+--     local f = Instance.new("RemoteEvent")
+--     f.Name = "GameAnalyticsSendMessage"
+--     f.Parent = ReplicatedStorage
+-- end
 
 if not ReplicatedStorage:FindFirstChild("GameAnalyticsCommandCenter") then
     --Create

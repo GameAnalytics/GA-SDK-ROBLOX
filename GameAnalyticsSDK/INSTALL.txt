@@ -11,7 +11,8 @@ To start using the plugin, follow these steps:
 5. Move the 'GameAnalyticsServer' script under 'ServerScriptService'
 6. Move the 'GameAnalyticsServerInitUsingSettings' script under 'ServerScriptService' (optional, NOT needed if you want to programmatically initialize the SDK from your own script)
 7. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'
-8. You're ready!
+8. Move the 'Postie' script under 'ReplicatedStorage'
+9. You're ready!
 
 NOTE: The provided rojo.json in the repository is set up to perform steps 4, 5 and 6 automatically through the Rojo workflow.
 

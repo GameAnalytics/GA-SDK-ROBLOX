@@ -17,9 +17,9 @@ local events = require(script.Events)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Postie = require(ReplicatedStorage.Postie)
 local ProductCache = {}
-
-local GameAnalyticsFiltering
 
 
 -- local functions
@@ -390,10 +390,10 @@ function ga:PlayerJoined(Player)
     --Variables
     local PlayerData = store:GetPlayerData(Player)
 
-    GameAnalyticsFiltering = GameAnalyticsFiltering or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsFiltering", 5)
     local PlayerPlatform = "unknown"
-    if GameAnalyticsFiltering then
-        PlayerPlatform = GameAnalyticsFiltering:InvokeClient(Player)
+    local isSuccessful, platform = Postie.InvokeClient("getPlatform", Player, 5)
+    if isSuccessful then
+        PlayerPlatform = platform
     end
 
     --Fill Data

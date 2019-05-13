@@ -1,13 +1,14 @@
 --Variables
-local GameAnalyticsFiltering = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsFiltering")
 --local GameAnalyticsSendMessage = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
 
 --Services
 local GS = game:GetService("GuiService")
 local UIS = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Postie = require(ReplicatedStorage.Postie)
 
 --Functions
-function getPlatform()
+local function getPlatform()
 
     if (GS:IsTenFootInterface()) then
         return "Console"
@@ -19,7 +20,7 @@ function getPlatform()
 end
 
 --Filtering
-GameAnalyticsFiltering.OnClientInvoke = getPlatform
+Postie.SetCallback("getPlatform", getPlatform);
 
 -- debug stuff
 --GameAnalyticsSendMessage.OnClientEvent:Connect(function(chatProperties)
