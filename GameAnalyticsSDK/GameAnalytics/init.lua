@@ -390,8 +390,11 @@ function ga:PlayerJoined(Player)
     --Variables
     local PlayerData = store:GetPlayerData(Player)
 
-    GameAnalyticsFiltering = GameAnalyticsFiltering or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsFiltering")
-    local PlayerPlatform = GameAnalyticsFiltering:InvokeClient(Player)
+    GameAnalyticsFiltering = GameAnalyticsFiltering or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsFiltering", 5)
+    local PlayerPlatform = "unknown"
+    if GameAnalyticsFiltering then
+        PlayerPlatform = GameAnalyticsFiltering:InvokeClient(Player)
+    end
 
     --Fill Data
     for key, value in pairs(store.BasePlayerData) do
