@@ -143,7 +143,13 @@ end
 
 -- New Players
 Players.PlayerAdded:Connect(function(Player)
-    GameAnalytics:PlayerJoined(Player)
+    local joinData = Player:GetJoinData()
+    local teleportData = joinData.TeleportData
+    local gaData = nil
+    if teleportData then
+        gaData = teleportData.gameanalyticsData
+    end
+    GameAnalytics:PlayerJoined(Player, gaData)
 end)
 
 -- Players leaving

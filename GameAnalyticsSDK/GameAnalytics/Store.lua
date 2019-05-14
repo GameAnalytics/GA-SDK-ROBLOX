@@ -15,7 +15,8 @@ local store = {
         SdkConfig = {},
         ClientServerTimeOffset = 0,
         Configurations = {},
-        CommandCenterIsReady = false
+        CommandCenterIsReady = false,
+        PlayerTeleporting = false
     },
     DataToSave = {
         "Sessions",

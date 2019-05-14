@@ -244,26 +244,30 @@ function events:setAvailableResourceItemTypes(availableResourceItemTypes)
     logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
 end
 
-function events:addSessionStartEvent(playerId)
-    local eventDict = {}
-
-    -- Event specific data
-    eventDict["category"] = CategorySessionStart
-
+function events:addSessionStartEvent(playerId, teleportData)
     local PlayerData = store.PlayerCache[playerId]
 
-    -- Increment session number  and persist
-    PlayerData.Sessions = PlayerData.Sessions + 1
+    if teleportData then
+        PlayerData.Sessions = teleportData.Sessions
+    else
+        local eventDict = {}
 
-    --  Add custom dimensions
-    addDimensionsToEvent(playerId, eventDict)
+        -- Event specific data
+        eventDict["category"] = CategorySessionStart
 
-    -- Add to store
-    addEventToStore(playerId, eventDict)
+        -- Increment session number  and persist
+        PlayerData.Sessions = PlayerData.Sessions + 1
 
-    logger:i("Add SESSION START event")
+        --  Add custom dimensions
+        addDimensionsToEvent(playerId, eventDict)
 
-    processEvents()
+        -- Add to store
+        addEventToStore(playerId, eventDict)
+
+        logger:i("Add SESSION START event")
+
+        processEvents()
+    end
 end
 
 function events:addSessionEndEvent(playerId)

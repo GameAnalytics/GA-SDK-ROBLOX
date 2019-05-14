@@ -146,7 +146,7 @@ function ga:initialize(options)
     end)
 end
 
-function ga:startNewSession(playerId)
+function ga:startNewSession(playerId, teleportData)
     threading:performTaskOnGAThread(function()
         if not state:isEventSubmissionEnabled() then
             return
@@ -156,7 +156,7 @@ function ga:startNewSession(playerId)
             return
         end
 
-        state:startNewSession(playerId)
+        state:startNewSession(playerId, teleportData)
     end)
 end
 
@@ -368,6 +368,25 @@ function ga:setEnabledAutomaticSendBusinessEvents(flag)
     end)
 end
 
+function ga:addGameAnalyticsTeleportData(playerIds, teleportData)
+    local gameAnalyticsTeleportData = {}
+    for index = 1, #playerIds do
+        local playerId = playerIds[index]
+        local PlayerData = store.PlayerCache[playerId]
+        PlayerData.PlayerTeleporting = true
+        local data = {
+            ["SessionID"] = PlayerData.SessionID,
+            ["Sessions"] = PlayerData.Sessions,
+            ["SessionStart"] = PlayerData.SessionStart
+        }
+        gameAnalyticsTeleportData[playerId] = data
+    end
+
+    teleportData["gameanalyticsData"] = gameAnalyticsTeleportData
+
+    return teleportData
+end
+
 function ga:getCommandCenterValueAsString(playerId, options)
     local key = options["key"] or ""
     local defaultValue = options["defaultValue"] or nil
@@ -382,7 +401,7 @@ function ga:getConfigurationsContentAsString(playerId)
     return state:getConfigurationsContentAsString(playerId)
 end
 
-function ga:PlayerJoined(Player)
+function ga:PlayerJoined(Player, teleportData)
     if store.PlayerCache[Player.UserId] then
         return
     end
@@ -406,7 +425,7 @@ function ga:PlayerJoined(Player)
     PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or ("unknown")
     PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
-    ga:startNewSession(Player.UserId)
+    ga:startNewSession(Player.UserId, teleportData)
 
 
     --Autosave
@@ -431,7 +450,10 @@ function ga:PlayerRemoved(Player)
     --Save
     store:SavePlayerData(Player)
 
-    ga:endSession(Player.UserId)
+    local PlayerData = store.PlayerCache[Player.UserId]
+    if not PlayerData.PlayerTeleporting then
+        ga:endSession(Player.UserId)
+    end
 end
 
 function ga:ProcessReceiptCallback(Info)

@@ -148,7 +148,7 @@ function state:setCustomDimension03(playerId, dimension)
     PlayerData.CurrentCustomDimension03 = dimension
 end
 
-function state:startNewSession(playerId)
+function state:startNewSession(playerId, teleportData)
     if state:isEventSubmissionEnabled() then
         logger:i("Starting a new session.")
     end
@@ -201,11 +201,16 @@ function state:startNewSession(playerId)
         return
     end
 
-    PlayerData.SessionID = HTTP:GenerateGUID(false):lower()
-    PlayerData.SessionStart = getClientTsAdjusted(playerId)
+    if teleportData then
+        PlayerData.SessionID = teleportData.SessionID
+        PlayerData.SessionStart = teleportData.SessionStart
+    else
+        PlayerData.SessionID = HTTP:GenerateGUID(false):lower()
+        PlayerData.SessionStart = getClientTsAdjusted(playerId)
+    end
 
     if state:isEventSubmissionEnabled() then
-        events:addSessionStartEvent(playerId)
+        events:addSessionStartEvent(playerId, teleportData)
     end
 end
 
