@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.2.13**
+* changed Postie from being a script to a modulescript
+
 **1.2.12**
 * added Postie module to replace invokeclient call in playerjoined
 
