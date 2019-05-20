@@ -379,7 +379,7 @@ function ga:addGameAnalyticsTeleportData(playerIds, teleportData)
             ["Sessions"] = PlayerData.Sessions,
             ["SessionStart"] = PlayerData.SessionStart
         }
-        gameAnalyticsTeleportData[playerId] = data
+        gameAnalyticsTeleportData[tostring(playerId)] = data
     end
 
     teleportData["gameanalyticsData"] = gameAnalyticsTeleportData

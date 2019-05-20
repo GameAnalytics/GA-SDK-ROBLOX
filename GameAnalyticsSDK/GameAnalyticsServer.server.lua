@@ -147,7 +147,7 @@ Players.PlayerAdded:Connect(function(Player)
     local teleportData = joinData.TeleportData
     local gaData = nil
     if teleportData then
-        gaData = teleportData.gameanalyticsData
+        gaData = teleportData.gameanalyticsData and teleportData.gameanalyticsData[tostring(Player.UserId)]
     end
     GameAnalytics:PlayerJoined(Player, gaData)
 end)

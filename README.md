@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.3.1**
+* fixed multi-place game bugs
+
 **1.3.0**
 * added support for multi-place game sessions
 
