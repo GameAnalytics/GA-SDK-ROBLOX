@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.3.2**
+* fixed bug with error events not sending
+
 **1.3.1**
 * fixed multi-place game bugs
 

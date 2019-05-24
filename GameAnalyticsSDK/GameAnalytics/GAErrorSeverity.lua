@@ -9,9 +9,9 @@ local function readonlytable(table)
 end
 
 return readonlytable({
-    Debug = "Debug";
-    Info = "Info";
-    Warning = "Warning";
-    Error = "Error";
-    Critical = "Critical";
+    Debug = "debug";
+    Info = "info";
+    Warning = "warning";
+    Error = "error";
+    Critical = "critical";
 })
