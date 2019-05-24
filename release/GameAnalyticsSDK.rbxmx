@@ -3366,7 +3366,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.3.2"
+    SdkVersion = "1.3.3"
 }
 
 return version
@@ -4212,11 +4212,11 @@ return threading
 end
 
 return readonlytable({
-    Debug = "debug";
-    Info = "info";
-    Warning = "warning";
-    Error = "error";
-    Critical = "critical";
+    debug = "debug";
+    info = "info";
+    warning = "warning";
+    error = "error";
+    critical = "critical";
 })
 ]]></ProtectedString>
                     <BinaryString name="Tags"></BinaryString>
