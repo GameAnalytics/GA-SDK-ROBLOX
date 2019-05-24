@@ -99,7 +99,7 @@ LS.MessageOut:Connect(function(message, messageType)
 
     --Report (use nil for playerId as real player id is not available)
     GameAnalytics:addErrorEvent(nil, {
-        severity = GameAnalytics.EGAErrorSeverity.Error,
+        severity = GameAnalytics.EGAErrorSeverity.error,
         message = m
     })
 

@@ -118,7 +118,7 @@ LS.MessageOut:Connect(function(message, messageType)
 
     --Report (use nil for playerId as real player id is not available)
     GameAnalytics:addErrorEvent(nil, {
-        severity = GameAnalytics.EGAErrorSeverity.Error,
+        severity = GameAnalytics.EGAErrorSeverity.error,
         message = m
     })
 
@@ -3366,7 +3366,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.3.3"
+    SdkVersion = "1.3.4"
 }
 
 return version
