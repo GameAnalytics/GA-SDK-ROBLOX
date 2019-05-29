@@ -240,8 +240,8 @@ function validation:validateBusinessEvent(currency, amount, cartType, itemType, 
     return true
 end
 
-function validation:validateResourceEvent(flowType, currency, amount, itemType, itemId, currencies, itemTypes)
-    if flowType < 1 or flowType > 2 then
+function validation:validateResourceEvent(flowTypeValues, flowType, currency, amount, itemType, itemId, currencies, itemTypes)
+    if flowType ~= flowTypeValues.Source and flowType ~= flowTypeValues.Sink then
         logger:w("Validation fail - resource event - flowType: Invalid flow type " .. tostring(flowType))
         return false
     end
@@ -294,8 +294,8 @@ function validation:validateResourceEvent(flowType, currency, amount, itemType, 
     return true
 end
 
-function validation:validateProgressionEvent(progressionStatus, progression01, progression02, progression03)
-    if progressionStatus < 1 or progressionStatus > 3 then
+function validation:validateProgressionEvent(progressionStatusValues, progressionStatus, progression01, progression02, progression03)
+    if progressionStatus ~= progressionStatusValues.Start and progressionStatus ~= progressionStatusValues.Complete and progressionStatus ~= progressionStatusValues.Fail then
         logger:w("Validation fail - progression event: Invalid progression status " .. tostring(progressionStatus))
         return false
     end
@@ -418,8 +418,8 @@ function validation:validateLongString(longString, canBeEmpty)
     return true
 end
 
-function validation:validateErrorEvent(severity, message)
-    if severity < 1 or severity > 5 then
+function validation:validateErrorEvent(severityValues, severity, message)
+    if severity ~= severityValues.debug and severity ~= severityValues.info and severity ~= severityValues.warning and severity ~= severityValues.error and severity ~= severityValues.critical then
         logger:w("Validation fail - error event - severity: Severity was unsupported value " .. tostring(severity))
         return false
     end

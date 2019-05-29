@@ -336,13 +336,13 @@ end
 
 function events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId)
     -- Validate event params
-    if not validation:validateResourceEvent(flowType, currency, amount, itemType, itemId, self._availableResourceCurrencies, self._availableResourceItemTypes) then
+    if not validation:validateResourceEvent(GAResourceFlowType, flowType, currency, amount, itemType, itemId, self._availableResourceCurrencies, self._availableResourceItemTypes) then
         -- TODO: add sdk error event
         return
     end
 
     -- If flow type is sink reverse amount
-    if flowType == 2 then
+    if flowType == GAResourceFlowType.Sink then
         amount = (-1 * amount)
     end
 
@@ -366,7 +366,7 @@ end
 
 function events:addProgressionEvent(playerId, progressionStatus, progression01, progression02, progression03, score)
     -- Validate event params
-    if not validation:validateProgressionEvent(progressionStatus, progression01, progression02, progression03) then
+    if not validation:validateProgressionEvent(GAProgressionStatus, progressionStatus, progression01, progression02, progression03) then
         -- TODO: add sdk error event
         return
     end
@@ -394,21 +394,21 @@ function events:addProgressionEvent(playerId, progressionStatus, progression01, 
     local attempt_num = 0
 
     -- Add score if specified and status is not start
-    if score ~= nil and progressionStatus ~= 1 then
+    if score ~= nil and progressionStatus ~= GAProgressionStatus.Start then
         eventDict["score"] = score
     end
 
     local PlayerData = store.PlayerCache[playerId]
 
     -- Count attempts on each progression fail and persist
-    if progressionStatus == 3 then
+    if progressionStatus == GAProgressionStatus.Fail then
         -- Increment attempt number
         local progressionTries = PlayerData.ProgressionTries[progressionIdentifier] or 0
         PlayerData.ProgressionTries[progressionIdentifier] = progressionTries + 1
     end
 
     -- increment and add attempt_num on complete and delete persisted
-    if progressionStatus == 2 then
+    if progressionStatus == GAProgressionStatus.Complete then
         -- Increment attempt number
         local progressionTries = PlayerData.ProgressionTries[progressionIdentifier] or 0
         PlayerData.ProgressionTries[progressionIdentifier] = progressionTries + 1
@@ -459,7 +459,7 @@ end
 
 function events:addErrorEvent(playerId, severity, message)
     -- Validate
-    if not validation:validateErrorEvent(severity, message) then
+    if not validation:validateErrorEvent(GAErrorSeverity, severity, message) then
         -- TODO: add sdk error event
         return
     end
