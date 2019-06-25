@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.3.6**
+* fix for command center populated events
+
 **1.3.5**
 * fixes to some types of events not being sent
 

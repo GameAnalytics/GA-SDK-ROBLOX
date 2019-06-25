@@ -30,8 +30,8 @@ local function getClientTsAdjusted(playerId)
     end
 end
 
-local function populateConfigurations(playerId)
-    local PlayerData = store.PlayerCache[playerId]
+local function populateConfigurations(player)
+    local PlayerData = store.PlayerCache[player.UserId]
     local sdkConfig = PlayerData.SdkConfig
 
     if sdkConfig["configurations"] then
@@ -42,7 +42,7 @@ local function populateConfigurations(playerId)
                 local key = configuration["key"] or ""
                 local start_ts = configuration["start"] or 0
                 local end_ts = configuration["end"] or math.huge
-                local client_ts_adjusted = getClientTsAdjusted(playerId)
+                local client_ts_adjusted = getClientTsAdjusted(player.UserId)
 
                 if #key > 0 and configuration["value"] and client_ts_adjusted > start_ts and client_ts_adjusted < end_ts then
                     PlayerData.Configurations[key] = configuration["value"]
@@ -54,7 +54,7 @@ local function populateConfigurations(playerId)
 
     PlayerData.CommandCenterIsReady = true
     GameAnalyticsCommandCenter = GameAnalyticsCommandCenter or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsCommandCenter")
-    GameAnalyticsCommandCenter:FireAllClients()
+    GameAnalyticsCommandCenter:FireClient(player, PlayerData.Configurations)
 end
 
 function state:sessionIsStarted(playerId)
@@ -148,16 +148,16 @@ function state:setCustomDimension03(playerId, dimension)
     PlayerData.CurrentCustomDimension03 = dimension
 end
 
-function state:startNewSession(playerId, teleportData)
+function state:startNewSession(player, teleportData)
     if state:isEventSubmissionEnabled() then
         logger:i("Starting a new session.")
     end
-    local PlayerData = store.PlayerCache[playerId]
+    local PlayerData = store.PlayerCache[player.UserId]
 
     -- make sure the current custom dimensions are valid
-    state:validateAndFixCurrentDimensions(playerId)
+    state:validateAndFixCurrentDimensions(player.UserId)
 
-    local initResult = http_api:initRequest(events.GameKey, events.SecretKey, PlayerData, playerId)
+    local initResult = http_api:initRequest(events.GameKey, events.SecretKey, PlayerData, player.UserId)
     local statusCode = initResult.statusCode
     local responseBody = initResult.body
 
@@ -194,9 +194,9 @@ function state:startNewSession(playerId, teleportData)
     PlayerData.ClientServerTimeOffset = PlayerData.SdkConfig["time_offset"] or 0
 
     -- populate configurations
-    populateConfigurations(playerId)
+    populateConfigurations(player)
 
-    if not state:isEnabled(playerId) then
+    if not state:isEnabled(player.UserId) then
         logger:w("Could not start session: SDK is disabled.")
         return
     end
@@ -206,11 +206,11 @@ function state:startNewSession(playerId, teleportData)
         PlayerData.SessionStart = teleportData.SessionStart
     else
         PlayerData.SessionID = HTTP:GenerateGUID(false):lower()
-        PlayerData.SessionStart = getClientTsAdjusted(playerId)
+        PlayerData.SessionStart = getClientTsAdjusted(player.UserId)
     end
 
     if state:isEventSubmissionEnabled() then
-        events:addSessionStartEvent(playerId, teleportData)
+        events:addSessionStartEvent(player.UserId, teleportData)
     end
 end
 

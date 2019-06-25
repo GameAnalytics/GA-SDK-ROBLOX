@@ -146,7 +146,7 @@ function ga:initialize(options)
     end)
 end
 
-function ga:startNewSession(playerId, teleportData)
+function ga:startNewSession(player, teleportData)
     threading:performTaskOnGAThread(function()
         if not state:isEventSubmissionEnabled() then
             return
@@ -156,7 +156,7 @@ function ga:startNewSession(playerId, teleportData)
             return
         end
 
-        state:startNewSession(playerId, teleportData)
+        state:startNewSession(player, teleportData)
     end)
 end
 
@@ -425,7 +425,7 @@ function ga:PlayerJoined(Player, teleportData)
     PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or ("unknown")
     PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
-    ga:startNewSession(Player.UserId, teleportData)
+    ga:startNewSession(Player, teleportData)
 
 
     --Autosave
