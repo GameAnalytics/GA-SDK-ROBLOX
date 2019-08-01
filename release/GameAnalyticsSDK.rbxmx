@@ -965,7 +965,7 @@ function ga:PlayerJoined(Player, teleportData)
 
     store.PlayerCache[Player.UserId] = PlayerData
 
-    PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or ("unknown")
+    PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or ("uwp_desktop")
     PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
     ga:startNewSession(Player, teleportData)
@@ -3366,7 +3366,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.3.6"
+    SdkVersion = "1.3.7"
 }
 
 return version
