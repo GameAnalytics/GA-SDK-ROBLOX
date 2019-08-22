@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.3.8**
+* fixes for progression events
+
 **1.3.7**
 * bug fix for platform name fallback option
 

@@ -424,7 +424,17 @@ function events:addProgressionEvent(playerId, progressionStatus, progression01, 
     -- Add custom dimensions
     addDimensionsToEvent(playerId, eventDict)
 
-    logger:i("Add PROGRESSION event: {status:" .. statusString .. ", progression01:" .. progression01 .. ", progression02:" .. progression02 .. ", progression03:" .. progression03 .. ", score:" .. tostring(score) .. ", attempt:" .. tostring(attempt_num) .. "}")
+    local progression02String = ""
+    if not utilities:isStringNullOrEmpty(progression02) then
+        progression02String = progression02
+    end
+
+    local progression03String = ""
+    if not utilities:isStringNullOrEmpty(progression03) then
+        progression03String = progression03
+    end
+
+    logger:i("Add PROGRESSION event: {status:" .. statusString .. ", progression01:" .. progression01 .. ", progression02:" .. progression02String .. ", progression03:" .. progression03String .. ", score:" .. tostring(score) .. ", attempt:" .. tostring(attempt_num) .. "}")
 
     -- Send to store
     addEventToStore(playerId, eventDict)
@@ -476,7 +486,12 @@ function events:addErrorEvent(playerId, severity, message)
     -- Add custom dimensions
     addDimensionsToEvent(playerId, eventData)
 
-    logger:i("Add ERROR event: {severity:" .. severityString .. ", message:" .. message .. "}")
+    local messageString = ""
+    if not utilities:isStringNullOrEmpty(message) then
+        messageString = message
+    end
+
+    logger:i("Add ERROR event: {severity:" .. severityString .. ", message:" .. messageString .. "}")
 
     -- Send to store
     addEventToStore(playerId, eventData)
