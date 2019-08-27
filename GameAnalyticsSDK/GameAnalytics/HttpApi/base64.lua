@@ -1,4 +1,4 @@
-local ASSERTIONS_ENABLED = false -- Whether to run several checks when the module is first loaded
+local ASSERTIONS_ENABLED = true -- Whether to run several checks when the module is first loaded
 
 local CHAR_SET = { [0] =
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",

@@ -1056,6 +1056,10 @@ return settings
 local validation = require(script.Parent.Validation)
 local version = require(script.Parent.Version)
 
+local sha256 = require(script.sha256)
+local hmac = require(script.hmac)
+local base64 = require(script.base64)
+
 local http_api = {
     protocol = "https",
     hostName = "api.gameanalytics.com",
@@ -1079,7 +1083,6 @@ local http_api = {
 local HTTP = game:GetService("HttpService")
 local logger = require(script.Parent.Logger)
 local baseUrl = (RunService:IsStudio() and "http" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/" .. http_api.version
-local encodingReady = false
 
 local Encoding = {}
 
@@ -1095,30 +1098,20 @@ local function getInitAnnotations(playerData, playerId)
 end
 
 local function encode(payload, secretKey)
-    if not encodingReady then
-        Encoding.lockbox = require(script.Encoding.lockbox)
-        Encoding.lockbox.bit = require(script.Encoding.bit).bit
-        Encoding.array = require(Encoding.lockbox.util.array)
-        Encoding.stream = require(Encoding.lockbox.util.stream)
-        Encoding.base64 = require(Encoding.lockbox.util.base64)
-        Encoding.hmac = require(Encoding.lockbox.mac.hmac)
-        Encoding.sha256 = require(Encoding.lockbox.digest.sha2_256)
-        encodingReady = true
-    end
-
     --Validate
     if not secretKey then logger:w("Error encoding, invalid SecretKey") return end
 
     --Encode
-    local hmacBuilder = Encoding.hmac()
-        .setBlockSize(64)
-        .setDigest(Encoding.sha256)
-        .setKey(Encoding.array.fromString(RunService:IsStudio() and "16813a12f718bc5c620f56944e1abc3ea13ccbac" or secretKey))
-        .init()
-        .update(Encoding.stream.fromString(payload))
-        .finish()
+    local payloadHmac = hmac(
+        RunService:IsStudio() and "16813a12f718bc5c620f56944e1abc3ea13ccbac" or secretKey, -- key
+        payload, -- message
+        sha256, -- hashing function
+        64, -- block size
+        nil, -- output size
+        true -- output as binary data
+    )
 
-    return Encoding.base64.fromArray(hmacBuilder.asBytes())
+    return base64.encode(payloadHmac)
 end
 
 local function processRequestResponse(response, requestId)
@@ -1313,1313 +1306,419 @@ return http_api
 ]]></ProtectedString>
                     <BinaryString name="Tags"></BinaryString>
                 </Properties>
-                <Item class="Folder" referent="RBX419df056fc0b48818fe911db5cdea52b">
+                <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683accce5">
                     <Properties>
-                        <string name="Name">Encoding</string>
+                        <Content name="LinkedSource"><null></null></Content>
+                        <string name="Name">base64</string>
+                        <string name="ScriptGuid"></string>
+                        <ProtectedString name="Source"><![CDATA[local ASSERTIONS_ENABLED = true -- Whether to run several checks when the module is first loaded
+
+local CHAR_SET = { [0] =
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+    "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "/",
+}
+
+local REVERSE_CHAR_SET = {
+    [65] = 0, [66] = 1, [67] = 2, [68] = 3, [69] = 4, [70] = 5, [71] = 6, [72] = 7, [73] = 8, [74] = 9, [75] = 10, [76] = 11, [77] = 12, [78] = 13,
+    [79] = 14, [80] = 15, [81] = 16, [82] = 17, [83] = 18, [84] = 19, [85] = 20, [86] = 21, [87] = 22, [88] = 23, [89] = 24, [90] = 25, [97] = 26,
+    [98] = 27, [99] = 28, [100] = 29, [101] = 30, [102] = 31, [103] = 32, [104] = 33, [105] = 34, [106] = 35, [107] = 36, [108] = 37, [109] = 38, [110] = 39,
+    [111] = 40, [112] = 41, [113] = 42, [114] = 43, [115] = 44, [116] = 45, [117] = 46, [118] = 47, [119] = 48, [120] = 49, [121] = 50, [122] = 51, [48] = 52,
+    [49] = 53, [50] = 54, [51] = 55, [52] = 56, [53] = 57, [54] = 58, [55] = 59, [56] = 60, [57] = 61, [43] = 62, [47] = 63,
+}
+
+--- Packs three 8-bit integers into one unsigned 24-bit integer.
+local function packUint24FromOctets(a, b, c)
+    return bit32.lshift(a, 16)+bit32.lshift(b, 8)+c
+end
+
+--- Packs four 6-bit integers into one unsigned 24-bit integer
+local function packUint24FromSextets(a, b, c, d)
+    return bit32.lshift(a, 18)+bit32.lshift(b, 12)+bit32.lshift(c, 6)+d
+end
+
+--- Encodes `input` from plaintext into base64, optionally omitting padding
+local function encodeBase64(input, omitPadding)
+    local output = {}
+    local padding = #input%3
+
+    local c = 1
+    for i = 1, #input, 3 do
+        local b1, b2, b3 = string.byte(input, i, i+2)
+        local packed = packUint24FromOctets(b1, b2 or 0, b3 or 0)
+        output[c] = CHAR_SET[bit32.extract(packed, 18, 6)]
+        output[c+1] = CHAR_SET[bit32.extract(packed, 12, 6)]
+        if b2 then
+            output[c+2] = CHAR_SET[bit32.extract(packed, 6, 6)]
+            if b3 then
+                output[c+3] = CHAR_SET[bit32.extract(packed, 0, 6)]
+            end
+        end
+        c = c+4
+    end
+    if not omitPadding then
+        if padding == 2 then
+            output[c-1] = "="
+        elseif padding == 1 then
+            output[c-2] = "=="
+        end
+    end
+    return table.concat(output)
+end
+
+--- Decodes `input` from base64 to plaintext.
+local function decodeBase64(input)
+    assert(not (string.find(input, "[^%w+/=]")), "input contains invalid characters")
+
+    local output = {}
+
+    local c = 1
+    for i = 1, #input, 4 do
+        local b1, b2, b3, b4 = string.byte(input, i, i+3)
+        b1 = REVERSE_CHAR_SET[b1]
+        b2 = REVERSE_CHAR_SET[b2]
+        b3 = REVERSE_CHAR_SET[b3]
+        b4 = REVERSE_CHAR_SET[b4]
+
+        local packed = packUint24FromSextets(b1, b2, b3 or 0, b4 or 0)
+        output[c] = string.char(bit32.extract(packed, 16, 8))
+        if not b3 then
+            break
+        end
+        output[c+1] = string.char(bit32.extract(packed, 8, 8))
+        if not b4 then
+            break
+        end
+        output[c+2] = string.char(bit32.extract(packed, 0, 8))
+        c = c+3
+    end
+    return table.concat(output)
+end
+
+if ASSERTIONS_ENABLED then
+    assert(packUint24FromOctets(77, 97, 110) == 5071214, "(Base64) packUint24FromOctets check")
+    assert(packUint24FromSextets(19, 22, 5, 46) == 5071214, "(Base64) packUint24FromSextets check")
+
+    assert(encodeBase64("Man") == "TWFu", "(Base64) Man failed to encode into TWFu")
+    assert(encodeBase64("Ma") == "TWE=", "(Base64) Ma failed to encode into TWE=")
+    assert(encodeBase64("M") == "TQ==", "(Base64) M failed to encode into TQ==")
+    assert(encodeBase64("Baby shark") == "QmFieSBzaGFyaw==", "(Base64) Baby shark failed to encode into QmFieSBzaGFyaw==")
+    assert(encodeBase64("Almost heaven, West Virginia\nBlue Ridge Mountains, Shenandoah River\nLife is old there, older than the trees\nYounger than the mountains, blowing like a breeze\nCountry roads, take me home\nTo the place I belong\nWest Virginia, mountain mama\nTake me home, country roads\nAll my memories gather round her\nMiner's lady, stranger to blue water\nDark and dusty, painted on the sky\nMisty taste of moonshine, teardrop in my eye\nCountry roads, take me home\nTo the place I belong\nWest Virginia, mountain mama\nTake me home, country roads\nI hear her voice, in the morning hour she calls me\nThe radio reminds me of my home far away\nAnd driving down the road I get a feeling\nThat I should have been home yesterday, yesterday\nCountry roads, take me home\nTo the place I belong\nWest Virginia, mountain mama\nTake me home, country roads\nCountry roads, take me home\nTo the place I belong\nWest Virginia, mountain mama\nTake me home, country roads\nTake me home, down country roads\nTake me home, down country roads") == "QWxtb3N0IGhlYXZlbiwgV2VzdCBWaXJnaW5pYQpCbHVlIFJpZGdlIE1vdW50YWlucywgU2hlbmFuZG9haCBSaXZlcgpMaWZlIGlzIG9sZCB0aGVyZSwgb2xkZXIgdGhhbiB0aGUgdHJlZXMKWW91bmdlciB0aGFuIHRoZSBtb3VudGFpbnMsIGJsb3dpbmcgbGlrZSBhIGJyZWV6ZQpDb3VudHJ5IHJvYWRzLCB0YWtlIG1lIGhvbWUKVG8gdGhlIHBsYWNlIEkgYmVsb25nCldlc3QgVmlyZ2luaWEsIG1vdW50YWluIG1hbWEKVGFrZSBtZSBob21lLCBjb3VudHJ5IHJvYWRzCkFsbCBteSBtZW1vcmllcyBnYXRoZXIgcm91bmQgaGVyCk1pbmVyJ3MgbGFkeSwgc3RyYW5nZXIgdG8gYmx1ZSB3YXRlcgpEYXJrIGFuZCBkdXN0eSwgcGFpbnRlZCBvbiB0aGUgc2t5Ck1pc3R5IHRhc3RlIG9mIG1vb25zaGluZSwgdGVhcmRyb3AgaW4gbXkgZXllCkNvdW50cnkgcm9hZHMsIHRha2UgbWUgaG9tZQpUbyB0aGUgcGxhY2UgSSBiZWxvbmcKV2VzdCBWaXJnaW5pYSwgbW91bnRhaW4gbWFtYQpUYWtlIG1lIGhvbWUsIGNvdW50cnkgcm9hZHMKSSBoZWFyIGhlciB2b2ljZSwgaW4gdGhlIG1vcm5pbmcgaG91ciBzaGUgY2FsbHMgbWUKVGhlIHJhZGlvIHJlbWluZHMgbWUgb2YgbXkgaG9tZSBmYXIgYXdheQpBbmQgZHJpdmluZyBkb3duIHRoZSByb2FkIEkgZ2V0IGEgZmVlbGluZwpUaGF0IEkgc2hvdWxkIGhhdmUgYmVlbiBob21lIHllc3RlcmRheSwgeWVzdGVyZGF5CkNvdW50cnkgcm9hZHMsIHRha2UgbWUgaG9tZQpUbyB0aGUgcGxhY2UgSSBiZWxvbmcKV2VzdCBWaXJnaW5pYSwgbW91bnRhaW4gbWFtYQpUYWtlIG1lIGhvbWUsIGNvdW50cnkgcm9hZHMKQ291bnRyeSByb2FkcywgdGFrZSBtZSBob21lClRvIHRoZSBwbGFjZSBJIGJlbG9uZwpXZXN0IFZpcmdpbmlhLCBtb3VudGFpbiBtYW1hClRha2UgbWUgaG9tZSwgY291bnRyeSByb2FkcwpUYWtlIG1lIGhvbWUsIGRvd24gY291bnRyeSByb2FkcwpUYWtlIG1lIGhvbWUsIGRvd24gY291bnRyeSByb2Fkcw==", "(Base64) Country Roads failed to encode properly")
+
+    assert(encodeBase64("Man", true) == "TWFu", "(Base64) Man with padding disabled failed to encode into TWFu")
+    assert(encodeBase64("Ma", true) == "TWE", "(Base64) Ma with padding disabled failed to encode into TWE")
+    assert(encodeBase64("M", true) == "TQ", "(Base64) M with padding disabled failed to encode into TQ")
+    assert(encodeBase64("Baby shark", true) == "QmFieSBzaGFyaw", "(Base64) Baby shark with padding disabled failed to encode into QmFieSBzaGFyaw")
+
+    assert(encodeBase64("") == "", "(Base64) Empty string failed to encode properly")
+    assert(encodeBase64("f") == "Zg==", "(Base64) f failed to encode into Zg==")
+    assert(encodeBase64("fo") == "Zm8=", "(Base64) fo failed to encode into Zm8=")
+    assert(encodeBase64("foo") == "Zm9v", "(Base64) foo failed to encode into Zm9v")
+    assert(encodeBase64("foob") == "Zm9vYg==", "(Base64) foob failed to encode into Zm9vYg==")
+    assert(encodeBase64("fooba") == "Zm9vYmE=", "(Base64) fooba failed to encode into Zm9vYmE=")
+    assert(encodeBase64("foobar") == "Zm9vYmFy", "(Base64) foobar failed to encode into Zm9vYmFy")
+
+    assert(encodeBase64("A\0B") == "QQBC", "(Base64) A\\0B failed to encode into QQBC")
+    assert(encodeBase64("A\n\t\v") == "QQoJCw==", "(Base64) A\\n\\t\\v failed to encode into QQoJCw==")
+    assert(encodeBase64("☺☻") == "4pi64pi7", "(Base64) ☺☻ failed to encode into 4pi64pi7")
+    assert(encodeBase64("テスト") == "44OG44K544OI", "(Base64) テスト failed to encode into 44OG44K544OI")
+
+    assert(decodeBase64("TWFu") == "Man", "(Base64) Man failed to decode into TWFu")
+    assert(decodeBase64("TWE=") == "Ma", "(Base64) Ma failed to decode into TWE=")
+    assert(decodeBase64("TQ==") == "M", "(Base64) M failed to decode into TQ==")
+    assert(decodeBase64("QmFieSBzaGFyaw==") == "Baby shark", "(Base64) Baby shark failed to decode into QmFieSBzaGFyaw==")
+    assert(decodeBase64("QWxtb3N0IGhlYXZlbiwgV2VzdCBWaXJnaW5pYQpCbHVlIFJpZGdlIE1vdW50YWlucywgU2hlbmFuZG9haCBSaXZlcgpMaWZlIGlzIG9sZCB0aGVyZSwgb2xkZXIgdGhhbiB0aGUgdHJlZXMKWW91bmdlciB0aGFuIHRoZSBtb3VudGFpbnMsIGJsb3dpbmcgbGlrZSBhIGJyZWV6ZQpDb3VudHJ5IHJvYWRzLCB0YWtlIG1lIGhvbWUKVG8gdGhlIHBsYWNlIEkgYmVsb25nCldlc3QgVmlyZ2luaWEsIG1vdW50YWluIG1hbWEKVGFrZSBtZSBob21lLCBjb3VudHJ5IHJvYWRzCkFsbCBteSBtZW1vcmllcyBnYXRoZXIgcm91bmQgaGVyCk1pbmVyJ3MgbGFkeSwgc3RyYW5nZXIgdG8gYmx1ZSB3YXRlcgpEYXJrIGFuZCBkdXN0eSwgcGFpbnRlZCBvbiB0aGUgc2t5Ck1pc3R5IHRhc3RlIG9mIG1vb25zaGluZSwgdGVhcmRyb3AgaW4gbXkgZXllCkNvdW50cnkgcm9hZHMsIHRha2UgbWUgaG9tZQpUbyB0aGUgcGxhY2UgSSBiZWxvbmcKV2VzdCBWaXJnaW5pYSwgbW91bnRhaW4gbWFtYQpUYWtlIG1lIGhvbWUsIGNvdW50cnkgcm9hZHMKSSBoZWFyIGhlciB2b2ljZSwgaW4gdGhlIG1vcm5pbmcgaG91ciBzaGUgY2FsbHMgbWUKVGhlIHJhZGlvIHJlbWluZHMgbWUgb2YgbXkgaG9tZSBmYXIgYXdheQpBbmQgZHJpdmluZyBkb3duIHRoZSByb2FkIEkgZ2V0IGEgZmVlbGluZwpUaGF0IEkgc2hvdWxkIGhhdmUgYmVlbiBob21lIHllc3RlcmRheSwgeWVzdGVyZGF5CkNvdW50cnkgcm9hZHMsIHRha2UgbWUgaG9tZQpUbyB0aGUgcGxhY2UgSSBiZWxvbmcKV2VzdCBWaXJnaW5pYSwgbW91bnRhaW4gbWFtYQpUYWtlIG1lIGhvbWUsIGNvdW50cnkgcm9hZHMKQ291bnRyeSByb2FkcywgdGFrZSBtZSBob21lClRvIHRoZSBwbGFjZSBJIGJlbG9uZwpXZXN0IFZpcmdpbmlhLCBtb3VudGFpbiBtYW1hClRha2UgbWUgaG9tZSwgY291bnRyeSByb2FkcwpUYWtlIG1lIGhvbWUsIGRvd24gY291bnRyeSByb2FkcwpUYWtlIG1lIGhvbWUsIGRvd24gY291bnRyeSByb2Fkcw==") == "Almost heaven, West Virginia\nBlue Ridge Mountains, Shenandoah River\nLife is old there, older than the trees\nYounger than the mountains, blowing like a breeze\nCountry roads, take me home\nTo the place I belong\nWest Virginia, mountain mama\nTake me home, country roads\nAll my memories gather round her\nMiner's lady, stranger to blue water\nDark and dusty, painted on the sky\nMisty taste of moonshine, teardrop in my eye\nCountry roads, take me home\nTo the place I belong\nWest Virginia, mountain mama\nTake me home, country roads\nI hear her voice, in the morning hour she calls me\nThe radio reminds me of my home far away\nAnd driving down the road I get a feeling\nThat I should have been home yesterday, yesterday\nCountry roads, take me home\nTo the place I belong\nWest Virginia, mountain mama\nTake me home, country roads\nCountry roads, take me home\nTo the place I belong\nWest Virginia, mountain mama\nTake me home, country roads\nTake me home, down country roads\nTake me home, down country roads", "(Base64) Country Roads failed to decode properly")
+
+    assert(decodeBase64("TWE") == "Ma", "(Base64) TWE failed to decode into Ma")
+    assert(decodeBase64("TQ") == "M", "(Base64) TQ failed to decode into M")
+    assert(decodeBase64("QmFieSBzaGFyaw") == "Baby shark", "(Base64) QmFieSBzaGFyaw failed to decode into Baby shark")
+
+    assert(decodeBase64("") == "", "(Base64) Empty string failed to decode")
+    assert(decodeBase64("Zg==") == "f", "(Base64) Zg== failed to decode into f")
+    assert(decodeBase64("Zm8=") == "fo", "(Base64) Zm8= failed to decode into fo")
+    assert(decodeBase64("Zm9v") == "foo", "(Base64) Zm9v failed to decode into foo")
+    assert(decodeBase64("Zm9vYg==") == "foob", "(Base64) Zm9vYg== failed to decode into foob")
+    assert(decodeBase64("Zm9vYmE=") == "fooba", "(Base64) Zm9vYmE= failed to decode into fooba")
+    assert(decodeBase64("Zm9vYmFy") == "foobar", "(Base64) Zm9vYmFy failed to decode into foobar")
+
+    assert(decodeBase64("QQBC") == "A\0B", "(Base64) QQBC failed to decode into A\\0B")
+    assert(decodeBase64("QQoJCw==") == "A\n\t\v", "(Base64) QQoJCw== failed to decode into A\\n\\t\\v")
+    assert(decodeBase64("4pi64pi7") == "☺☻", "(Base64) 4pi64pi7 failed to decode into ☺☻")
+    assert(decodeBase64("44OG44K544OI") == "テスト", "(Base64) 44OG44K544OI failed to decode into テスト")
+end
+
+return {
+    encode = encodeBase64,
+    decode = decodeBase64,
+}
+]]></ProtectedString>
                         <BinaryString name="Tags"></BinaryString>
                     </Properties>
-                    <Item class="ModuleScript" referent="RBX9e3a0d8e67d748a6a311e68092173f46">
-                        <Properties>
-                            <Content name="LinkedSource"><null></null></Content>
-                            <string name="Name">lockbox</string>
-                            <string name="ScriptGuid"></string>
-                            <ProtectedString name="Source"><![CDATA[local lockbox = {ALLOW_INSECURE = false}
+                </Item>
+                <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683addde5">
+                    <Properties>
+                        <Content name="LinkedSource"><null></null></Content>
+                        <string name="Name">hmac</string>
+                        <string name="ScriptGuid"></string>
+                        <ProtectedString name="Source"><![CDATA[local ASSERTIONS_ENABLED = false -- Whether to run several checks when the module is first loaded
 
-for _,v in pairs(script:GetChildren()) do
-    lockbox[v.Name] = v
+local INNER_PADDING_CHAR = string.char(0x36)
+local OUTER_PADDING_CHAR = string.char(0x5C)
+
+local binaryStringMap = {} -- For the sake of speed of converting hexes to strings, there's a map of the conversions here
+for i = 0, 255 do
+    binaryStringMap[string.format("%02x", i)] = string.char(i)
 end
 
-return lockbox
-]]></ProtectedString>
-                            <BinaryString name="Tags"></BinaryString>
-                        </Properties>
-                        <Item class="Folder" referent="RBX2dda4596184d45a4a91955d7738a62ab">
-                            <Properties>
-                                <string name="Name">util</string>
-                                <BinaryString name="Tags"></BinaryString>
-                            </Properties>
-                            <Item class="ModuleScript" referent="RBX2e1e8e5695804d9eaf55991d9c18e2b8">
-                                <Properties>
-                                    <Content name="LinkedSource"><null></null></Content>
-                                    <string name="Name">stream</string>
-                                    <string name="ScriptGuid"></string>
-                                    <ProtectedString name="Source"><![CDATA[local lockbox = script.Parent.Parent
-
-local Queue = require(lockbox.util.queue);
-local String = string;
-
-local Stream = {};
-
-
-Stream.fromString = function(string)
-    local i=0;
-    return function()
-        i=i+1;
-        if(i <= String.len(string)) then
-            return String.byte(string,i);
-        else
-            return nil;
-        end
+--- XORs two strings together on a byte level
+local function xorStrings(str1, str2)
+    local output = {}
+    for i = 1, #str1 do
+        output[i] = string.char(bit32.bxor(string.byte(str1, i), string.byte(str2, i)))
     end
+    return table.concat(output)
 end
 
+--- Converts hex strings to their binary equivalent
+local function hexToBinary(string)
+    return ( string.gsub(string, "%x%x", binaryStringMap) )
+end
 
-Stream.toString = function(stream)
-    local array = {};
-    local i=1;
+--- Outputs a HMAC string (in hex) given a key, message, hashing function, and block size.
+--- Optionally accepts an output size to truncate the HMAC to, and a boolean to indicate whether to output the data as a binary string or not.
+--- Both blockSize and outputSize are in bytes for ease of computation.
+local function hmac(key, message, hash, blockSize, outputSize, asBinaryData)
+    local innerPadding = string.rep(INNER_PADDING_CHAR, blockSize)
+    local outerPadding = string.rep(OUTER_PADDING_CHAR, blockSize)
 
-    local byte = stream();
-    while byte ~= nil do
-        array[i] = String.char(byte);
-        i = i+1;
-        byte = stream();
+    if #key > blockSize then
+        key = hexToBinary(hash(key))
     end
-
-    return table.concat(array,"");
-end
-
-
-Stream.fromArray = function(array)
-    local queue = Queue();
-    local i=1;
-
-    local byte = array[i];
-    while byte ~= nil do
-        queue.push(byte);
-        i=i+1;
-        byte = array[i];
+    if #key < blockSize then
+        key = key..string.rep("\0", blockSize-#key)
     end
+    local outerKey = xorStrings(key, outerPadding)
+    local innerKey = xorStrings(key, innerPadding)
 
-    return queue.pop;
-end
+    local mac = hash( outerKey..hexToBinary(hash(innerKey..message)) )
 
-
-Stream.toArray = function(stream)
-    local array = {};
-    local i=1;
-
-    local byte = stream();
-    while byte ~= nil do
-        array[i] = byte;
-        i = i+1;
-        byte = stream();
-    end
-
-    return array;
-end
-
-
-local fromHexTable = {};
-for i=0,255 do
-    fromHexTable[String.format("%02X",i)]=i;
-    fromHexTable[String.format("%02x",i)]=i;
-end
-
-Stream.fromHex = function(hex)
-    local queue = Queue();
-
-    for i=1,String.len(hex)/2 do
-        local h = String.sub(hex,i*2-1,i*2);
-        queue.push(fromHexTable[h]);
-    end
-
-    return queue.pop;
-end
-
-
-
-local toHexTable = {};
-for i=0,255 do
-    toHexTable[i]=String.format("%02X",i);
-end
-
-Stream.toHex = function(stream)
-    local hex = {};
-    local i = 1;
-
-    local byte = stream();
-    while byte ~= nil do
-        hex[i] = toHexTable[byte];
-        i=i+1;
-        byte = stream();
-    end
-
-    return table.concat(hex,"");
-end
-
-return Stream;
-]]></ProtectedString>
-                                    <BinaryString name="Tags"></BinaryString>
-                                </Properties>
-                            </Item>
-                            <Item class="ModuleScript" referent="RBX6fd16a0a5a5140d2adf1c03caeec1b69">
-                                <Properties>
-                                    <Content name="LinkedSource"><null></null></Content>
-                                    <string name="Name">queue</string>
-                                    <string name="ScriptGuid"></string>
-                                    <ProtectedString name="Source"><![CDATA[local Queue = function()
-    local queue = {};
-    local tail = 0;
-    local head = 0;
-
-    local public = {};
-
-    public.push = function(obj)
-        queue[head] = obj;
-        head = head + 1;
-        return;
-    end
-
-    public.pop = function()
-        if tail < head
-        then
-            local obj = queue[tail];
-            queue[tail] = nil;
-            tail = tail + 1;
-            return obj;
-        else
-            return nil;
-        end
-    end
-
-    public.size = function()
-        return head - tail;
-    end
-
-    public.getHead = function()
-        return head;
-    end
-
-    public.getTail = function()
-        return tail;
-    end
-
-    public.reset = function()
-        queue = {};
-        head = 0;
-        tail = 0;
-    end
-
-    return public;
-end
-
-return Queue;
-]]></ProtectedString>
-                                    <BinaryString name="Tags"></BinaryString>
-                                </Properties>
-                            </Item>
-                            <Item class="ModuleScript" referent="RBX87e03de0ae5c4c32a1cd8874ef1a02bd">
-                                <Properties>
-                                    <Content name="LinkedSource"><null></null></Content>
-                                    <string name="Name">array</string>
-                                    <string name="ScriptGuid"></string>
-                                    <ProtectedString name="Source"><![CDATA[local lockbox = script.Parent.Parent
-
-local String = string;
-local Queue = require(lockbox.util.queue);
-local Bit = require(lockbox.util.bit);
-
-local XOR = Bit.bxor;
-
-local Array = {};
-
-Array.size = function(array)
-    return #array;
-end
-
-Array.fromString = function(string)
-    local bytes = {};
-
-    local i=1;
-    local byte = String.byte(string,i);
-    while byte ~= nil do
-        bytes[i] = byte;
-        i = i + 1;
-        byte = String.byte(string,i);
-    end
-
-    return bytes;
-
-end
-
-Array.toString = function(bytes)
-    local chars = {};
-    local i=1;
-
-    local byte = bytes[i];
-    while byte ~= nil do
-        chars[i] = String.char(byte);
-        i = i+1;
-        byte = bytes[i];
-    end
-
-    return table.concat(chars,"");
-end
-
-Array.fromStream = function(stream)
-    local array = {};
-    local i=1;
-
-    local byte = stream();
-    while byte ~= nil do
-        array[i] = byte;
-        i = i+1;
-        byte = stream();
-    end
-
-    return array;
-end
-
-Array.readFromQueue = function(queue,size)
-    local array = {};
-
-    for i=1,size do
-        array[i] = queue.pop();
-    end
-
-    return array;
-end
-
-Array.writeToQueue = function(queue,array)
-    local size = Array.size(array);
-
-    for i=1,size do
-        queue.push(array[i]);
-    end
-end
-
-Array.toStream = function(array)
-    local queue = Queue();
-    local i=1;
-
-    local byte = array[i];
-    while byte ~= nil do
-        queue.push(byte);
-        i=i+1;
-        byte = array[i];
-    end
-
-    return queue.pop;
-end
-
-
-local fromHexTable = {};
-for i=0,255 do
-    fromHexTable[String.format("%02X",i)]=i;
-    fromHexTable[String.format("%02x",i)]=i;
-end
-
-Array.fromHex = function(hex)
-    local array = {};
-
-    for i=1,String.len(hex)/2 do
-        local h = String.sub(hex,i*2-1,i*2);
-        array[i] = fromHexTable[h];
-    end
-
-    return array;
-end
-
-
-local toHexTable = {};
-for i=0,255 do
-    toHexTable[i]=String.format("%02X",i);
-end
-
-Array.toHex = function(array)
-    local hex = {};
-    local i = 1;
-
-    local byte = array[i];
-    while byte ~= nil do
-        hex[i] = toHexTable[byte];
-        i=i+1;
-        byte = array[i];
-    end
-
-    return table.concat(hex,"");
-
-end
-
-Array.concat = function(a,b)
-    local concat = {};
-    local out=1;
-
-    local i=1;
-    local byte = a[i];
-    while byte ~= nil do
-        concat[out] = byte;
-        i = i + 1;
-        out = out + 1;
-        byte = a[i];
-    end
-
-    i=1;
-    byte = b[i];
-    while byte ~= nil do
-        concat[out] = byte;
-        i = i + 1;
-        out = out + 1;
-        byte = b[i];
-    end
-
-    return concat;
-end
-
-Array.truncate = function(a,newSize)
-    local x = {};
-
-    for i=1,newSize do
-        x[i]=a[i];
-    end
-
-    return x;
-end
-
-Array.XOR = function(a,b)
-    local x = {};
-
-    for k,v in pairs(a) do
-        x[k] = XOR(v,b[k]);
-    end
-
-    return x;
-end
-
-Array.substitute = function(input,sbox)
-    local out = {};
-
-    for k,v in pairs(input) do
-        out[k] = sbox[v];
-    end
-
-    return out;
-end
-
-Array.permute = function(input,pbox)
-    local out = {};
-
-    for k,v in pairs(pbox) do
-        out[k] = input[v];
-    end
-
-    return out;
-end
-
-Array.copy = function(input)
-    local out = {};
-
-    for k,v in pairs(input) do
-        out[k] = v;
-    end
-    return out;
-end
-
-Array.slice = function(input,start,stop)
-    local out = {};
-
-    for i=start,stop do
-        out[i-start+1] = input[i];
-    end
-    return out;
-end
-
-return Array;
-]]></ProtectedString>
-                                    <BinaryString name="Tags"></BinaryString>
-                                </Properties>
-                            </Item>
-                            <Item class="ModuleScript" referent="RBXab0edb14e1a7431d84930f2cd95e5919">
-                                <Properties>
-                                    <Content name="LinkedSource"><null></null></Content>
-                                    <string name="Name">base64</string>
-                                    <string name="ScriptGuid"></string>
-                                    <ProtectedString name="Source"><![CDATA[local lockbox = script.Parent.Parent
-
-local String = string;
-local Bit = require(lockbox.util.bit);
-
-local Array = require(lockbox.util.array);
-local Stream = require(lockbox.util.stream);
-
-local AND = Bit.band;
-local OR  = Bit.bor;
-local NOT = Bit.bnot;
---local XOR = Bit.bxor;
---local LROT = Bit.lrotate;
---local RROT = Bit.rrotate;
-local LSHIFT = Bit.lshift;
-local RSHIFT = Bit.rshift;
-
-
-local SYMBOLS = {
-[0]="A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P",
-    "Q","R","S","T","U","V","W","X","Y","Z","a","b","c","d","e","f",
-    "g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v",
-    "w","x","y","z","0","1","2","3","4","5","6","7","8","9","+","/"};
-
-local LOOKUP = {};
-
-for k,v in pairs(SYMBOLS) do
-    LOOKUP[k]=v;
-    LOOKUP[v]=k;
-end
-
-
-local Base64 = {};
-
-Base64.fromStream = function(stream)
-    local bits = 0x00;
-    local bitCount = 0;
-    local base64 = {};
-
-    local byte = stream();
-    while byte ~= nil do
-        bits = OR(LSHIFT(bits,8),byte);
-        bitCount = bitCount + 8;
-        while bitCount >= 6 do
-            bitCount = bitCount - 6;
-            local temp = RSHIFT(bits,bitCount);
-            table.insert(base64,LOOKUP[temp]);
-            bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
-        end
-        byte = stream();
-    end
-
-    if (bitCount == 4) then
-        bits = LSHIFT(bits,2);
-        table.insert(base64,LOOKUP[bits]);
-        table.insert(base64,"=");
-    elseif (bitCount == 2) then
-        bits = LSHIFT(bits,4);
-        table.insert(base64,LOOKUP[bits]);
-        table.insert(base64,"==");
-    end
-
-    return table.concat(base64,"");
-end
-
-Base64.fromArray = function(array)
-    local bits = 0x00;
-    local bitCount = 0;
-    local base64 = {};
-
-    local ind = 1;
-
-    local byte = array[ind]; ind = ind + 1;
-    while byte ~= nil do
-        bits = OR(LSHIFT(bits,8),byte);
-        bitCount = bitCount + 8;
-        while bitCount >= 6 do
-            bitCount = bitCount - 6;
-            local temp = RSHIFT(bits,bitCount);
-            table.insert(base64,LOOKUP[temp]);
-            bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
-        end
-        byte = array[ind]; ind = ind + 1;
-    end
-
-    if (bitCount == 4) then
-        bits = LSHIFT(bits,2);
-        table.insert(base64,LOOKUP[bits]);
-        table.insert(base64,"=");
-    elseif (bitCount == 2) then
-        bits = LSHIFT(bits,4);
-        table.insert(base64,LOOKUP[bits]);
-        table.insert(base64,"==");
-    end
-
-    return table.concat(base64,"");
-end
-
-Base64.fromString = function(string)
-    return Base64.fromArray(Array.fromString(string));
-end
-
-
-
-Base64.toStream = function(base64)
-    return Stream.fromArray(Base64.toArray(base64));
-end
-
-Base64.toArray = function(base64)
-    local bits = 0x00;
-    local bitCount = 0;
-
-    local bytes = {};
-
-    for c in String.gmatch(base64,".") do
-        if (c == "=") then
-            bits = RSHIFT(bits,2); bitCount = bitCount - 2;
-        else
-            bits = LSHIFT(bits,6); bitCount = bitCount + 6;
-            bits = OR(bits,LOOKUP[c]);
-        end
-
-        while(bitCount >= 8) do
-            bitCount = bitCount - 8;
-            local temp = RSHIFT(bits,bitCount);
-            table.insert(bytes,temp);
-            bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
-        end
-    end
-
-    return bytes;
-end
-
-Base64.toString = function(base64)
-    local bits = 0x00;
-    local bitCount = 0;
-
-    local chars = {};
-
-    for c in String.gmatch(base64,".") do
-        if (c == "=") then
-            bits = RSHIFT(bits,2); bitCount = bitCount - 2;
-        else
-            bits = LSHIFT(bits,6); bitCount = bitCount + 6;
-            bits = OR(bits,LOOKUP[c]);
-        end
-
-        while(bitCount >= 8) do
-            bitCount = bitCount - 8;
-            local temp = RSHIFT(bits,bitCount);
-            table.insert(chars,String.char(temp));
-            bits = AND(bits,NOT(LSHIFT(0xFFFFFFFF,bitCount)));
-        end
-    end
-
-    return table.concat(chars,"");
-end
-
-return Base64;
-]]></ProtectedString>
-                                    <BinaryString name="Tags"></BinaryString>
-                                </Properties>
-                            </Item>
-                            <Item class="ModuleScript" referent="RBXe0335e45fc804c34a6c9e8af63aaae2b">
-                                <Properties>
-                                    <Content name="LinkedSource"><null></null></Content>
-                                    <string name="Name">bit</string>
-                                    <string name="ScriptGuid"></string>
-                                    <ProtectedString name="Source"><![CDATA[local lockbox = script.Parent.Parent
-
-e = require(lockbox).bit
-
-if not e then
-    error("no bitwise support found", 2)
-end
-
--- Workaround to support Lua 5.2 bit32 API with the LuaJIT bit one
-if e.rol and not e.lrotate then
-    e.lrotate = e.rol
-end
-if e.ror and not e.rrotate then
-    e.rrotate = e.ror
-end
-
-return e
-]]></ProtectedString>
-                                    <BinaryString name="Tags"></BinaryString>
-                                </Properties>
-                            </Item>
-                        </Item>
-                        <Item class="Folder" referent="RBXdc2f1f7d26b248fbbed00705303d8be4">
-                            <Properties>
-                                <string name="Name">mac</string>
-                                <BinaryString name="Tags"></BinaryString>
-                            </Properties>
-                            <Item class="ModuleScript" referent="RBXbe6ae6e782124123884e3623c338888e">
-                                <Properties>
-                                    <Content name="LinkedSource"><null></null></Content>
-                                    <string name="Name">hmac</string>
-                                    <string name="ScriptGuid"></string>
-                                    <ProtectedString name="Source"><![CDATA[local lockbox = script.Parent.Parent
-
-local Bit = require(lockbox.util.bit);
---local String = string;
-local Stream = require(lockbox.util.stream);
-local Array = require(lockbox.util.array);
-
-local XOR = Bit.bxor;
-
-local HMAC = function()
-
-    local public = {};
-    local blockSize = 64;
-    local Digest = nil;
-    local outerPadding = {};
-    local innerPadding = {}
-    local digest;
-
-    public.setBlockSize = function(bytes)
-        blockSize = bytes;
-        return public;
-    end
-
-    public.setDigest = function(digestModule)
-        Digest = digestModule;
-        digest = Digest();
-        return public;
-    end
-
-    public.setKey = function(key)
-        local keyStream;
-
-        if(Array.size(key) > blockSize) then
-            keyStream = Stream.fromArray(Digest()
-                        .update(Stream.fromArray(key))
-                        .finish()
-                        .asBytes());
-        else
-            keyStream = Stream.fromArray(key);
-        end
-
-        outerPadding = {};
-        innerPadding = {};
-
-        for i=1,blockSize do
-            local byte = keyStream();
-            if byte == nil then byte = 0x00; end
-            outerPadding[i] = XOR(0x5C,byte);
-            innerPadding[i] = XOR(0x36,byte);
-        end
-
-        return public;
-    end
-
-    public.init = function()
-        digest    .init()
-                .update(Stream.fromArray(innerPadding));
-        return public;
-    end
-
-    public.update = function(messageStream)
-        digest.update(messageStream);
-        return public;
-    end
-
-    public.finish = function()
-        local inner = digest.finish().asBytes();
-        digest    .init()
-                .update(Stream.fromArray(outerPadding))
-                .update(Stream.fromArray(inner))
-                .finish();
-
-        return public;
-    end
-
-    public.asBytes = function()
-        return digest.asBytes();
-    end
-
-    public.asHex = function()
-        return digest.asHex();
-    end
-
-    return public;
-
-end
-
-return HMAC;
-]]></ProtectedString>
-                                    <BinaryString name="Tags"></BinaryString>
-                                </Properties>
-                            </Item>
-                        </Item>
-                        <Item class="Folder" referent="RBX04e894e82e894852a78bbe267f159152">
-                            <Properties>
-                                <string name="Name">digest</string>
-                                <BinaryString name="Tags"></BinaryString>
-                            </Properties>
-                            <Item class="ModuleScript" referent="RBX7fc7f21985054de0bab9afe1363b36b3">
-                                <Properties>
-                                    <Content name="LinkedSource"><null></null></Content>
-                                    <string name="Name">sha2_256</string>
-                                    <string name="ScriptGuid"></string>
-                                    <ProtectedString name="Source"><![CDATA[local lockbox = script.Parent.Parent
-
-local Bit = require(lockbox.util.bit);
-local String = string;
-local Math = math;
-local Queue = require(lockbox.util.queue);
-local heartbeat = game:GetService("RunService").Heartbeat
-
-local CONSTANTS = {
-   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-   0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-   0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-   0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-   0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-   0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-   0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-   0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2  };
-
-local AND = Bit.band;
-local OR  = Bit.bor;
-local NOT = Bit.bnot;
-local XOR = Bit.bxor;
---local LROT = Bit.lrotate;
-local RROT = Bit.rrotate;
-local LSHIFT = Bit.lshift;
-local RSHIFT = Bit.rshift;
-
---SHA2 is big-endian
-local bytes2word = function(b0,b1,b2,b3)
-    local i = b0; i = LSHIFT(i,8);
-    i = OR(i,b1); i = LSHIFT(i,8);
-    i = OR(i,b2); i = LSHIFT(i,8);
-    i = OR(i,b3);
-    return i;
-end
-
-local word2bytes = function(word)
-    local b0,b1,b2,b3;
-    b3 = AND(word,0xFF); word = RSHIFT(word,8);
-    b2 = AND(word,0xFF); word = RSHIFT(word,8);
-    b1 = AND(word,0xFF); word = RSHIFT(word,8);
-    b0 = AND(word,0xFF);
-    return b0,b1,b2,b3;
-end
-
--- local bytes2dword = function(b0,b1,b2,b3,b4,b5,b6,b7)
---     local i = bytes2word(b0,b1,b2,b3);
---     local j = bytes2word(b4,b5,b6,b7);
---     return (i*0x100000000)+j;
--- end
-
-local dword2bytes = function(i)
-    local b4,b5,b6,b7 = word2bytes(i);
-    local b0,b1,b2,b3 = word2bytes(Math.floor(i/0x100000000));
-    return b0,b1,b2,b3,b4,b5,b6,b7;
-end
-
-
-
-
-local SHA2_256 = function()
-
-    local queue = Queue();
-
-    local h0 = 0x6a09e667;
-    local h1 = 0xbb67ae85;
-    local h2 = 0x3c6ef372;
-    local h3 = 0xa54ff53a;
-    local h4 = 0x510e527f;
-    local h5 = 0x9b05688c;
-    local h6 = 0x1f83d9ab;
-    local h7 = 0x5be0cd19;
-
-    local public = {};
-
-    local processBlock = function()
-
-        local a = h0;
-        local b = h1;
-        local c = h2;
-        local d = h3;
-        local e = h4;
-        local f = h5;
-        local g = h6;
-        local h = h7;
-
-        local w = {};
-        for i=0,15 do
-            w[i] = bytes2word(queue.pop(),queue.pop(),queue.pop(),queue.pop());
-        end
-
-        heartbeat:Wait()
-
-        for i=16,63 do
-            if i%20 == 0 then
-                heartbeat:Wait()
-            end
-            local s0 = XOR(RROT(w[i-15],7), XOR(RROT(w[i-15],18), RSHIFT(w[i-15],3)));
-            local s1 = XOR(RROT(w[i-2],17), XOR(RROT(w[i-2], 19), RSHIFT(w[i-2],10)));
-            w[i] = AND(w[i-16] + s0 + w[i-7] + s1, 0xFFFFFFFF);
-        end
-
-        for i=0,63 do
-            if i%12 == 0 then
-                heartbeat:Wait()
-            end
-            local s1 = XOR(RROT(e,6), XOR(RROT(e,11),RROT(e,25)));
-            local ch = XOR(AND(e,f), AND(NOT(e),g));
-            local temp1 = h + s1 + ch + CONSTANTS[i+1] + w[i];
-            local s0 = XOR(RROT(a,2), XOR(RROT(a,13), RROT(a,22)));
-            local maj = XOR(AND(a,b), XOR(AND(a,c), AND(b,c)));
-            local temp2 = s0 + maj;
-
-            h = g;
-            g = f;
-            f = e;
-            e = d + temp1;
-            d = c;
-            c = b;
-            b = a;
-            a = temp1 + temp2;
-        end
-
-        h0 = AND(h0 + a, 0xFFFFFFFF);
-        h1 = AND(h1 + b, 0xFFFFFFFF);
-        h2 = AND(h2 + c, 0xFFFFFFFF);
-        h3 = AND(h3 + d, 0xFFFFFFFF);
-        h4 = AND(h4 + e, 0xFFFFFFFF);
-        h5 = AND(h5 + f, 0xFFFFFFFF);
-        h6 = AND(h6 + g, 0xFFFFFFFF);
-        h7 = AND(h7 + h, 0xFFFFFFFF);
-        heartbeat:Wait()
-    end
-
-    public.init = function()
-        queue.reset();
-
-        h0 = 0x6a09e667;
-        h1 = 0xbb67ae85;
-        h2 = 0x3c6ef372;
-        h3 = 0xa54ff53a;
-        h4 = 0x510e527f;
-        h5 = 0x9b05688c;
-        h6 = 0x1f83d9ab;
-        h7 = 0x5be0cd19;
-
-        return public;
-    end
-
-    public.update = function(bytes)
-
-        for b in bytes do
-            queue.push(b);
-            if queue.size() >= 64 then processBlock(); end
-        end
-
-        return public;
-    end
-
-    public.finish = function()
-        local bits = queue.getHead() * 8;
-
-        queue.push(0x80);
-        while ((queue.size()+7) % 64) < 63 do
-            queue.push(0x00);
-        end
-
-        local b0,b1,b2,b3,b4,b5,b6,b7 = dword2bytes(bits);
-
-        queue.push(b0);
-        queue.push(b1);
-        queue.push(b2);
-        queue.push(b3);
-        queue.push(b4);
-        queue.push(b5);
-        queue.push(b6);
-        queue.push(b7);
-
-        while queue.size() > 0 do
-            processBlock();
-        end
-
-        return public;
-    end
-
-    public.asBytes = function()
-        local  b0, b1, b2, b3 = word2bytes(h0);
-        local  b4, b5, b6, b7 = word2bytes(h1);
-        local  b8, b9,b10,b11 = word2bytes(h2);
-        local b12,b13,b14,b15 = word2bytes(h3);
-        local b16,b17,b18,b19 = word2bytes(h4);
-        local b20,b21,b22,b23 = word2bytes(h5);
-        local b24,b25,b26,b27 = word2bytes(h6);
-        local b28,b29,b30,b31 = word2bytes(h7);
-
-
-        return {  b0, b1, b2, b3, b4, b5, b6, b7, b8, b9,b10,b11,b12,b13,b14,b15
-                ,b16,b17,b18,b19,b20,b21,b22,b23,b24,b25,b26,b27,b28,b29,b30,b31};
-    end
-
-    public.asHex = function()
-        local  b0, b1, b2, b3 = word2bytes(h0);
-        local  b4, b5, b6, b7 = word2bytes(h1);
-        local  b8, b9,b10,b11 = word2bytes(h2);
-        local b12,b13,b14,b15 = word2bytes(h3);
-        local b16,b17,b18,b19 = word2bytes(h4);
-        local b20,b21,b22,b23 = word2bytes(h5);
-        local b24,b25,b26,b27 = word2bytes(h6);
-        local b28,b29,b30,b31 = word2bytes(h7);
-
-        local fmt = "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-
-        return String.format(fmt, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9,b10,b11,b12,b13,b14,b15
-                ,b16,b17,b18,b19,b20,b21,b22,b23,b24,b25,b26,b27,b28,b29,b30,b31);
-    end
-
-    return public;
-
-end
-
-return SHA2_256;
-]]></ProtectedString>
-                                    <BinaryString name="Tags"></BinaryString>
-                                </Properties>
-                            </Item>
-                        </Item>
-                    </Item>
-                    <Item class="ModuleScript" referent="RBX6d336f35031d46fd9427cab63c89cfba">
-                        <Properties>
-                            <Content name="LinkedSource"><null></null></Content>
-                            <string name="Name">bit</string>
-                            <string name="ScriptGuid"></string>
-                            <ProtectedString name="Source"><![CDATA[local M = {_TYPE='module', _NAME='bit.numberlua', _VERSION='0.3.1.20120131'}
-
-M.bits = 32
-
-local floor = math.floor
-
-local MOD = 2^32
-local MODM = MOD-1
-
-local function memoize(f)
-  local mt = {}
-  local t = setmetatable({}, mt)
-  function mt:__index(k)
-    local v = f(k); t[k] = v
-    return v
-  end
-  return t
-end
-
-local function make_bitop_uncached(t, m)
-  local function bitop(a, b)
-    local res,p = 0,1
-    while a ~= 0 and b ~= 0 do
-      local am, bm = a%m, b%m
-      res = res + t[am][bm]*p
-      a = (a - am) / m
-      b = (b - bm) / m
-      p = p*m
-    end
-    res = res + (a+b)*p
-    return res
-  end
-  return bitop
-end
-
-local function make_bitop(t)
-  local op1 = make_bitop_uncached(t,2^1)
-  local op2 = memoize(function(a)
-    return memoize(function(b)
-      return op1(a, b)
-    end)
-  end)
-  return make_bitop_uncached(op2, 2^(t.n or 1))
-end
-
--- ok?  probably not if running on a 32-bit int Lua number type platform
-function M.tobit(x)
-  return x % 2^32
-end
-
-M.cast = M.tobit
-
-M.bxor = make_bitop {[0]={[0]=0,[1]=1},[1]={[0]=1,[1]=0}, n=4}
-local bxor = M.bxor
-
-function M.bnot(a)   return MODM - a end
-local bnot = M.bnot
-
-function M.band(a,b) return ((a+b) - bxor(a,b))/2 end
-local band = M.band
-
-function M.bor(a,b)  return MODM - band(MODM - a, MODM - b) end
-local bor = M.bor
-
-local lshift, rshift -- forward declare
-
-function M.rshift(a,disp) -- Lua5.2 insipred
-  if disp < 0 then return lshift(a,-disp) end
-  return floor(a % 2^32 / 2^disp)
-end
-rshift = M.rshift
-
-function M.lshift(a,disp) -- Lua5.2 inspired
-  if disp < 0 then return rshift(a,-disp) end
-  return (a * 2^disp) % 2^32
-end
-lshift = M.lshift
-
-function M.tohex(x, n) -- BitOp style
-  n = n or 8
-  local up
-  if n <= 0 then
-    if n == 0 then return '' end
-    up = true
-    n = - n
-  end
-  x = band(x, 16^n-1)
-  return ('%0'..n..(up and 'X' or 'x')):format(x)
-end
-local tohex = M.tohex
-
-function M.extract(n, field, width) -- Lua5.2 inspired
-  width = width or 1
-  return band(rshift(n, field), 2^width-1)
-end
-local extract = M.extract
-
-function M.replace(n, v, field, width) -- Lua5.2 inspired
-  width = width or 1
-  local mask1 = 2^width-1
-  v = band(v, mask1) -- required by spec?
-  local mask = bnot(lshift(mask1, field))
-  return band(n, mask) + lshift(v, field)
-end
-local replace = M.replace
-
-function M.bswap(x)  -- BitOp style
-  local a = band(x, 0xff); x = rshift(x, 8)
-  local b = band(x, 0xff); x = rshift(x, 8)
-  local c = band(x, 0xff); x = rshift(x, 8)
-  local d = band(x, 0xff)
-  return lshift(lshift(lshift(a, 8) + b, 8) + c, 8) + d
-end
-local bswap = M.bswap
-
-function M.rrotate(x, disp)  -- Lua5.2 inspired
-  disp = disp % 32
-  local low = band(x, 2^disp-1)
-  return rshift(x, disp) + lshift(low, 32-disp)
-end
-local rrotate = M.rrotate
-
-function M.lrotate(x, disp)  -- Lua5.2 inspired
-  return rrotate(x, -disp)
-end
-local lrotate = M.lrotate
-
-M.rol = M.lrotate  -- LuaOp inspired
-M.ror = M.rrotate  -- LuaOp insipred
-
-
-function M.arshift(x, disp) -- Lua5.2 inspired
-  local z = rshift(x, disp)
-  if x >= 0x80000000 then z = z + lshift(2^disp-1, 32-disp) end
-  return z
-end
-local arshift = M.arshift
-
-function M.btest(x, y) -- Lua5.2 inspired
-  return band(x, y) ~= 0
-end
-
---
--- Start Lua 5.2 "bit32" compat section.
---
-
-M.bit32 = {} -- Lua 5.2 'bit32' compatibility
-
-M.bit32.bits = M.bits
-
-M.bit32.cast = M.cast
-
-local function bit32_bnot(x)
-  return (-1 - x) % MOD
-end
-M.bit32.bnot = bit32_bnot
-
-local function bit32_bxor(a, b, c, ...)
-  local z
-  if b then
-    a = a % MOD
-    b = b % MOD
-    z = bxor(a, b)
-    if c then
-      z = bit32_bxor(z, c, ...)
-    end
-    return z
-  elseif a then
-    return a % MOD
-  else
-    return 0
-  end
-end
-M.bit32.bxor = bit32_bxor
-
-local function bit32_band(a, b, c, ...)
-  local z
-  if b then
-    a = a % MOD
-    b = b % MOD
-    z = ((a+b) - bxor(a,b)) / 2
-    if c then
-      z = bit32_band(z, c, ...)
-    end
-    return z
-  elseif a then
-    return a % MOD
-  else
-    return MODM
-  end
-end
-M.bit32.band = bit32_band
-
-local function bit32_bor(a, b, c, ...)
-  local z
-  if b then
-    a = a % MOD
-    b = b % MOD
-    z = MODM - band(MODM - a, MODM - b)
-    if c then
-      z = bit32_bor(z, c, ...)
-    end
-    return z
-  elseif a then
-    return a % MOD
-  else
-    return 0
-  end
-end
-M.bit32.bor = bit32_bor
-
-function M.bit32.btest(...)
-  return bit32_band(...) ~= 0
-end
-
-function M.bit32.lrotate(x, disp)
-  return lrotate(x % MOD, disp)
-end
-
-function M.bit32.rrotate(x, disp)
-  return rrotate(x % MOD, disp)
-end
-
-function M.bit32.lshift(x,disp)
-  if disp > 31 or disp < -31 then return 0 end
-  return lshift(x % MOD, disp)
-end
-
-function M.bit32.rshift(x,disp)
-  if disp > 31 or disp < -31 then return 0 end
-  return rshift(x % MOD, disp)
-end
-
-function M.bit32.arshift(x,disp)
-  x = x % MOD
-  if disp >= 0 then
-    if disp > 31 then
-      return (x >= 0x80000000) and MODM or 0
+    local output;
+    if outputSize then
+        output = string.sub(mac, 1, outputSize*2) -- Today's gross hack is brought to you by every byte being represented by two hex digits
     else
-      local z = rshift(x, disp)
-      if x >= 0x80000000 then z = z + lshift(2^disp-1, 32-disp) end
-      return z
+        output = mac
     end
-  else
-    return lshift(x, -disp)
-  end
+    if asBinaryData then
+        return hexToBinary(output)
+    else
+        return output
+    end
 end
 
-function M.bit32.extract(x, field, ...)
-  local width = ... or 1
-  if field < 0 or field > 31 or width < 0 or field+width > 32 then error 'out of range' end
-  x = x % MOD
-  return extract(x, field, ...)
+if ASSERTIONS_ENABLED then
+    local sha256 = require(script.Parent.sha256)
+    -- SHA-256 tests (https://tools.ietf.org/html/rfc4231)
+    assert(hmac(string.rep(string.char(0x0b), 20), "Hi There", sha256, 64) == "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7", "(HMAC-SHA-256) RFC test case 1 hash does not match")
+
+    assert(hmac("Jefe", "what do ya want for nothing?", sha256, 64) == "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843", "(HMAC-SHA-256) RFC test case 2 hash does not match")
+
+    assert(hmac(string.rep(string.char(0xaa), 20), string.rep(string.char(0xdd), 50), sha256, 64) == "773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe", "(HMAC-SHA-256) RFC test case 3 hash does not match")
+
+    assert(hmac(hexToBinary("0102030405060708090a0b0c0d0e0f10111213141516171819"), string.rep(string.char(0xcd), 50), sha256, 64) == "82558a389a443c0ea4cc819899f2083a85f0faa3e578f8077a2e3ff46729665b", "(HMAC-SHA-256) RFC test case 4 hash does not match")
+
+    assert(hmac(string.rep(string.char(0x0c), 20), "Test With Truncation", sha256, 64, 16) == "a3b6167473100ee06e0c796c2955552b", "(HMAC-SHA-256) RFC test case 5 hash does not match")
+
+    assert(hmac(string.rep(string.char(0xaa), 131), "Test Using Larger Than Block-Size Key - Hash Key First", sha256, 64) == "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54", "(HMAC-SHA-256) RFC test case 6 hash does not match")
+
+    assert(hmac(string.rep(string.char(0xaa), 131), "This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm.", sha256, 64) == "9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2", "(HMAC-SHA-256) RFC test case 7 hash does not match")
+
+    -- Tests explicitly for binary data output
+    assert(hmac(string.rep(string.char(0x0b), 20), "Hi There", sha256, 64, nil, true) == "\176\52\76\97\216\219\56\83\92\168\175\206\175\11\241\43\136\29\194\0\201\131\61\167\38\233\55\108\46\50\207\247", "(HMAC-SHA-256) RFC test case 1 hash as binary does not match")
+
+    assert(hmac("Jefe", "what do ya want for nothing?", sha256, 64, nil, true) == "\91\220\193\70\191\96\117\78\106\4\36\38\8\149\117\199\90\0\63\8\157\39\57\131\157\236\88\185\100\236\56\67", "(HMAC-SHA-256) RFC test case 2 hash as binary does not match")
+
+    assert(hmac(string.rep(string.char(0xaa), 20), string.rep(string.char(0xdd), 50), sha256, 64, nil, true) == "\119\62\169\30\54\128\14\70\133\77\184\235\208\145\129\167\41\89\9\139\62\248\193\34\217\99\85\20\206\213\101\254", "(HMAC-SHA-256) RFC test case 3 hash as binary does not match")
+
+    assert(hmac(hexToBinary("0102030405060708090a0b0c0d0e0f10111213141516171819"), string.rep(string.char(0xcd), 50), sha256, 64, nil, true) == "\130\85\138\56\154\68\60\14\164\204\129\152\153\242\8\58\133\240\250\163\229\120\248\7\122\46\63\244\103\41\102\91", "(HMAC-SHA-256) RFC test case 4 hash as binary does not match")
+
+    assert(hmac(string.rep(string.char(0x0c), 20), "Test With Truncation", sha256, 64, 16, true) == "\163\182\22\116\115\16\14\224\110\12\121\108\41\85\85\43", "(HMAC-SHA-256) RFC test case 5 hash as binary does not match")
+
+    assert(hmac(string.rep(string.char(0xaa), 131), "Test Using Larger Than Block-Size Key - Hash Key First", sha256, 64, nil, true) == "\96\228\49\89\30\224\182\127\13\138\38\170\203\245\183\127\142\11\198\33\55\40\197\20\5\70\4\15\14\227\127\84", "(HMAC-SHA-256) RFC test case 6 hash as binary does not match")
+
+    assert(hmac(string.rep(string.char(0xaa), 131), "This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm.", sha256, 64, nil, true) == "\155\9\255\167\27\148\47\203\39\99\95\188\213\176\233\68\191\220\99\100\79\7\19\147\138\127\81\83\92\58\53\226", "(HMAC-SHA-256) RFC test case 7 hash as binary does not match")
 end
 
-function M.bit32.replace(x, v, field, ...)
-  local width = ... or 1
-  if field < 0 or field > 31 or width < 0 or field+width > 32 then error 'out of range' end
-  x = x % MOD
-  v = v % MOD
-  return replace(x, v, field, ...)
+return hmac]]></ProtectedString>
+                        <BinaryString name="Tags"></BinaryString>
+                    </Properties>
+                </Item>
+                <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683afffe5">
+                    <Properties>
+                        <Content name="LinkedSource"><null></null></Content>
+                        <string name="Name">sha256</string>
+                        <string name="ScriptGuid"></string>
+                        <ProtectedString name="Source"><![CDATA[local ASSERTIONS_ENABLED = false -- Whether to run several checks when the module is first loaded and when a message is preprocessed.
+
+local INIT_0_256 = 0x6a09e667
+local INIT_1_256 = 0xbb67ae85
+local INIT_2_256 = 0x3c6ef372
+local INIT_3_256 = 0xa54ff53a
+local INIT_4_256 = 0x510e527f
+local INIT_5_256 = 0x9b05688c
+local INIT_6_256 = 0x1f83d9ab
+local INIT_7_256 = 0x5be0cd19
+
+local APPEND_CHAR = string.char(0x80)
+local INT_32_CAP = 2^32
+
+local K = { [0] =
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+}
+
+---Packs four 8-bit integers into one 32-bit integer
+local function packUint32(a, b, c, d)
+    return bit32.lshift(a, 24)+bit32.lshift(b, 16)+bit32.lshift(c, 8)+d
 end
 
-
---
--- Start LuaBitOp "bit" compat section.
---
-
-M.bit = {} -- LuaBitOp "bit" compatibility
-
-M.bit.bits = M.bits
-
-M.bit.cast = M.cast
-
-function M.bit.tobit(x)
-  x = x % MOD
-  if x >= 0x80000000 then x = x - MOD end
-  return x
-end
-local bit_tobit = M.bit.tobit
-
-function M.bit.tohex(x, ...)
-  return tohex(x % MOD, ...)
+---Unpacks one 32-bit integer into four 8-bit integers
+local function unpackUint32(int)
+    return bit32.extract(int, 24, 8), bit32.extract(int, 16, 8),
+           bit32.extract(int, 08, 8), bit32.extract(int, 00, 8)
 end
 
-function M.bit.bnot(x)
-  return bit_tobit(bnot(x % MOD))
+local function CH(x, y, z)
+    -- C ~ (A & (B ~ C)) has less ops than (A & B) ^ (~A & C)
+    return bit32.bxor( z, bit32.band(x, bit32.bxor(y, z)) )
 end
 
-local function bit_bor(a, b, c, ...)
-  if c then
-    return bit_bor(bit_bor(a, b), c, ...)
-  elseif b then
-    return bit_tobit(bor(a % MOD, b % MOD))
-  else
-    return bit_tobit(a)
-  end
-end
-M.bit.bor = bit_bor
-
-local function bit_band(a, b, c, ...)
-  if c then
-    return bit_band(bit_band(a, b), c, ...)
-  elseif b then
-    return bit_tobit(band(a % MOD, b % MOD))
-  else
-    return bit_tobit(a)
-  end
-end
-M.bit.band = bit_band
-
-local function bit_bxor(a, b, c, ...)
-  if c then
-    return bit_bxor(bit_bxor(a, b), c, ...)
-  elseif b then
-    return bit_tobit(bxor(a % MOD, b % MOD))
-  else
-    return bit_tobit(a)
-  end
-end
-M.bit.bxor = bit_bxor
-
-function M.bit.lshift(x, n)
-  return bit_tobit(lshift(x % MOD, n % 32))
+local function MAJ(x, y, z)
+    -- A | (B | C) | (B & C) has less ops than (A & B) ^ (A & C) ^ (B & C)
+    return bit32.bor( bit32.band(x, bit32.bor(y, z)), bit32.band(y, z) )
 end
 
-function M.bit.rshift(x, n)
-  return bit_tobit(rshift(x % MOD, n % 32))
+local function BSIG0(x)
+    return bit32.bxor( bit32.rrotate(x, 2), bit32.rrotate(x, 13), bit32.rrotate(x, 22) )
 end
 
-function M.bit.arshift(x, n)
-  return bit_tobit(arshift(x % MOD, n % 32))
+local function BSIG1(x)
+    return bit32.bxor( bit32.rrotate(x, 6), bit32.rrotate(x, 11), bit32.rrotate(x, 25) )
 end
 
-function M.bit.rol(x, n)
-  return bit_tobit(lrotate(x % MOD, n % 32))
+local function SSIG0(x)
+    return bit32.bxor( bit32.rrotate(x, 7), bit32.rrotate(x, 18), bit32.rshift(x, 3) )
 end
 
-function M.bit.ror(x, n)
-  return bit_tobit(rrotate(x % MOD, n % 32))
+local function SSIG1(x)
+    return bit32.bxor( bit32.rrotate(x, 17), bit32.rrotate(x, 19), bit32.rshift(x, 10) )
 end
 
-function M.bit.bswap(x)
-  return bit_tobit(bswap(x % MOD))
+local function preprocessMessage(message)
+    local initMsgLen = #message*8 -- Message length in bits
+    local msgLen = initMsgLen+8
+    local nulCount = 4 -- This is equivalent to 32 bits.
+    -- We're packing 32 bits of size, but the SHA-256 standard calls for 64, meaning we have to add at least 32 0s
+    -- Unfortunately 64 bits is not possible due to Lua numbers being doubles
+    message = message..APPEND_CHAR
+    while (msgLen+64)%512 ~= 0 do
+        nulCount = nulCount+1
+        msgLen = msgLen+8
+    end
+    message = message..string.rep("\0", nulCount)
+    message = message..string.char(unpackUint32(initMsgLen))
+    if ASSERTIONS_ENABLED then
+        assert(msgLen%512 == 448, "message length space check")
+        assert(#message%64 == 0, "message length check")
+    end
+    return message
 end
 
-return M
-]]></ProtectedString>
-                            <BinaryString name="Tags"></BinaryString>
-                        </Properties>
-                    </Item>
+local function sha256(message)
+    local message = preprocessMessage(message)
+    local H0 = INIT_0_256
+    local H1 = INIT_1_256
+    local H2 = INIT_2_256
+    local H3 = INIT_3_256
+    local H4 = INIT_4_256
+    local H5 = INIT_5_256
+    local H6 = INIT_6_256
+    local H7 = INIT_7_256
+
+    local W = {}
+    for chunkStart = 1, #message, 64 do
+        local place = chunkStart
+        for t = 0, 15 do
+            W[t] = packUint32(string.byte(message, place, place+3))
+            place = place+4
+        end
+
+        for t = 16, 63 do
+            W[t] = SSIG1(W[t-2])+W[t-7]+SSIG0(W[t-15])+W[t-16]
+        end
+
+        local a, b, c, d, e, f, g, h = H0, H1, H2, H3, H4, H5, H6, H7
+
+        for t = 0, 63 do
+            T1 = h + BSIG1(e) + CH(e, f, g) + K[t] + W[t]
+            T2 = BSIG0(a) + MAJ(a, b, c)
+            h = g
+            g = f
+            f = e
+            e = d + T1
+            d = c
+            c = b
+            b = a
+            a = T1 + T2
+        end
+
+        H0 = (H0+a)%INT_32_CAP
+        H1 = (H1+b)%INT_32_CAP
+        H2 = (H2+c)%INT_32_CAP
+        H3 = (H3+d)%INT_32_CAP
+        H4 = (H4+e)%INT_32_CAP
+        H5 = (H5+f)%INT_32_CAP
+        H6 = (H6+g)%INT_32_CAP
+        H7 = (H7+h)%INT_32_CAP
+    end
+
+    return string.format("%08x%08x%08x%08x%08x%08x%08x%08x", H0, H1, H2, H3, H4, H5, H6, H7)
+end
+
+if ASSERTIONS_ENABLED then
+    assert(packUint32(255, 167, 125, 235) == 4289166827, "(SHA-256/224) packUint32 check 1")
+    assert(packUint32(255, 0, 125, 235) == 4278222315, "(SHA-256/224) packUint32 check 2")
+
+    local b0, b1, b2, b3 = unpackUint32(4278222315)
+    assert(b0 == 255, "(SHA-256/224) unpackUint32 check 1")
+    assert(b1 == 000, "(SHA-256/224) unpackUint32 check 2")
+    assert(b2 == 125, "(SHA-256/224) unpackUint32 check 3")
+    assert(b3 == 235, "(SHA-256/224) unpackUint32 check 4")
+
+    -- SHA-256 tests
+    assert(sha256("abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", "(SHA-256) abc hash does not match")
+    assert(sha256("") == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "(SHA-256) empty hash does not match")
+    assert(sha256("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq") == "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1", "(SHA-256) 448 bit alphabet hash does not match")
+    assert(sha256("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu") == "cf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1", "(SHA-256) 896 bit alphabet hash does not match")
+    assert(sha256("foo") == "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae", "(SHA-256) foo hash does not match")
+    assert(sha256("bar") == "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9", "(SHA-256) bar hash does not match")
+    assert(sha256("baz") == "baa5a0964d3320fbc0c6a922140453c8513ea24ab8fd0577034804a967248096", "(SHA-256) baz hash does not match")
+    if true then
+        assert(sha256(string.rep("e", 199999)) == "434cf81dca15a72777e811ed4ae9144f9272ca3c04ff9c2de1533bbbffed5449", "(SHA-256) e hash does not match")
+        assert(sha256(string.rep("a", 1e6)) == "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0", "(SHA-256) million a hash does not match")
+    end
+end
+
+return sha256]]></ProtectedString>
+                        <BinaryString name="Tags"></BinaryString>
+                    </Properties>
                 </Item>
             </Item>
             <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683abdde5">
@@ -3381,7 +2480,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.3.8"
+    SdkVersion = "1.3.9"
 }
 
 return version
