@@ -35,7 +35,7 @@ local function unpackUint32(int)
 end
 
 local function CH(x, y, z)
-    -- C ~ (A & (B ~ C)) has less ops than (A & B) ^ (~A & C)
+    -- C ^ (A & (B ^ C)) has less ops than (A & B) ^ (~A & C)
     return bit32.bxor( z, bit32.band(x, bit32.bxor(y, z)) )
 end
 
