@@ -41,11 +41,11 @@ local errorCountCache = {}
 local errorCountCacheKeys = {}
 
 spawn(function()
-    local currentHour = math.floor(os.time()/3600)
+    local currentHour = os.date().hour
     ErrorDS = store:GetErrorDataStore(currentHour)
 
     while wait(3600) do
-        currentHour = math.floor(os.time()/3600)
+        currentHour = os.date().hour
         ErrorDS = store:GetErrorDataStore(currentHour)
         errorCountCache = {}
         errorCountCacheKeys = {}
