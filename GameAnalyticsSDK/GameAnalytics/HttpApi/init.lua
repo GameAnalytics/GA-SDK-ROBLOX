@@ -2,6 +2,10 @@ local RunService = game:GetService("RunService")
 local validation = require(script.Parent.Validation)
 local version = require(script.Parent.Version)
 
+local sha256 = require(script.sha256)
+local hmac = require(script.hmac)
+local base64 = require(script.base64)
+
 local http_api = {
     protocol = "https",
     hostName = "api.gameanalytics.com",
@@ -25,7 +29,6 @@ local http_api = {
 local HTTP = game:GetService("HttpService")
 local logger = require(script.Parent.Logger)
 local baseUrl = (RunService:IsStudio() and "http" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/" .. http_api.version
-local encodingReady = false
 
 local Encoding = {}
 
@@ -41,30 +44,19 @@ local function getInitAnnotations(playerData, playerId)
 end
 
 local function encode(payload, secretKey)
-    if not encodingReady then
-        Encoding.lockbox = require(script.Encoding.lockbox)
-        Encoding.lockbox.bit = require(script.Encoding.bit).bit
-        Encoding.array = require(Encoding.lockbox.util.array)
-        Encoding.stream = require(Encoding.lockbox.util.stream)
-        Encoding.base64 = require(Encoding.lockbox.util.base64)
-        Encoding.hmac = require(Encoding.lockbox.mac.hmac)
-        Encoding.sha256 = require(Encoding.lockbox.digest.sha2_256)
-        encodingReady = true
-    end
-
     --Validate
     if not secretKey then logger:w("Error encoding, invalid SecretKey") return end
 
     --Encode
-    local hmacBuilder = Encoding.hmac()
-        .setBlockSize(64)
-        .setDigest(Encoding.sha256)
-        .setKey(Encoding.array.fromString(RunService:IsStudio() and "16813a12f718bc5c620f56944e1abc3ea13ccbac" or secretKey))
-        .init()
-        .update(Encoding.stream.fromString(payload))
-        .finish()
+    local payloadHmac = hmac(
+        RunService:IsStudio() and "16813a12f718bc5c620f56944e1abc3ea13ccbac" or secretKey, -- key
+        payload, -- message
+        sha256, -- hashing function
+        64, -- block size
+        true -- output as binary data
+    )
 
-    return Encoding.base64.fromArray(hmacBuilder.asBytes())
+    return base64.encode(payloadHmac)
 end
 
 local function processRequestResponse(response, requestId)
