@@ -53,6 +53,7 @@ local function encode(payload, secretKey)
         payload, -- message
         sha256, -- hashing function
         64, -- block size
+        nil, -- output size
         true -- output as binary data
     )
 
