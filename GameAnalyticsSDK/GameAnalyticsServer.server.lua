@@ -35,7 +35,6 @@ local LS = game:GetService("LogService")
 local MKT = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ProductCache = {}
-local ONE_HOUR_IN_SECONDS = 3600
 local MaxErrorsPerHour = 10
 local ErrorDS = {}
 local errorCountCache = {}
@@ -45,7 +44,7 @@ spawn(function()
     local currentHour = math.floor(os.time()/3600)
     ErrorDS = store:GetErrorDataStore(currentHour)
 
-    while wait(ONE_HOUR_IN_SECONDS) do
+    while wait(3600) do
         currentHour = math.floor(os.time()/3600)
         ErrorDS = store:GetErrorDataStore(currentHour)
         errorCountCache = {}
