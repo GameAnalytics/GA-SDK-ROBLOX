@@ -451,7 +451,7 @@ function ga:PlayerRemoved(Player)
     store:SavePlayerData(Player)
 
     local PlayerData = store.PlayerCache[Player.UserId]
-    if not PlayerData.PlayerTeleporting then
+    if PlayerData and not PlayerData.PlayerTeleporting then
         ga:endSession(Player.UserId)
     end
 end
