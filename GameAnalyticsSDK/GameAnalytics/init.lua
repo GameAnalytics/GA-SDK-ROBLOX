@@ -20,6 +20,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Postie = require(ReplicatedStorage.Postie)
 local ProductCache = {}
+local OnPlayerReadyEvent
 
 
 -- local functions
@@ -427,6 +428,8 @@ function ga:PlayerJoined(Player, teleportData)
 
     ga:startNewSession(Player, teleportData)
 
+    OnPlayerReadyEvent = OnPlayerReadyEvent or game:GetService("ReplicatedStorage"):WaitForChild("OnPlayerReadyEvent")
+    OnPlayerReadyEvent:Fire(Player)
 
     --Autosave
     spawn(function()
@@ -453,6 +456,14 @@ function ga:PlayerRemoved(Player)
     local PlayerData = store.PlayerCache[Player.UserId]
     if not PlayerData.PlayerTeleporting then
         ga:endSession(Player.UserId)
+    end
+end
+
+function ga:isPlayerReady(playerId)
+    if store.PlayerCache[playerId] then
+        return true
+    else
+        return false
     end
 end
 

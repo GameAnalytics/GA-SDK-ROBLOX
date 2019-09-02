@@ -27,6 +27,13 @@ if not ReplicatedStorage:FindFirstChild("GameAnalyticsCommandCenter") then
     f.Parent = ReplicatedStorage
 end
 
+if not ReplicatedStorage:FindFirstChild("OnPlayerReadyEvent") then
+    --Create
+    local f = Instance.new("BindableEvent")
+    f.Name = "OnPlayerReadyEvent"
+    f.Parent = ReplicatedStorage
+end
+
 --Modules
 local GameAnalytics = require(ServerStorage.GameAnalytics)
 local store = require(ServerStorage.GameAnalytics.Store)
