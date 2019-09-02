@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.4.1**
+* fix to playerRemoved function
+
 **1.4.0**
 * added bindable event to listen to when player is ready (has gotten its player data loaded)
 
