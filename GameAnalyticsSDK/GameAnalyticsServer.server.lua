@@ -139,7 +139,7 @@ MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
     GameAnalytics:addBusinessEvent(Player.UserId, {
         amount = GamepassInfo.PriceInRobux,
         itemType = "Gamepass",
-        itemId = GamepassInfo.Name
+        itemId = GameAnalytics:filterForBusinessEvent(GamepassInfo.Name)
     })
 end)
 
