@@ -170,6 +170,10 @@ function ga:endSession(playerId)
     end)
 end
 
+function ga:filterForBusinessEvent(text)
+	return string.gsub(text, "[^A-Za-z0-9%s%-_%.%(%)!%?]", "")
+end
+
 function ga:addBusinessEvent(playerId, options)
     threading:performTaskOnGAThread(function()
         if not state:isEventSubmissionEnabled() then
