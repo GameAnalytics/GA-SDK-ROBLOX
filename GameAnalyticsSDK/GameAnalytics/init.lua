@@ -486,7 +486,7 @@ function ga:ProcessReceiptCallback(Info)
     ga:addBusinessEvent(Info.PlayerId, {
         amount = Info.CurrencySpent,
         itemType = "DeveloperProduct",
-        itemId = ProductInfo.Name
+        itemId = ga:filterForBusinessEvent(ProductInfo.Name)
     })
 end
 
