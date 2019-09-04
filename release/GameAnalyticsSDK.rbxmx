@@ -158,7 +158,7 @@ MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
     GameAnalytics:addBusinessEvent(Player.UserId, {
         amount = GamepassInfo.PriceInRobux,
         itemType = "Gamepass",
-        itemId = GamepassInfo.Name
+        itemId = GameAnalytics:filterForBusinessEvent(GamepassInfo.Name)
     })
 end)
 
@@ -720,6 +720,10 @@ function ga:endSession(playerId)
     end)
 end
 
+function ga:filterForBusinessEvent(text)
+	return string.gsub(text, "[^A-Za-z0-9%s%-_%.%(%)!%?]", "")
+end
+
 function ga:addBusinessEvent(playerId, options)
     threading:performTaskOnGAThread(function()
         if not state:isEventSubmissionEnabled() then
@@ -1032,7 +1036,7 @@ function ga:ProcessReceiptCallback(Info)
     ga:addBusinessEvent(Info.PlayerId, {
         amount = Info.CurrencySpent,
         itemType = "DeveloperProduct",
-        itemId = ProductInfo.Name
+        itemId = ga:filterForBusinessEvent(ProductInfo.Name)
     })
 end
 
@@ -2498,7 +2502,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.4.1"
+    SdkVersion = "1.4.2"
 }
 
 return version

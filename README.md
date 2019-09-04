@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**1.4.2**
+* improvements for business event
+
 **1.4.1**
 * fix to playerRemoved function
 
