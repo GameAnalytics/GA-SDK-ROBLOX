@@ -170,6 +170,10 @@ function ga:endSession(playerId)
     end)
 end
 
+function ga:filterForBusinessEvent(text)
+	return string.gsub(text, "[^A-Za-z0-9%s%-_%.%(%)!%?]", "")
+end
+
 function ga:addBusinessEvent(playerId, options)
     threading:performTaskOnGAThread(function()
         if not state:isEventSubmissionEnabled() then
@@ -482,7 +486,7 @@ function ga:ProcessReceiptCallback(Info)
     ga:addBusinessEvent(Info.PlayerId, {
         amount = Info.CurrencySpent,
         itemType = "DeveloperProduct",
-        itemId = ProductInfo.Name
+        itemId = ga:filterForBusinessEvent(ProductInfo.Name)
     })
 end
 
