@@ -1,0 +1,27 @@
+{
+    "name": "GameAnalyticsSDK",
+    "tree": {
+        "$className": "DataModel",
+        "ServerStorage": {
+            "$className": "ServerStorage",
+            "GameAnalytics": {
+                "$path": "GameAnalyticsSDK/GameAnalytics"
+            }
+        },
+        "StarterPlayer": {
+            "$className": "StarterPlayer",
+            "StarterPlayerScripts": {
+                "$className": "StarterPlayerScripts",
+                "GameAnalyticsClient": {
+                    "$path": "GameAnalyticsSDK/GameAnalyticsClient.client.lua"
+                }
+            }
+        },
+        "ServerScriptService": {
+            "$className": "ServerScriptService",
+            "server": {
+                "$path": "GameAnalyticsSDK/GameAnalyticsServer.server.lua"
+            }
+        }
+    }
+}
