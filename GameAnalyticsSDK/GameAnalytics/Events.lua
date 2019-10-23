@@ -145,7 +145,7 @@ local function dequeueMaxEvents()
     else
         logger:w(("More than %d events queued! Sending %d."):format(MAX_EVENTS_TO_SEND_IN_ONE_BATCH, MAX_EVENTS_TO_SEND_IN_ONE_BATCH))
 
-        if #self.EventsQueue > MAX_AGGREGATED_EVENTS then
+        if #store.EventsQueue > MAX_AGGREGATED_EVENTS then
             logger:w(("DROPPING EVENTS: More than %d events queued!"):format(MAX_AGGREGATED_EVENTS))
         end
 
@@ -156,7 +156,7 @@ local function dequeueMaxEvents()
         end
 
         -- Shift everything down and overwrite old events
-        local eventCount = #self._events
+        local eventCount = #store.EventsQueue
         for i=1, math.min(MAX_AGGREGATED_EVENTS, eventCount) do
             store.EventsQueue[i] = store.EventsQueue[i + MAX_EVENTS_TO_SEND_IN_ONE_BATCH]
         end
