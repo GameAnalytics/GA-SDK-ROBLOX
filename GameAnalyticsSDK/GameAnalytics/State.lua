@@ -5,7 +5,8 @@ local state = {
     _enableEventSubmission = true,
     Initialized = false,
     ReportErrors = true,
-    AutomaticSendBusinessEvents = true
+    AutomaticSendBusinessEvents = true,
+    ConfigsHash = ""
 }
 
 local validation = require(script.Parent.Validation)
@@ -14,7 +15,7 @@ local http_api = require(script.Parent.HttpApi)
 local store = require(script.Parent.Store)
 local events = require(script.Parent.Events)
 local HTTP = game:GetService("HttpService")
-local GameAnalyticsCommandCenter
+local GameAnalyticsRemoteConfigs
 
 local function getClientTsAdjusted(playerId)
     local PlayerData = store.PlayerCache[playerId]
@@ -34,14 +35,14 @@ local function populateConfigurations(player)
     local PlayerData = store.PlayerCache[player.UserId]
     local sdkConfig = PlayerData.SdkConfig
 
-    if sdkConfig["configurations"] then
-        local configurations = sdkConfig["configurations"]
+    if sdkConfig["configs"] then
+        local configurations = sdkConfig["configs"]
 
         for _,configuration in pairs(configurations) do
             if configuration then
                 local key = configuration["key"] or ""
-                local start_ts = configuration["start"] or 0
-                local end_ts = configuration["end"] or math.huge
+                local start_ts = configuration["start_ts"] or 0
+                local end_ts = configuration["end_ts"] or math.huge
                 local client_ts_adjusted = getClientTsAdjusted(player.UserId)
 
                 if #key > 0 and configuration["value"] and client_ts_adjusted > start_ts and client_ts_adjusted < end_ts then
@@ -52,9 +53,9 @@ local function populateConfigurations(player)
         end
     end
 
-    PlayerData.CommandCenterIsReady = true
-    GameAnalyticsCommandCenter = GameAnalyticsCommandCenter or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsCommandCenter")
-    GameAnalyticsCommandCenter:FireClient(player, PlayerData.Configurations)
+    PlayerData.RemoteConfigsIsReady = true
+    GameAnalyticsRemoteConfigs = GameAnalyticsRemoteConfigs or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsRemoteConfigs")
+    GameAnalyticsRemoteConfigs:FireClient(player, PlayerData.Configurations)
 end
 
 function state:sessionIsStarted(playerId)
@@ -68,8 +69,6 @@ end
 function state:isEnabled(playerId)
     local PlayerData = store.PlayerCache[playerId]
     if not PlayerData then
-        return false
-    elseif PlayerData.SdkConfig and PlayerData.SdkConfig["enabled"] == false then
         return false
     elseif not PlayerData.InitAuthorized then
         return false
@@ -161,7 +160,7 @@ function state:startNewSession(player, teleportData)
     local statusCode = initResult.statusCode
     local responseBody = initResult.body
 
-    if statusCode == http_api.EGAHTTPApiResponse.Ok and responseBody then
+    if (statusCode == http_api.EGAHTTPApiResponse.Ok or statusCode == http_api.EGAHTTPApiResponse.Created) and responseBody then
         -- set the time offset - how many seconds the local time is different from servertime
         local timeOffsetSeconds = 0
         local serverTs = responseBody["server_ts"] or -1
@@ -171,6 +170,20 @@ function state:startNewSession(player, teleportData)
         end
 
         responseBody["time_offset"] = timeOffsetSeconds
+
+        if not (statusCode == http_api.EGAHTTPApiResponse.Created) then
+            local sdkConfig = PlayerData.SdkConfig
+
+            if (sdkConfig["configs"]) then
+                responseBody["configs"] = sdkConfig["configs"]
+            end
+            if (sdkConfig["ab_id"]) then
+                responseBody["ab_id"] = sdkConfig["ab_id"]
+            end
+            if (sdkConfig["ab_variant_id"]) then
+                responseBody["ab_variant_id"] = sdkConfig["ab_variant_id"]
+            end
+        end
 
         PlayerData.SdkConfig = responseBody
         PlayerData.InitAuthorized = true
@@ -192,6 +205,9 @@ function state:startNewSession(player, teleportData)
 
     -- set offset in state (memory) from current config (config could be from cache etc.)
     PlayerData.ClientServerTimeOffset = PlayerData.SdkConfig["time_offset"] or 0
+    PlayerData.ConfigsHash = PlayerData.SdkConfig["configs_hash"] or ""
+    PlayerData.AbId = PlayerData.SdkConfig["ab_id"] or ""
+    PlayerData.AbVariantId = PlayerData.SdkConfig["ab_variant_id"] or ""
 
     -- populate configurations
     populateConfigurations(player)
@@ -224,17 +240,17 @@ function state:endSession(playerId)
     end
 end
 
-function state:getConfigurationStringValue(playerId, key, defaultValue)
+function state:getRemoteConfigsStringValue(playerId, key, defaultValue)
     local PlayerData = store.PlayerCache[playerId]
     return PlayerData.Configurations[key] or defaultValue
 end
 
-function state:isCommandCenterReady(playerId)
+function state:isRemoteConfigsReady(playerId)
     local PlayerData = store.PlayerCache[playerId]
-    return PlayerData.CommandCenterIsReady
+    return PlayerData.RemoteConfigsIsReady
 end
 
-function state:getConfigurationsContentAsString(playerId)
+function state:getRemoteConfigsContentAsString(playerId)
     local PlayerData = store.PlayerCache[playerId]
     return HTTP:JSONEncode(PlayerData.Configurations)
 end

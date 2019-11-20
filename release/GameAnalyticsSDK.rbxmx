@@ -39,10 +39,10 @@ end
 --     f.Parent = ReplicatedStorage
 -- end
 
-if not ReplicatedStorage:FindFirstChild("GameAnalyticsCommandCenter") then
+if not ReplicatedStorage:FindFirstChild("GameAnalyticsRemoteConfigs") then
     --Create
     local f = Instance.new("RemoteEvent")
-    f.Name = "GameAnalyticsCommandCenter"
+    f.Name = "GameAnalyticsRemoteConfigs"
     f.Parent = ReplicatedStorage
 end
 
@@ -942,18 +942,18 @@ function ga:addGameAnalyticsTeleportData(playerIds, teleportData)
     return teleportData
 end
 
-function ga:getCommandCenterValueAsString(playerId, options)
+function ga:getRemoteConfigsValueAsString(playerId, options)
     local key = options["key"] or ""
     local defaultValue = options["defaultValue"] or nil
-    return state:getConfigurationStringValue(playerId, key, defaultValue)
+    return state:getRemoteConfigsStringValue(playerId, key, defaultValue)
 end
 
-function ga:isCommandCenterReady(playerId)
-    return state:isCommandCenterReady(playerId)
+function ga:isRemoteConfigsReady(playerId)
+    return state:isRemoteConfigsReady(playerId)
 end
 
-function ga:getConfigurationsContentAsString(playerId)
-    return state:getConfigurationsContentAsString(playerId)
+function ga:getRemoteConfigsContentAsString(playerId)
+    return state:getRemoteConfigsContentAsString(playerId)
 end
 
 function ga:PlayerJoined(Player, teleportData)
@@ -1086,6 +1086,7 @@ local http_api = {
     protocol = "https",
     hostName = "api.gameanalytics.com",
     version = "v2",
+    remoteConfigsVersion = "v1",
     initializeUrlPath = "init",
     eventsUrlPath = "events",
     EGAHTTPApiResponse = {
@@ -1098,13 +1099,15 @@ local http_api = {
         BadRequest=6,
         Unauthorized=7,
         UnknownResponseCode=8,
-        Ok=9
+        Ok=9,
+        Created=10
     }
 }
 
 local HTTP = game:GetService("HttpService")
 local logger = require(script.Parent.Logger)
 local baseUrl = (RunService:IsStudio() and "http" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/" .. http_api.version
+local remoteConfigsBaseUrl = (RunService:IsStudio() and "http" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/remote_configs/" .. http_api.remoteConfigsVersion
 
 local Encoding = {}
 
@@ -1113,7 +1116,8 @@ local function getInitAnnotations(playerData, playerId)
         ["user_id"] = tostring(playerId),
         ["sdk_version"] = "roblox " .. version.SdkVersion,
         ["os_version"] = playerData.OS,
-        ["platform"] = playerData.Platform
+        ["platform"] = playerData.Platform,
+        ["random_salt"] = playerData.Sessions
     }
 
     return initAnnotations
@@ -1147,6 +1151,8 @@ local function processRequestResponse(response, requestId)
 
     if statusCode == 200 then
         return http_api.EGAHTTPApiResponse.Ok
+    elseif statusCode == 201 then
+            return http_api.EGAHTTPApiResponse.Created
     elseif statusCode == 0 or statusCode == 401 then
         logger:d(requestId .. " request. 401 - Unauthorized.")
         return http_api.EGAHTTPApiResponse.Unauthorized
@@ -1162,7 +1168,7 @@ local function processRequestResponse(response, requestId)
 end
 
 function http_api:initRequest(gameKey, secretKey, playerData, playerId)
-    local url = "https://rubick.gameanalytics.com/v2/command_center?game_key=" .. gameKey .. "&interval_seconds=1000000"
+    local url = remoteConfigsBaseUrl .. "/" .. http_api.initializeUrlPath .. "?game_key=" .. gameKey .. "&interval_seconds=0&configs_hash=" .. (playerData.ConfigsHash or "")
     if RunService:IsStudio() then
         url = baseUrl .. "/5c6bcb5402204249437fb5a7a80a4959/" .. self.initializeUrlPath
     end
@@ -1196,7 +1202,7 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
     local requestResponseEnum = processRequestResponse(res, "Init")
 
     -- if not 200 result
-    if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
+    if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.Created and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
         logger:d("Failed Init Call. URL: " .. url .. ", JSONString: " .. payload .. ", Authorization: " .. authorization)
         return {
             statusCode = requestResponseEnum,
@@ -1228,7 +1234,7 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
     end
 
     -- validate Init call values
-    local validatedInitValues = validation:validateAndCleanInitRequestResponse(responseBody)
+    local validatedInitValues = validation:validateAndCleanInitRequestResponse(responseBody, requestResponseEnum == http_api.EGAHTTPApiResponse.Created)
 
     if not validatedInitValues then
         return {
@@ -1239,7 +1245,7 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
 
     -- all ok
     return {
-        statusCode = http_api.EGAHTTPApiResponse.Ok,
+        statusCode = requestResponseEnum,
         body = responseBody
     }
 end
@@ -1287,7 +1293,7 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
     local requestResponseEnum = processRequestResponse(res, "Events")
 
     -- if not 200 result
-    if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
+    if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.Created and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
         logger:d("Failed Events Call. URL: " .. url .. ", JSONString: " .. payload .. ", Authorization: " .. authorization)
         return {
             statusCode = requestResponseEnum,
@@ -1866,11 +1872,14 @@ local store = {
         CurrentCustomDimension01 = "",
         CurrentCustomDimension02 = "",
         CurrentCustomDimension03 = "",
+        ConfigsHash = "",
+        AbId = "",
+        AbVariantId = "",
         InitAuthorized = false,
         SdkConfig = {},
         ClientServerTimeOffset = 0,
         Configurations = {},
-        CommandCenterIsReady = false,
+        RemoteConfigsIsReady = false,
         PlayerTeleporting = false
     },
     DataToSave = {
@@ -2109,7 +2118,7 @@ local function dequeueMaxEvents()
     else
         logger:w(("More than %d events queued! Sending %d."):format(MAX_EVENTS_TO_SEND_IN_ONE_BATCH, MAX_EVENTS_TO_SEND_IN_ONE_BATCH))
 
-        if #self.EventsQueue > MAX_AGGREGATED_EVENTS then
+        if #store.EventsQueue > MAX_AGGREGATED_EVENTS then
             logger:w(("DROPPING EVENTS: More than %d events queued!"):format(MAX_AGGREGATED_EVENTS))
         end
 
@@ -2120,7 +2129,7 @@ local function dequeueMaxEvents()
         end
 
         -- Shift everything down and overwrite old events
-        local eventCount = #self._events
+        local eventCount = #store.EventsQueue
         for i=1, math.min(MAX_AGGREGATED_EVENTS, eventCount) do
             store.EventsQueue[i] = store.EventsQueue[i + MAX_EVENTS_TO_SEND_IN_ONE_BATCH]
         end
@@ -2502,7 +2511,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "1.4.2"
+    SdkVersion = "2.0.0"
 }
 
 return version
@@ -2522,7 +2531,8 @@ return version
     _enableEventSubmission = true,
     Initialized = false,
     ReportErrors = true,
-    AutomaticSendBusinessEvents = true
+    AutomaticSendBusinessEvents = true,
+    ConfigsHash = ""
 }
 
 local validation = require(script.Parent.Validation)
@@ -2531,7 +2541,7 @@ local http_api = require(script.Parent.HttpApi)
 local store = require(script.Parent.Store)
 local events = require(script.Parent.Events)
 local HTTP = game:GetService("HttpService")
-local GameAnalyticsCommandCenter
+local GameAnalyticsRemoteConfigs
 
 local function getClientTsAdjusted(playerId)
     local PlayerData = store.PlayerCache[playerId]
@@ -2551,14 +2561,14 @@ local function populateConfigurations(player)
     local PlayerData = store.PlayerCache[player.UserId]
     local sdkConfig = PlayerData.SdkConfig
 
-    if sdkConfig["configurations"] then
-        local configurations = sdkConfig["configurations"]
+    if sdkConfig["configs"] then
+        local configurations = sdkConfig["configs"]
 
         for _,configuration in pairs(configurations) do
             if configuration then
                 local key = configuration["key"] or ""
-                local start_ts = configuration["start"] or 0
-                local end_ts = configuration["end"] or math.huge
+                local start_ts = configuration["start_ts"] or 0
+                local end_ts = configuration["end_ts"] or math.huge
                 local client_ts_adjusted = getClientTsAdjusted(player.UserId)
 
                 if #key > 0 and configuration["value"] and client_ts_adjusted > start_ts and client_ts_adjusted < end_ts then
@@ -2569,9 +2579,9 @@ local function populateConfigurations(player)
         end
     end
 
-    PlayerData.CommandCenterIsReady = true
-    GameAnalyticsCommandCenter = GameAnalyticsCommandCenter or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsCommandCenter")
-    GameAnalyticsCommandCenter:FireClient(player, PlayerData.Configurations)
+    PlayerData.RemoteConfigsIsReady = true
+    GameAnalyticsRemoteConfigs = GameAnalyticsRemoteConfigs or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsRemoteConfigs")
+    GameAnalyticsRemoteConfigs:FireClient(player, PlayerData.Configurations)
 end
 
 function state:sessionIsStarted(playerId)
@@ -2585,8 +2595,6 @@ end
 function state:isEnabled(playerId)
     local PlayerData = store.PlayerCache[playerId]
     if not PlayerData then
-        return false
-    elseif PlayerData.SdkConfig and PlayerData.SdkConfig["enabled"] == false then
         return false
     elseif not PlayerData.InitAuthorized then
         return false
@@ -2678,7 +2686,7 @@ function state:startNewSession(player, teleportData)
     local statusCode = initResult.statusCode
     local responseBody = initResult.body
 
-    if statusCode == http_api.EGAHTTPApiResponse.Ok and responseBody then
+    if (statusCode == http_api.EGAHTTPApiResponse.Ok or statusCode == http_api.EGAHTTPApiResponse.Created) and responseBody then
         -- set the time offset - how many seconds the local time is different from servertime
         local timeOffsetSeconds = 0
         local serverTs = responseBody["server_ts"] or -1
@@ -2688,6 +2696,20 @@ function state:startNewSession(player, teleportData)
         end
 
         responseBody["time_offset"] = timeOffsetSeconds
+
+        if not (statusCode == http_api.EGAHTTPApiResponse.Created) then
+            local sdkConfig = PlayerData.SdkConfig
+
+            if (sdkConfig["configs"]) then
+                responseBody["configs"] = sdkConfig["configs"]
+            end
+            if (sdkConfig["ab_id"]) then
+                responseBody["ab_id"] = sdkConfig["ab_id"]
+            end
+            if (sdkConfig["ab_variant_id"]) then
+                responseBody["ab_variant_id"] = sdkConfig["ab_variant_id"]
+            end
+        end
 
         PlayerData.SdkConfig = responseBody
         PlayerData.InitAuthorized = true
@@ -2709,6 +2731,9 @@ function state:startNewSession(player, teleportData)
 
     -- set offset in state (memory) from current config (config could be from cache etc.)
     PlayerData.ClientServerTimeOffset = PlayerData.SdkConfig["time_offset"] or 0
+    PlayerData.ConfigsHash = PlayerData.SdkConfig["configs_hash"] or ""
+    PlayerData.AbId = PlayerData.SdkConfig["ab_id"] or ""
+    PlayerData.AbVariantId = PlayerData.SdkConfig["ab_variant_id"] or ""
 
     -- populate configurations
     populateConfigurations(player)
@@ -2741,17 +2766,17 @@ function state:endSession(playerId)
     end
 end
 
-function state:getConfigurationStringValue(playerId, key, defaultValue)
+function state:getRemoteConfigsStringValue(playerId, key, defaultValue)
     local PlayerData = store.PlayerCache[playerId]
     return PlayerData.Configurations[key] or defaultValue
 end
 
-function state:isCommandCenterReady(playerId)
+function state:isRemoteConfigsReady(playerId)
     local PlayerData = store.PlayerCache[playerId]
-    return PlayerData.CommandCenterIsReady
+    return PlayerData.RemoteConfigsIsReady
 end
 
-function state:getConfigurationsContentAsString(playerId)
+function state:getRemoteConfigsContentAsString(playerId)
     local PlayerData = store.PlayerCache[playerId]
     return HTTP:JSONEncode(PlayerData.Configurations)
 end
@@ -2907,7 +2932,7 @@ function validation:validateKeys(gameKey, secretKey)
     return false
 end
 
-function validation:validateAndCleanInitRequestResponse(initResponse)
+function validation:validateAndCleanInitRequestResponse(initResponse, configsCreated)
     -- make sure we have a valid dict
     if not initResponse then
         logger:w("validateInitRequestResponse failed - no response dictionary.")
@@ -2916,16 +2941,17 @@ function validation:validateAndCleanInitRequestResponse(initResponse)
 
     local validatedDict = {}
 
-    -- validate enabled field
-    validatedDict["enabled"] = initResponse["enabled"] or true
-
     -- validate server_ts
     local serverTsNumber = initResponse["server_ts"] or -1
     if serverTsNumber > 0 then
         validatedDict["server_ts"] = serverTsNumber
     end
 
-    validatedDict["configurations"] = initResponse["configurations"] or {}
+    if configsCreated then
+        validatedDict["configs"] = initResponse["configs"] or {}
+        validatedDict["ab_id"] = initResponse["ab_id"] or ""
+        validatedDict["ab_variant_id"] = initResponse["ab_variant_id"] or ""
+    end
 
     return validatedDict
 end

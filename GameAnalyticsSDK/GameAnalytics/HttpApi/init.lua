@@ -10,6 +10,7 @@ local http_api = {
     protocol = "https",
     hostName = "api.gameanalytics.com",
     version = "v2",
+    remoteConfigsVersion = "v1",
     initializeUrlPath = "init",
     eventsUrlPath = "events",
     EGAHTTPApiResponse = {
@@ -22,13 +23,15 @@ local http_api = {
         BadRequest=6,
         Unauthorized=7,
         UnknownResponseCode=8,
-        Ok=9
+        Ok=9,
+        Created=10
     }
 }
 
 local HTTP = game:GetService("HttpService")
 local logger = require(script.Parent.Logger)
 local baseUrl = (RunService:IsStudio() and "http" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/" .. http_api.version
+local remoteConfigsBaseUrl = (RunService:IsStudio() and "http" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/remote_configs/" .. http_api.remoteConfigsVersion
 
 local Encoding = {}
 
@@ -37,7 +40,8 @@ local function getInitAnnotations(playerData, playerId)
         ["user_id"] = tostring(playerId),
         ["sdk_version"] = "roblox " .. version.SdkVersion,
         ["os_version"] = playerData.OS,
-        ["platform"] = playerData.Platform
+        ["platform"] = playerData.Platform,
+        ["random_salt"] = playerData.Sessions
     }
 
     return initAnnotations
@@ -71,6 +75,8 @@ local function processRequestResponse(response, requestId)
 
     if statusCode == 200 then
         return http_api.EGAHTTPApiResponse.Ok
+    elseif statusCode == 201 then
+            return http_api.EGAHTTPApiResponse.Created
     elseif statusCode == 0 or statusCode == 401 then
         logger:d(requestId .. " request. 401 - Unauthorized.")
         return http_api.EGAHTTPApiResponse.Unauthorized
@@ -86,7 +92,7 @@ local function processRequestResponse(response, requestId)
 end
 
 function http_api:initRequest(gameKey, secretKey, playerData, playerId)
-    local url = "https://rubick.gameanalytics.com/v2/command_center?game_key=" .. gameKey .. "&interval_seconds=1000000"
+    local url = remoteConfigsBaseUrl .. "/" .. http_api.initializeUrlPath .. "?game_key=" .. gameKey .. "&interval_seconds=0&configs_hash=" .. (playerData.ConfigsHash or "")
     if RunService:IsStudio() then
         url = baseUrl .. "/5c6bcb5402204249437fb5a7a80a4959/" .. self.initializeUrlPath
     end
@@ -120,7 +126,7 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
     local requestResponseEnum = processRequestResponse(res, "Init")
 
     -- if not 200 result
-    if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
+    if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.Created and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
         logger:d("Failed Init Call. URL: " .. url .. ", JSONString: " .. payload .. ", Authorization: " .. authorization)
         return {
             statusCode = requestResponseEnum,
@@ -152,7 +158,7 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
     end
 
     -- validate Init call values
-    local validatedInitValues = validation:validateAndCleanInitRequestResponse(responseBody)
+    local validatedInitValues = validation:validateAndCleanInitRequestResponse(responseBody, requestResponseEnum == http_api.EGAHTTPApiResponse.Created)
 
     if not validatedInitValues then
         return {
@@ -163,7 +169,7 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
 
     -- all ok
     return {
-        statusCode = http_api.EGAHTTPApiResponse.Ok,
+        statusCode = requestResponseEnum,
         body = responseBody
     }
 end
@@ -211,7 +217,7 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
     local requestResponseEnum = processRequestResponse(res, "Events")
 
     -- if not 200 result
-    if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
+    if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.Created and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
         logger:d("Failed Events Call. URL: " .. url .. ", JSONString: " .. payload .. ", Authorization: " .. authorization)
         return {
             statusCode = requestResponseEnum,

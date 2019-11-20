@@ -139,7 +139,7 @@ function validation:validateKeys(gameKey, secretKey)
     return false
 end
 
-function validation:validateAndCleanInitRequestResponse(initResponse)
+function validation:validateAndCleanInitRequestResponse(initResponse, configsCreated)
     -- make sure we have a valid dict
     if not initResponse then
         logger:w("validateInitRequestResponse failed - no response dictionary.")
@@ -148,16 +148,17 @@ function validation:validateAndCleanInitRequestResponse(initResponse)
 
     local validatedDict = {}
 
-    -- validate enabled field
-    validatedDict["enabled"] = initResponse["enabled"] or true
-
     -- validate server_ts
     local serverTsNumber = initResponse["server_ts"] or -1
     if serverTsNumber > 0 then
         validatedDict["server_ts"] = serverTsNumber
     end
 
-    validatedDict["configurations"] = initResponse["configurations"] or {}
+    if configsCreated then
+        validatedDict["configs"] = initResponse["configs"] or {}
+        validatedDict["ab_id"] = initResponse["ab_id"] or ""
+        validatedDict["ab_variant_id"] = initResponse["ab_variant_id"] or ""
+    end
 
     return validatedDict
 end

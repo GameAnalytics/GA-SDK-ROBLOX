@@ -20,10 +20,10 @@ end
 --     f.Parent = ReplicatedStorage
 -- end
 
-if not ReplicatedStorage:FindFirstChild("GameAnalyticsCommandCenter") then
+if not ReplicatedStorage:FindFirstChild("GameAnalyticsRemoteConfigs") then
     --Create
     local f = Instance.new("RemoteEvent")
-    f.Name = "GameAnalyticsCommandCenter"
+    f.Name = "GameAnalyticsRemoteConfigs"
     f.Parent = ReplicatedStorage
 end
 

@@ -392,18 +392,18 @@ function ga:addGameAnalyticsTeleportData(playerIds, teleportData)
     return teleportData
 end
 
-function ga:getCommandCenterValueAsString(playerId, options)
+function ga:getRemoteConfigsValueAsString(playerId, options)
     local key = options["key"] or ""
     local defaultValue = options["defaultValue"] or nil
-    return state:getConfigurationStringValue(playerId, key, defaultValue)
+    return state:getRemoteConfigsStringValue(playerId, key, defaultValue)
 end
 
-function ga:isCommandCenterReady(playerId)
-    return state:isCommandCenterReady(playerId)
+function ga:isRemoteConfigsReady(playerId)
+    return state:isRemoteConfigsReady(playerId)
 end
 
-function ga:getConfigurationsContentAsString(playerId)
-    return state:getConfigurationsContentAsString(playerId)
+function ga:getRemoteConfigsContentAsString(playerId)
+    return state:getRemoteConfigsContentAsString(playerId)
 end
 
 function ga:PlayerJoined(Player, teleportData)

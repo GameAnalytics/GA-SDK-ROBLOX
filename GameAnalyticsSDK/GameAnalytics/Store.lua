@@ -11,11 +11,14 @@ local store = {
         CurrentCustomDimension01 = "",
         CurrentCustomDimension02 = "",
         CurrentCustomDimension03 = "",
+        ConfigsHash = "",
+        AbId = "",
+        AbVariantId = "",
         InitAuthorized = false,
         SdkConfig = {},
         ClientServerTimeOffset = 0,
         Configurations = {},
-        CommandCenterIsReady = false,
+        RemoteConfigsIsReady = false,
         PlayerTeleporting = false
     },
     DataToSave = {
