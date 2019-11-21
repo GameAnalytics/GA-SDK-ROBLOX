@@ -14,7 +14,7 @@ Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
 **2.0.0**
-* command center is now called remote configs
+* Remote Config calls have been updated and the old calls have deprecated. Please see GA documentation for the new SDK calls and migration guide
 * A/B testing support added
 
 **1.4.2**
