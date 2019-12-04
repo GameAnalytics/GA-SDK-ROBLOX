@@ -41,6 +41,7 @@ local function getInitAnnotations(playerData, playerId)
         ["sdk_version"] = "roblox " .. version.SdkVersion,
         ["os_version"] = playerData.OS,
         ["platform"] = playerData.Platform,
+        ["build"] = nil,
         ["random_salt"] = playerData.Sessions
     }
 
@@ -108,7 +109,8 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
             Url = url,
             Method = "POST",
             Headers = {
-                ["Authorization"] = authorization
+                ["Authorization"] = authorization,
+                ["Content-Type"] = "application/json"
             },
             Body = payload
         })
@@ -198,7 +200,8 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
             Url = url,
             Method = "POST",
             Headers = {
-                ["Authorization"] = authorization
+                ["Authorization"] = authorization,
+                ["Content-Type"] = "application/json"
             },
             Body = payload
         })

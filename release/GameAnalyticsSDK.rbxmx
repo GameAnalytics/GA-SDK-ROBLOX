@@ -1117,6 +1117,7 @@ local function getInitAnnotations(playerData, playerId)
         ["sdk_version"] = "roblox " .. version.SdkVersion,
         ["os_version"] = playerData.OS,
         ["platform"] = playerData.Platform,
+        ["build"] = nil,
         ["random_salt"] = playerData.Sessions
     }
 
@@ -1184,7 +1185,8 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
             Url = url,
             Method = "POST",
             Headers = {
-                ["Authorization"] = authorization
+                ["Authorization"] = authorization,
+                ["Content-Type"] = "application/json"
             },
             Body = payload
         })
@@ -1274,7 +1276,8 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
             Url = url,
             Method = "POST",
             Headers = {
-                ["Authorization"] = authorization
+                ["Authorization"] = authorization,
+                ["Content-Type"] = "application/json"
             },
             Body = payload
         })
@@ -2511,7 +2514,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "2.0.0"
+    SdkVersion = "2.0.1"
 }
 
 return version
