@@ -123,6 +123,17 @@ function ga:configureBuild(build)
     end)
 end
 
+function ga:configureAvailableGamepasses(availableGamepasses)
+    threading:performTaskOnGAThread(function()
+        if isSdkReady({needsInitialized=true, shouldWarn=false}) then
+            logger:w("Available gamepasses must be set before SDK is initialized.")
+            return
+        end
+
+        state:setAvailableGamepasses(availableGamepasses)
+    end)
+end
+
 function ga:initialize(options)
     threading:performTaskOnGAThread(function()
         if isSdkReady({needsInitialized=true, shouldWarn=false}) then
@@ -189,8 +200,17 @@ function ga:addBusinessEvent(playerId, options)
         local itemId = options["itemId"] or ""
         local cartType = options["cartType"] or ""
         local USDSpent = math.floor((amount * 0.7) * 0.35)
+        local gamepassId = options["gamepassId"] or nil
 
         events:addBusinessEvent(playerId, "USD", USDSpent, itemType, itemId, cartType)
+
+        if itemType == "Gamepass" then
+            local player = Players:GetPlayerByUserId(playerId)
+            local playerData = store:GetPlayerData(player)
+            table.insert(playerData.OwnedGamepasses, gamepassId)
+            store.PlayerCache[player] = playerData
+            store:SavePlayerData(player)
+        end
     end)
 end
 
@@ -434,6 +454,52 @@ function ga:PlayerJoined(Player, teleportData)
 
     OnPlayerReadyEvent = OnPlayerReadyEvent or game:GetService("ReplicatedStorage"):WaitForChild("OnPlayerReadyEvent")
     OnPlayerReadyEvent:Fire(Player)
+
+    --Website gamepasses
+    if PlayerData.OwnedGamepasses == nil then --player is new (or is playing after SDK update)
+        PlayerData.OwnedGamepasses = {}
+        for i, id in ipairs(state._availableGamepasses) do
+            if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
+                table.insert(PlayerData.OwnedGamepasses, id)
+            end
+        end
+        --Player's data is now up to date. gamepass purchases on website can now be tracked in future visits
+        store.PlayerCache[Player.UserId] = PlayerData
+        
+        store:SavePlayerData(Player)
+    else
+        --build a list of the game passes a user owns
+        local currentlyOwned = {}
+        for i, id in ipairs(state._availableGamepasses) do
+            if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
+                table.insert(currentlyOwned, id)
+            end
+        end
+
+        --make a table so it's easier to compare to stored game passes
+        local storedGamepassesTable = {}
+        for i, id in ipairs(PlayerData.OwnedGamepasses) do
+            storedGamepassesTable[id] = true
+        end
+        
+        --compare stored game passes to currently owned game passses
+        for i, id in ipairs(currentlyOwned) do
+            if not storedGamepassesTable[id] then
+                table.insert(PlayerData.OwnedGamepasses, id)
+                local gamepassInfo = MKT:GetProductInfo(id, Enum.InfoType.GamePass)
+                ga:addBusinessEvent(Player.UserId, {
+                    amount = gamepassInfo.PriceInRobux,
+                    itemType = "Gamepass",
+                    itemId = ga:filterForBusinessEvent(gamepassInfo.Name),
+                    cartType = "Website"
+                })
+            end
+        end
+
+        store.PlayerCache[Player.UserId] = PlayerData
+
+        store:SavePlayerData(Player)
+    end
 
     --Autosave
     spawn(function()

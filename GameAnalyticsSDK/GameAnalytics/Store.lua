@@ -19,7 +19,8 @@ local store = {
         ClientServerTimeOffset = 0,
         Configurations = {},
         RemoteConfigsIsReady = false,
-        PlayerTeleporting = false
+        PlayerTeleporting = false,
+        OwnedGamepasses = nil --nil means a completely new player. {} means player with no game passes
     },
     DataToSave = {
         "Sessions",
@@ -27,7 +28,8 @@ local store = {
         "ProgressionTries",
         "CurrentCustomDimension01",
         "CurrentCustomDimension02",
-        "CurrentCustomDimension03"
+        "CurrentCustomDimension03",
+        "OwnedGamepasses"
     },
 
     --Cache

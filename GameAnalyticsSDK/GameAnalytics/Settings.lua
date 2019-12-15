@@ -10,7 +10,8 @@ local settings = {
     AvailableResourceCurrencies = {},
     AvailableResourceItemTypes = {},
     GameKey = "",
-    SecretKey = ""
+    SecretKey = "",
+    AvailableGamepasses = {} --Array of all game pass ids used to track Roblox.com purchases
 }
 
 return settings

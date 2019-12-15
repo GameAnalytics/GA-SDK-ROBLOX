@@ -42,6 +42,9 @@ end
 if #Settings.Build > 0 then
     GameAnalytics:configureBuild(Settings.Build)
 end
+if #Settings.AvailableGamepasses > 0 then
+    GameAnalytics:configureAvailableGamepasses(Settings.AvailableGamepasses)
+end
 
 GameAnalytics:initialize({
     gameKey = Settings.GameKey,

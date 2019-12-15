@@ -114,7 +114,7 @@ LS.MessageOut:Connect(function(message, messageType)
     errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
 end)
 
---Record Gamepasses. NOTE: This doesn't record gamepass purchases if a player buys it from the website
+--Record Gamepasses. 
 MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
 
     --Validate
@@ -139,7 +139,8 @@ MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
     GameAnalytics:addBusinessEvent(Player.UserId, {
         amount = GamepassInfo.PriceInRobux,
         itemType = "Gamepass",
-        itemId = GameAnalytics:filterForBusinessEvent(GamepassInfo.Name)
+        itemId = GameAnalytics:filterForBusinessEvent(GamepassInfo.Name),
+        gamepassId = ID
     })
 end)
 
