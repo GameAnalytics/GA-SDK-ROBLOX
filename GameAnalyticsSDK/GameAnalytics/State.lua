@@ -2,6 +2,7 @@ local state = {
     _availableCustomDimensions01 = {},
     _availableCustomDimensions02 = {},
     _availableCustomDimensions03 = {},
+    _availableGamepasses = {},
     _enableEventSubmission = true,
     Initialized = false,
     ReportErrors = true,
@@ -122,6 +123,16 @@ function state:setAvailableCustomDimensions03(availableCustomDimensions)
     self._availableCustomDimensions03 = availableCustomDimensions
 
     logger:i("Set available custom03 dimension values: (" .. table.concat(availableCustomDimensions, ", ") .. ")")
+end
+
+function state:setAvailableGamepasses(availableGamepasses)
+    if not validation:validateCustomDimensions(availableCustomDimensions) then
+        return
+    end
+
+    self._availableGamepasses = availableGamepasses
+
+    logger:i("Set available game passes: (" .. table.concat(availableGamepasses, ", ") .. ")")
 end
 
 function state:setEventSubmission(flag)
