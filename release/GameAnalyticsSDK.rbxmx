@@ -133,7 +133,7 @@ LS.MessageOut:Connect(function(message, messageType)
     errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
 end)
 
---Record Gamepasses. NOTE: This doesn't record gamepass purchases if a player buys it from the website
+--Record Gamepasses. 
 MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
 
     --Validate
@@ -158,7 +158,8 @@ MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
     GameAnalytics:addBusinessEvent(Player.UserId, {
         amount = GamepassInfo.PriceInRobux,
         itemType = "Gamepass",
-        itemId = GameAnalytics:filterForBusinessEvent(GamepassInfo.Name)
+        itemId = GameAnalytics:filterForBusinessEvent(GamepassInfo.Name),
+        gamepassId = ID
     })
 end)
 
@@ -454,6 +455,9 @@ end
 if #Settings.Build > 0 then
     GameAnalytics:configureBuild(Settings.Build)
 end
+if #Settings.AvailableGamepasses > 0 then
+    GameAnalytics:configureAvailableGamepasses(Settings.AvailableGamepasses)
+end
 
 GameAnalytics:initialize({
     gameKey = Settings.GameKey,
@@ -673,6 +677,17 @@ function ga:configureBuild(build)
     end)
 end
 
+function ga:configureAvailableGamepasses(availableGamepasses)
+    threading:performTaskOnGAThread(function()
+        if isSdkReady({needsInitialized=true, shouldWarn=false}) then
+            logger:w("Available gamepasses must be set before SDK is initialized.")
+            return
+        end
+
+        state:setAvailableGamepasses(availableGamepasses)
+    end)
+end
+
 function ga:initialize(options)
     threading:performTaskOnGAThread(function()
         if isSdkReady({needsInitialized=true, shouldWarn=false}) then
@@ -739,8 +754,17 @@ function ga:addBusinessEvent(playerId, options)
         local itemId = options["itemId"] or ""
         local cartType = options["cartType"] or ""
         local USDSpent = math.floor((amount * 0.7) * 0.35)
+        local gamepassId = options["gamepassId"] or nil
 
         events:addBusinessEvent(playerId, "USD", USDSpent, itemType, itemId, cartType)
+
+        if itemType == "Gamepass" then
+            local player = Players:GetPlayerByUserId(playerId)
+            local playerData = store:GetPlayerData(player)
+            table.insert(playerData.OwnedGamepasses, gamepassId)
+            store.PlayerCache[player] = playerData
+            store:SavePlayerData(player)
+        end
     end)
 end
 
@@ -985,6 +1009,52 @@ function ga:PlayerJoined(Player, teleportData)
     OnPlayerReadyEvent = OnPlayerReadyEvent or game:GetService("ReplicatedStorage"):WaitForChild("OnPlayerReadyEvent")
     OnPlayerReadyEvent:Fire(Player)
 
+    --Website gamepasses
+    if PlayerData.OwnedGamepasses == nil then --player is new (or is playing after SDK update)
+        PlayerData.OwnedGamepasses = {}
+        for i, id in ipairs(state._availableGamepasses) do
+            if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
+                table.insert(PlayerData.OwnedGamepasses, id)
+            end
+        end
+        --Player's data is now up to date. gamepass purchases on website can now be tracked in future visits
+        store.PlayerCache[Player.UserId] = PlayerData
+        
+        store:SavePlayerData(Player)
+    else
+        --build a list of the game passes a user owns
+        local currentlyOwned = {}
+        for i, id in ipairs(state._availableGamepasses) do
+            if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
+                table.insert(currentlyOwned, id)
+            end
+        end
+
+        --make a table so it's easier to compare to stored game passes
+        local storedGamepassesTable = {}
+        for i, id in ipairs(PlayerData.OwnedGamepasses) do
+            storedGamepassesTable[id] = true
+        end
+        
+        --compare stored game passes to currently owned game passses
+        for i, id in ipairs(currentlyOwned) do
+            if not storedGamepassesTable[id] then
+                table.insert(PlayerData.OwnedGamepasses, id)
+                local gamepassInfo = MKT:GetProductInfo(id, Enum.InfoType.GamePass)
+                ga:addBusinessEvent(Player.UserId, {
+                    amount = gamepassInfo.PriceInRobux,
+                    itemType = "Gamepass",
+                    itemId = ga:filterForBusinessEvent(gamepassInfo.Name),
+                    cartType = "Website"
+                })
+            end
+        end
+
+        store.PlayerCache[Player.UserId] = PlayerData
+
+        store:SavePlayerData(Player)
+    end
+
     --Autosave
     spawn(function()
 
@@ -1061,7 +1131,8 @@ return ga
     AvailableResourceCurrencies = {},
     AvailableResourceItemTypes = {},
     GameKey = "",
-    SecretKey = ""
+    SecretKey = "",
+    AvailableGamepasses = {} --Array of all game pass ids used to track Roblox.com purchases
 }
 
 return settings
@@ -1883,7 +1954,8 @@ local store = {
         ClientServerTimeOffset = 0,
         Configurations = {},
         RemoteConfigsIsReady = false,
-        PlayerTeleporting = false
+        PlayerTeleporting = false,
+        OwnedGamepasses = nil --nil means a completely new player. {} means player with no game passes
     },
     DataToSave = {
         "Sessions",
@@ -1891,7 +1963,8 @@ local store = {
         "ProgressionTries",
         "CurrentCustomDimension01",
         "CurrentCustomDimension02",
-        "CurrentCustomDimension03"
+        "CurrentCustomDimension03",
+        "OwnedGamepasses"
     },
 
     --Cache
@@ -2514,7 +2587,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-    SdkVersion = "2.0.1"
+    SdkVersion = "2.1.0"
 }
 
 return version
@@ -2531,6 +2604,7 @@ return version
     _availableCustomDimensions01 = {},
     _availableCustomDimensions02 = {},
     _availableCustomDimensions03 = {},
+    _availableGamepasses = {},
     _enableEventSubmission = true,
     Initialized = false,
     ReportErrors = true,
@@ -2651,6 +2725,16 @@ function state:setAvailableCustomDimensions03(availableCustomDimensions)
     self._availableCustomDimensions03 = availableCustomDimensions
 
     logger:i("Set available custom03 dimension values: (" .. table.concat(availableCustomDimensions, ", ") .. ")")
+end
+
+function state:setAvailableGamepasses(availableGamepasses)
+    if not validation:validateCustomDimensions(availableCustomDimensions) then
+        return
+    end
+
+    self._availableGamepasses = availableGamepasses
+
+    logger:i("Set available game passes: (" .. table.concat(availableGamepasses, ", ") .. ")")
 end
 
 function state:setEventSubmission(flag)
