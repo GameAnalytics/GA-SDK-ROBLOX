@@ -13,6 +13,10 @@
         "GameAnalyticsServer": {
             "path": "GameAnalyticsSDK/GameAnalyticsServer.server.lua",
             "target": "ServerScriptService.GameAnalyticsServer"
+        },
+        "Postie": {
+            "path": "GameAnalyticsSDK/Postie.lua",
+            "target": "ReplicatedStorage.Postie"
         }
     }
 }
