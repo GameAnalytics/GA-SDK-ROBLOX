@@ -29,13 +29,8 @@ local CategoryError = "error"
 local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
 local MAX_AGGREGATED_EVENTS = 2000
 
-
 local function addDimensionsToEvent(playerId, eventData)
-	if not eventData then
-		return
-	end
-
-	if not playerId then
+	if not eventData or not playerId then
 		return
 	end
 
