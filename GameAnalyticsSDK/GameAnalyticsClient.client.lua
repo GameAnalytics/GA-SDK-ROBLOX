@@ -10,17 +10,17 @@ local Postie = require(ReplicatedStorage.Postie)
 --Functions
 local function getPlatform()
 
-    if (GS:IsTenFootInterface()) then
-        return "Console"
-    elseif (UIS.TouchEnabled and not UIS.MouseEnabled) then
-        return "Mobile"
-    else
-        return "Desktop"
-    end
+	if GS:IsTenFootInterface() then
+		return "Console"
+	elseif UIS.TouchEnabled and not UIS.MouseEnabled then
+		return "Mobile"
+	else
+		return "Desktop"
+	end
 end
 
 --Filtering
-Postie.SetCallback("getPlatform", getPlatform);
+Postie.SetCallback("getPlatform", getPlatform)
 
 -- debug stuff
 --GameAnalyticsSendMessage.OnClientEvent:Connect(function(chatProperties)

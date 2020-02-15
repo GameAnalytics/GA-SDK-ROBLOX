@@ -1,57 +1,64 @@
 --[[
 
-    NOTE: This script should be in game.ServerScriptService
+	NOTE: This script should be in game.ServerScriptService
 
 --]]
 
+local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
 --Validate
 if not script:IsDescendantOf(game:GetService("ServerScriptService")) then
-    error("GameAnalytics: GameAnalyticsServerInitUsingSettings has to be located in game.ServerScriptService.")
-    return
+	error("GameAnalytics: GameAnalyticsServerInitUsingSettings has to be located in game.ServerScriptService.")
+	return
 end
 
 --Modules
 local GameAnalytics = require(ServerStorage.GameAnalytics)
 local Settings = require(ServerStorage.GameAnalytics.Settings)
-local Players = game:GetService("Players")
 
 if Settings.EnableInfoLog then
-    GameAnalytics:setEnabledInfoLog(Settings.EnableInfoLog)
+	GameAnalytics:setEnabledInfoLog(Settings.EnableInfoLog)
 end
+
 if Settings.EnableVerboseLog then
-    GameAnalytics:setEnabledVerboseLog(Settings.EnableVerboseLog)
+	GameAnalytics:setEnabledVerboseLog(Settings.EnableVerboseLog)
 end
 
 if #Settings.AvailableCustomDimensions01 > 0 then
-    GameAnalytics:configureAvailableCustomDimensions01(Settings.AvailableCustomDimensions01)
+	GameAnalytics:configureAvailableCustomDimensions01(Settings.AvailableCustomDimensions01)
 end
+
 if #Settings.AvailableCustomDimensions02 > 0 then
-    GameAnalytics:configureAvailableCustomDimensions02(Settings.AvailableCustomDimensions02)
+	GameAnalytics:configureAvailableCustomDimensions02(Settings.AvailableCustomDimensions02)
 end
+
 if #Settings.AvailableCustomDimensions03 > 0 then
-    GameAnalytics:configureAvailableCustomDimensions03(Settings.AvailableCustomDimensions03)
+	GameAnalytics:configureAvailableCustomDimensions03(Settings.AvailableCustomDimensions03)
 end
+
 if #Settings.AvailableResourceCurrencies > 0 then
-    GameAnalytics:configureAvailableResourceCurrencies(Settings.AvailableResourceCurrencies)
+	GameAnalytics:configureAvailableResourceCurrencies(Settings.AvailableResourceCurrencies)
 end
+
 if #Settings.AvailableResourceItemTypes > 0 then
-    GameAnalytics:configureAvailableResourceItemTypes(Settings.AvailableResourceItemTypes)
+	GameAnalytics:configureAvailableResourceItemTypes(Settings.AvailableResourceItemTypes)
 end
+
 if #Settings.Build > 0 then
-    GameAnalytics:configureBuild(Settings.Build)
+	GameAnalytics:configureBuild(Settings.Build)
 end
+
 if #Settings.AvailableGamepasses > 0 then
-    GameAnalytics:configureAvailableGamepasses(Settings.AvailableGamepasses)
+	GameAnalytics:configureAvailableGamepasses(Settings.AvailableGamepasses)
 end
 
 GameAnalytics:initialize({
-    gameKey = Settings.GameKey,
-    secretKey = Settings.SecretKey
+	gameKey = Settings.GameKey,
+	secretKey = Settings.SecretKey,
 })
 
 -- Fire for players already in game
-for _, Player in pairs(Players:GetPlayers()) do
-    GameAnalytics:PlayerJoined(Player)
+for _, Player in ipairs(Players:GetPlayers()) do
+	GameAnalytics:PlayerJoined(Player)
 end

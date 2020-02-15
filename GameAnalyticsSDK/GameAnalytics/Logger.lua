@@ -2,30 +2,30 @@ local RunService = game:GetService("RunService")
 --local GameAnalyticsSendMessage
 
 local logger = {
-    _infoLogEnabled = false,
-    _infoLogAdvancedEnabled = false,
-    _debugEnabled = RunService:IsStudio()
+	_infoLogEnabled = false,
+	_infoLogAdvancedEnabled = false,
+	_debugEnabled = RunService:IsStudio(),
 }
 
 function logger:setDebugLog(enabled)
-    self._debugEnabled = enabled
+	self._debugEnabled = enabled
 end
 
 function logger:setInfoLog(enabled)
-    self._infoLogEnabled = enabled
+	self._infoLogEnabled = enabled
 end
 
 function logger:setVerboseLog(enabled)
-    self._infoLogAdvancedEnabled = enabled
+	self._infoLogAdvancedEnabled = enabled
 end
 
 function logger:i(format)
-    if not self._infoLogEnabled then
-        return
-    end
+	if not self._infoLogEnabled then
+		return
+	end
 
-    local m = "Info/GameAnalytics: " .. format
-    print(m)
+	local m = "Info/GameAnalytics: " .. format
+	print(m)
 --    GameAnalyticsSendMessage = GameAnalyticsSendMessage or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
 --    GameAnalyticsSendMessage:FireAllClients({
 --        Text = m,
@@ -36,8 +36,8 @@ function logger:i(format)
 end
 
 function logger:w(format)
-    local m = "Warning/GameAnalytics: " .. format
-    warn(m)
+	local m = "Warning/GameAnalytics: " .. format
+	warn(m)
 --    GameAnalyticsSendMessage = GameAnalyticsSendMessage or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
 --    GameAnalyticsSendMessage:FireAllClients({
 --        Text = m,
@@ -48,9 +48,9 @@ function logger:w(format)
 end
 
 function logger:e(format)
-    spawn(function ()
-        local m = "Error/GameAnalytics: " .. format
-        error(m, 0)
+	spawn(function()
+		local m = "Error/GameAnalytics: " .. format
+		error(m, 0)
 --        GameAnalyticsSendMessage = GameAnalyticsSendMessage or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
 --        GameAnalyticsSendMessage:FireAllClients({
 --            Text = m,
@@ -58,16 +58,16 @@ function logger:e(format)
 --            Color = Color3.new(255, 0, 0),
 --            FontSize = Enum.FontSize.Size96
 --        })
-    end)
+	end)
 end
 
 function logger:d(format)
-    if not self._debugEnabled then
-        return
-    end
+	if not self._debugEnabled then
+		return
+	end
 
-    local m = "Debug/GameAnalytics: " .. format
-    print(m)
+	local m = "Debug/GameAnalytics: " .. format
+	print(m)
 --    GameAnalyticsSendMessage = GameAnalyticsSendMessage or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
 --    GameAnalyticsSendMessage:FireAllClients({
 --        Text = m,
@@ -78,12 +78,12 @@ function logger:d(format)
 end
 
 function logger:ii(format)
-    if not self._infoLogAdvancedEnabled then
-        return
-    end
+	if not self._infoLogAdvancedEnabled then
+		return
+	end
 
-    local m = "Verbose/GameAnalytics: " .. format
-    print(m)
+	local m = "Verbose/GameAnalytics: " .. format
+	print(m)
 --    GameAnalyticsSendMessage = GameAnalyticsSendMessage or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
 --    GameAnalyticsSendMessage:FireAllClients({
 --        Text = m,
