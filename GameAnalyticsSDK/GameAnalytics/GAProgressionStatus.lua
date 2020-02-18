@@ -1,15 +1,15 @@
 local function readonlytable(table)
-   return setmetatable({}, {
-     __index = table,
-     __newindex = function(t, k, v)
-                    error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
-                  end,
-     __metatable = false
-   });
+	return setmetatable({}, {
+		__index = table,
+		__metatable = false,
+		__newindex = function(t, k, v)
+			error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
+		end,
+	})
 end
 
 return readonlytable({
-    Start = "Start";
-    Complete = "Complete";
-    Fail = "Fail";
+	Start = "Start",
+	Complete = "Complete",
+	Fail = "Fail",
 })

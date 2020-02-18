@@ -38,6 +38,12 @@ stds.roblox = {
             }
         },
 
+        table = {
+            fields = {
+                "create"
+            }
+        },
+
         -- Global types
         "Instance",
         "Vector2",
