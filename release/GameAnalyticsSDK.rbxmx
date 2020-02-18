@@ -1,26 +1,23 @@
 <roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
-	<Meta name="ExplicitAutoJoints">true</Meta>
-	<External>null</External>
-	<External>nil</External>
-	<Item class="ModuleScript" referent="RBXf309a3c5773d40eaae7007cb4478e182">
-		<Properties>
-			<BinaryString name="AttributesSerialize"></BinaryString>
-			<Content name="LinkedSource"><null></null></Content>
-			<string name="Name">GameAnalyticsSDK</string>
-			<string name="ScriptGuid">{7431f9d9-7538-46e6-a8c6-45d71ee7e57a}</string>
-			<ProtectedString name="Source"><![CDATA[local module = {}
+    <External>null</External>
+    <External>nil</External>
+    <Item class="ModuleScript" referent="RBXf309a3c5773d40eaae7007cb4478e182">
+        <Properties>
+            <Content name="LinkedSource"><null></null></Content>
+            <string name="Name">GameAnalyticsSDK</string>
+            <string name="ScriptGuid">{7431f9d9-7538-46e6-a8c6-45d71ee7e57a}</string>
+            <ProtectedString name="Source"><![CDATA[local module = {}
 return module
 ]]></ProtectedString>
-			<BinaryString name="Tags"></BinaryString>
-		</Properties>
-		<Item class="Script" referent="RBXa82cd927306847a28e2acd9083a050b2">
-			<Properties>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<bool name="Disabled">false</bool>
-				<Content name="LinkedSource"><null></null></Content>
-				<string name="Name">GameAnalyticsServer</string>
-				<string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
-				<ProtectedString name="Source"><![CDATA[--[[
+            <BinaryString name="Tags"></BinaryString>
+        </Properties>
+        <Item class="Script" referent="RBXa82cd927306847a28e2acd9083a050b2">
+            <Properties>
+                <bool name="Disabled">false</bool>
+                <Content name="LinkedSource"><null></null></Content>
+                <string name="Name">GameAnalyticsServer</string>
+                <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
+                <ProtectedString name="Source"><![CDATA[--[[
 
 	NOTE: This script should be in game.ServerScriptService
 
@@ -182,17 +179,239 @@ Players.PlayerRemoving:Connect(function(Player)
 	GameAnalytics:PlayerRemoved(Player)
 end)
 ]]></ProtectedString>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-		</Item>
-		<Item class="Script" referent="RBXa82cd927306847a28e2acd9083a150a5">
-			<Properties>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<bool name="Disabled">false</bool>
-				<Content name="LinkedSource"><null></null></Content>
-				<string name="Name">GameAnalyticsServerInitUsingSettings</string>
-				<string name="ScriptGuid">{9D237FD1-2A47-44D7-867C-E56125886B31}</string>
-				<ProtectedString name="Source"><![CDATA[--[[
+                <BinaryString name="Tags"></BinaryString>
+            </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="RBXa82cd927306847a28e2acd9083a990b2">
+            <Properties>
+                <bool name="Disabled">false</bool>
+                <Content name="LinkedSource"><null></null></Content>
+                <string name="Name">Postie</string>
+                <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae9}</string>
+                <ProtectedString name="Source"><![CDATA[--[[
+	Postie: An elegant alternative to RemoteFunctions with a timeout
+	https://devforum.roblox.com/t/postie-an-elegant-alternative-to-remotefunctions-with-a-timeout/243812
+	By Dandystan
+
+	INTERFACE:
+
+		Function Postie.InvokeClient(id: string, player: Instance<Player>, timeout: number, ...args: any) -> boolean, ...any // yields, server-side
+		 Invoke player with arguments args. Invocation identified by id. Yield until timeout (given in seconds) is reached
+		 and return false, or a signal is received back from the client and return true plus any values received from the
+		 client.
+
+		Function Postie.InvokeServer(id: string, timeout: number, ...args: any) -> boolean, ...any // yields, client-side
+		 Invoke the server with arguments args. Invocation identified by id. Yield until timeout (given in seconds) is
+		 reached and return false, or a signal is received back from the server and return true plus any values received
+		 from the server.
+
+		Function Postie.SetCallback(id: string, callback?: (...args: any))
+		 Set the callback that is invoked when an invocation identified by id is sent. Arguments passed with the invocation
+		 are passed to the callback. If on the server, the player who invoked is implicitly received as the first argument.
+
+		Function Postie.GetCallback(id: string) -> (...)?
+		 Return the callback associated with id.
+
+	EXAMPLE 1 - server to client:
+
+		Server:
+			local postie = require(postieObj)
+
+			-- arbritary func to be called whenever
+			local function getTrampolinesOnScreen(player)
+				-- get objects on screen from player
+				local isSuccessful, trampolines = postie.InvokeClient("RequestObjectsOnScreen", player, 5, "Trampolines")
+				-- check for timeout
+				if isSuccessful then
+					-- validate returned data type for security purposes
+					if typeof(trampolines) == "number" then
+						return true, trampolines
+					end
+				end
+
+				return false
+			end
+
+		Client:
+			local postie = require(postieObj)
+
+			postie.SetCallback("RequestObjectsOnScreen", function(objectType)
+				return objectsOnScreen[objectType]
+			end)
+
+	EXAMPLE 2 - client to server:
+
+		Server:
+			local postie = require(postieObj)
+
+			postie.SetCallback("GetCoins", function(player)
+				return playerCoins[player]
+			end)
+
+		Client:
+			local postie = require(postieObj)
+
+			local function getCoins()
+				return postie.InvokeServer("GetCoins", 5)
+			end
+--]]
+
+-- dependencies:
+local httpService = game:GetService("HttpService")
+local runService = game:GetService("RunService")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+
+if not script:FindFirstChild("Sent") then
+	--Create
+	local f = Instance.new("RemoteEvent")
+	f.Name = "Sent"
+	f.Parent = script
+end
+
+if not script:FindFirstChild("Received") then
+	--Create
+	local f = Instance.new("RemoteEvent")
+	f.Name = "Received"
+	f.Parent = script
+end
+
+-- data:
+local sent = script.Sent
+local received = script.Received
+local isServer = runService:IsServer()
+local idToCallbackMap = {}
+local listeners = {}
+
+-- functions:
+-- SpawnNow(callback: (...args: any), ...args: any)
+local function spawnNow(callback, ...)
+	local bindable = Instance.new("BindableEvent")
+	local arguments = table.pack(...)
+	bindable.Event:Connect(function()
+		callback(table.unpack(arguments, 1, arguments.n))
+	end)
+	bindable:Fire()
+	bindable:Destroy()
+end
+
+
+-- Postie:
+local postie = {}
+
+-- Function Postie.InvokeClient(id: string, player: Instance<Player>, timeout: number, ...args: any) -> boolean, ...any // yields, server-side
+function postie.InvokeClient(id, player, timeout, ...)
+	assert(isServer, "Postie.InvokeClient can only be called from the server")
+	assert(typeof(id) == "string", "bad argument #1 to Postie.InvokeClient, expects string")
+	assert(typeof(player) == "Instance" and player:IsA("Player"), "bad argument #2 to Postie.InvokeClient, expects Instance<Player>")
+	assert(typeof(timeout) == "number", "bad argument #3 to Postie.InvokeClient, expects number")
+	local bindable = Instance.new("BindableEvent")
+	local isResumed = false
+	local pos = #listeners + 1
+	-- get uuid
+	local uuid = httpService:GenerateGUID(false)
+	-- await signal from client
+	listeners[pos] = function(playerWhoFired, signalUuid, ...)
+		if not (playerWhoFired == player and signalUuid == uuid) then return false end
+		isResumed = true
+		table.remove(listeners, pos)
+		bindable:Fire(true, ...)
+		return true
+	end
+	-- await timeout
+	spawnNow(function()
+		wait(timeout)
+		if isResumed then return end
+		table.remove(listeners, pos)
+		bindable:Fire(false)
+	end)
+	-- send signal
+	sent:FireClient(player, id, uuid, ...)
+	return bindable.Event:Wait()
+end
+
+-- Function Postie.InvokeServer(id: string, timeout: number, ...args: any) -> boolean, ...any // yields, client-side
+function postie.InvokeServer(id, timeout, ...)
+	assert(not isServer, "Postie.InvokeServer can only be called from the client")
+	assert(typeof(id) == "string", "bad argument #1 to Postie.InvokeServer, expects string")
+	assert(typeof(timeout) == "number", "bad argument #2 to Postie.InvokeServer, expects number")
+	local bindable = Instance.new("BindableEvent")
+	local isResumed = false
+	local pos = #listeners + 1
+	-- get uuid
+	local uuid = httpService:GenerateGUID(false)
+	-- await signal from client
+	listeners[pos] = function(signalUuid, ...)
+		if signalUuid ~= uuid then return false end
+		isResumed = true
+		table.remove(listeners, pos)
+		bindable:Fire(true, ...)
+		return true
+	end
+	-- await timeout
+	spawnNow(function()
+		wait(timeout)
+		if isResumed then return end
+		table.remove(listeners, pos)
+		bindable:Fire(false)
+	end)
+	-- send signal
+	sent:FireServer(id, uuid, ...)
+	return bindable.Event:Wait()
+end
+
+-- Function Postie.SetCallback(id: string, callback?: (...args: any))
+function postie.SetCallback(id, callback)
+	assert(typeof(id) == "string", "bad argument #1 to Postie.SetCallback, expects string")
+	idToCallbackMap[id] = callback
+end
+
+-- Function Postie.GetCallback(id: string) -> (...)?
+function postie.GetCallback(id)
+	assert(typeof(id) == "string", "bad argument #1 to Postie.GetCallback, expects string")
+	return idToCallbackMap[id]
+end
+
+
+-- main:
+-- handle signals
+if isServer then
+	-- handle received
+	received.OnServerEvent:Connect(function(...)
+		for _, listener in ipairs(listeners) do
+			if listener(...) then return end
+		end
+	end)
+	-- handle sent
+	sent.OnServerEvent:Connect(function(player, id, uuid, ...)
+		local callback = idToCallbackMap[id]
+		received:FireClient(player, uuid, callback and callback(player, ...))
+	end)
+else
+	-- handle received
+	received.OnClientEvent:Connect(function(...)
+		for _, listener in ipairs(listeners) do
+			if listener(...) then return end
+		end
+	end)
+	-- handle sent
+	sent.OnClientEvent:Connect(function(id, uuid, ...)
+		local callback = idToCallbackMap[id]
+		received:FireServer(uuid, callback and callback(...))
+	end)
+end
+
+return postie
+]]></ProtectedString>
+                <BinaryString name="Tags"></BinaryString>
+            </Properties>
+        </Item>
+        <Item class="Script" referent="RBXa82cd927306847a28e2acd9083a150a5">
+            <Properties>
+                <bool name="Disabled">false</bool>
+                <Content name="LinkedSource"><null></null></Content>
+                <string name="Name">GameAnalyticsServerInitUsingSettings</string>
+                <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
+                <ProtectedString name="Source"><![CDATA[--[[
 
 	NOTE: This script should be in game.ServerScriptService
 
@@ -257,17 +476,16 @@ for _, Player in ipairs(Players:GetPlayers()) do
 	GameAnalytics:PlayerJoined(Player)
 end
 ]]></ProtectedString>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-		</Item>
-		<Item class="Script" referent="RBXb7b6780e3b3b47999e926fea38fa454f">
-			<Properties>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<bool name="Disabled">false</bool>
-				<Content name="LinkedSource"><null></null></Content>
-				<string name="Name">INSTALL</string>
-				<string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a2ae1}</string>
-				<ProtectedString name="Source"><![CDATA[--[[
+                <BinaryString name="Tags"></BinaryString>
+            </Properties>
+        </Item>
+        <Item class="Script" referent="RBXb7b6780e3b3b47999e926fea38fa454f">
+            <Properties>
+                <bool name="Disabled">false</bool>
+                <Content name="LinkedSource"><null></null></Content>
+                <string name="Name">INSTALL</string>
+                <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a2ae1}</string>
+                <ProtectedString name="Source"><![CDATA[--[[
 
 Thanks for using the official GameAnalytics Roblox SDK module (based on gillern's GameAnalytics module)!
 
@@ -295,17 +513,16 @@ Resources:
 
 --]]
 ]]></ProtectedString>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-		</Item>
-		<Item class="LocalScript" referent="RBX5ddcab423f9e430186a33c70b93fc965">
-			<Properties>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<bool name="Disabled">false</bool>
-				<Content name="LinkedSource"><null></null></Content>
-				<string name="Name">GameAnalyticsClient</string>
-				<string name="ScriptGuid">{7cd38da4-97aa-470d-a875-cace696c90ba}</string>
-				<ProtectedString name="Source"><![CDATA[--Variables
+                <BinaryString name="Tags"></BinaryString>
+            </Properties>
+        </Item>
+        <Item class="LocalScript" referent="RBX5ddcab423f9e430186a33c70b93fc965">
+            <Properties>
+                <bool name="Disabled">false</bool>
+                <Content name="LinkedSource"><null></null></Content>
+                <string name="Name">GameAnalyticsClient</string>
+                <string name="ScriptGuid">{7cd38da4-97aa-470d-a875-cace696c90ba}</string>
+                <ProtectedString name="Source"><![CDATA[--Variables
 --local GameAnalyticsSendMessage = game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
 
 --Services
@@ -332,241 +549,16 @@ Postie.SetCallback("getPlatform", getPlatform)
 -- debug stuff
 --GameAnalyticsSendMessage.OnClientEvent:Connect(function(chatProperties)
 --    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", chatProperties)
---end)
-]]></ProtectedString>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-		</Item>
-		<Item class="ModuleScript" referent="RBX5D938AEEE4F244FF8C6F60FE7A5BCBE2">
-			<Properties>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<Content name="LinkedSource"><null></null></Content>
-				<string name="Name">Postie</string>
-				<string name="ScriptGuid"></string>
-				<ProtectedString name="Source"><![CDATA[--[[
-    Postie: An elegant alternative to RemoteFunctions with a timeout
-    https://devforum.roblox.com/t/postie-an-elegant-alternative-to-remotefunctions-with-a-timeout/243812
-    By Dandystan
-
-    INTERFACE:
-
-        Function Postie.InvokeClient(id: string, player: Instance<Player>, timeout: number, ...args: any) -> boolean, ...any // yields, server-side
-         Invoke player with arguments args. Invocation identified by id. Yield until timeout (given in seconds) is reached
-         and return false, or a signal is received back from the client and return true plus any values received from the
-         client.
-
-        Function Postie.InvokeServer(id: string, timeout: number, ...args: any) -> boolean, ...any // yields, client-side
-         Invoke the server with arguments args. Invocation identified by id. Yield until timeout (given in seconds) is
-         reached and return false, or a signal is received back from the server and return true plus any values received
-         from the server.
-
-        Function Postie.SetCallback(id: string, callback?: (...args: any))
-         Set the callback that is invoked when an invocation identified by id is sent. Arguments passed with the invocation
-         are passed to the callback. If on the server, the player who invoked is implicitly received as the first argument.
-
-        Function Postie.GetCallback(id: string) -> (...)?
-         Return the callback associated with id.
-
-    EXAMPLE 1 - server to client:
-
-        Server:
-            local postie = require(postieObj)
-
-            -- arbritary func to be called whenever
-            local function getTrampolinesOnScreen(player)
-                -- get objects on screen from player
-                local isSuccessful, trampolines = postie.InvokeClient("RequestObjectsOnScreen", player, 5, "Trampolines")
-                -- check for timeout
-                if isSuccessful then
-                    -- validate returned data type for security purposes
-                    if typeof(trampolines) == "number" then
-                        return true, trampolines
-                    end
-                end
-
-                return false
-            end
-
-        Client:
-            local postie = require(postieObj)
-
-            postie.SetCallback("RequestObjectsOnScreen", function(objectType)
-                return objectsOnScreen[objectType]
-            end)
-
-    EXAMPLE 2 - client to server:
-
-        Server:
-            local postie = require(postieObj)
-
-            postie.SetCallback("GetCoins", function(player)
-                return playerCoins[player]
-            end)
-
-        Client:
-            local postie = require(postieObj)
-
-            local function getCoins()
-                return postie.InvokeServer("GetCoins", 5)
-            end
---]]
-
--- dependencies:
-local httpService = game:GetService("HttpService")
-local runService = game:GetService("RunService")
-local replicatedStorage = game:GetService("ReplicatedStorage")
-
-if not script:FindFirstChild("Sent") then
-    --Create
-    local f = Instance.new("RemoteEvent")
-    f.Name = "Sent"
-    f.Parent = script
-end
-
-if not script:FindFirstChild("Received") then
-    --Create
-    local f = Instance.new("RemoteEvent")
-    f.Name = "Received"
-    f.Parent = script
-end
-
--- data:
-local sent = script.Sent
-local received = script.Received
-local isServer = runService:IsServer()
-local idToCallbackMap = {}
-local listeners = {}
-
--- functions:
--- SpawnNow(callback: (...args: any), ...args: any)
-local function spawnNow(callback, ...)
-    local bindable = Instance.new("BindableEvent")
-    local arguments = table.pack(...)
-    bindable.Event:Connect(function()
-        callback(table.unpack(arguments, 1, arguments.n))
-    end)
-    bindable:Fire()
-    bindable:Destroy()
-end
-
-
--- Postie:
-local postie = {}
-
--- Function Postie.InvokeClient(id: string, player: Instance<Player>, timeout: number, ...args: any) -> boolean, ...any // yields, server-side
-function postie.InvokeClient(id, player, timeout, ...)
-    assert(isServer, "Postie.InvokeClient can only be called from the server")
-    assert(typeof(id) == "string", "bad argument #1 to Postie.InvokeClient, expects string")
-    assert(typeof(player) == "Instance" and player:IsA("Player"), "bad argument #2 to Postie.InvokeClient, expects Instance<Player>")
-    assert(typeof(timeout) == "number", "bad argument #3 to Postie.InvokeClient, expects number")
-    local bindable = Instance.new("BindableEvent")
-    local isResumed = false
-    local pos = #listeners + 1
-    -- get uuid
-    local uuid = httpService:GenerateGUID(false)
-    -- await signal from client
-    listeners[pos] = function(playerWhoFired, signalUuid, ...)
-        if not (playerWhoFired == player and signalUuid == uuid) then return false end
-        isResumed = true
-        table.remove(listeners, pos)
-        bindable:Fire(true, ...)
-        return true
-    end
-    -- await timeout
-    spawnNow(function()
-        wait(timeout)
-        if isResumed then return end
-        table.remove(listeners, pos)
-        bindable:Fire(false)
-    end)
-    -- send signal
-    sent:FireClient(player, id, uuid, ...)
-    return bindable.Event:Wait()
-end
-
--- Function Postie.InvokeServer(id: string, timeout: number, ...args: any) -> boolean, ...any // yields, client-side
-function postie.InvokeServer(id, timeout, ...)
-    assert(not isServer, "Postie.InvokeServer can only be called from the client")
-    assert(typeof(id) == "string", "bad argument #1 to Postie.InvokeServer, expects string")
-    assert(typeof(timeout) == "number", "bad argument #2 to Postie.InvokeServer, expects number")
-    local bindable = Instance.new("BindableEvent")
-    local isResumed = false
-    local pos = #listeners + 1
-    -- get uuid
-    local uuid = httpService:GenerateGUID(false)
-    -- await signal from client
-    listeners[pos] = function(signalUuid, ...)
-        if signalUuid ~= uuid then return false end
-        isResumed = true
-        table.remove(listeners, pos)
-        bindable:Fire(true, ...)
-        return true
-    end
-    -- await timeout
-    spawnNow(function()
-        wait(timeout)
-        if isResumed then return end
-        table.remove(listeners, pos)
-        bindable:Fire(false)
-    end)
-    -- send signal
-    sent:FireServer(id, uuid, ...)
-    return bindable.Event:Wait()
-end
-
--- Function Postie.SetCallback(id: string, callback?: (...args: any))
-function postie.SetCallback(id, callback)
-    assert(typeof(id) == "string", "bad argument #1 to Postie.SetCallback, expects string")
-    idToCallbackMap[id] = callback
-end
-
--- Function Postie.GetCallback(id: string) -> (...)?
-function postie.GetCallback(id)
-    assert(typeof(id) == "string", "bad argument #1 to Postie.GetCallback, expects string")
-    return idToCallbackMap[id]
-end
-
-
--- main:
--- handle signals
-if isServer then
-    -- handle received
-    received.OnServerEvent:Connect(function(...)
-        for _, listener in ipairs(listeners) do
-            if listener(...) then return end
-        end
-    end)
-    -- handle sent
-    sent.OnServerEvent:Connect(function(player, id, uuid, ...)
-        local callback = idToCallbackMap[id]
-        received:FireClient(player, uuid, callback and callback(player, ...))
-    end)
-else
-    -- handle received
-    received.OnClientEvent:Connect(function(...)
-        for _, listener in ipairs(listeners) do
-            if listener(...) then return end
-        end
-    end)
-    -- handle sent
-    sent.OnClientEvent:Connect(function(id, uuid, ...)
-        local callback = idToCallbackMap[id]
-        received:FireServer(uuid, callback and callback(...))
-    end)
-end
-
-return postie
-]]></ProtectedString>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-		</Item>
-		<Item class="ModuleScript" referent="RBX7DA988BD9AF547EEBE6F893A53462107">
-			<Properties>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<Content name="LinkedSource"><null></null></Content>
-				<string name="Name">GameAnalytics</string>
-				<string name="ScriptGuid"></string>
-				<ProtectedString name="Source"><![CDATA[local GAResourceFlowType = require(script.GAResourceFlowType)
+--end)]]></ProtectedString>
+                <BinaryString name="Tags"></BinaryString>
+            </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="RBXf8708688395b460f9941544945f03ab9">
+            <Properties>
+                <Content name="LinkedSource"><null></null></Content>
+                <string name="Name">GameAnalytics</string>
+                <string name="ScriptGuid"></string>
+                <ProtectedString name="Source"><![CDATA[local GAResourceFlowType = require(script.GAResourceFlowType)
 local GAProgressionStatus = require(script.GAProgressionStatus)
 local GAErrorSeverity = require(script.GAErrorSeverity)
 
@@ -1134,601 +1126,40 @@ end
 
 return ga
 ]]></ProtectedString>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-			<Item class="ModuleScript" referent="RBX322CF1A6B0714F6BADF63A4FE4B21B2C">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Events</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local events = {
-	ProcessEventsInterval = 8,
+                <BinaryString name="Tags"></BinaryString>
+            </Properties>
+            <Item class="ModuleScript" referent="RBX34831ce54bf7450a8e97b4ff9458caa6">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">Settings</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local settings = {
+	EnableInfoLog = true,
+	EnableVerboseLog = false,
+	AutomaticSendBusinessEvents = true,
+	ReportErrors = true,
+	Build = "0.1",
+	AvailableCustomDimensions01 = {},
+	AvailableCustomDimensions02 = {},
+	AvailableCustomDimensions03 = {},
+	AvailableResourceCurrencies = {},
+	AvailableResourceItemTypes = {},
 	GameKey = "",
 	SecretKey = "",
-	_build = "",
-	_availableResourceCurrencies = {},
-	_availableResourceItemTypes = {},
+	AvailableGamepasses = {}, --Array of all game pass ids used to track Roblox.com purchases
 }
 
-local store = require(script.Parent.Store)
-local logger = require(script.Parent.Logger)
-local version = require(script.Parent.Version)
-local validation = require(script.Parent.Validation)
-local threading = require(script.Parent.Threading)
-local http_api = require(script.Parent.HttpApi)
-local utilities = require(script.Parent.Utilities)
-local GAResourceFlowType = require(script.Parent.GAResourceFlowType)
-local GAProgressionStatus = require(script.Parent.GAProgressionStatus)
-local GAErrorSeverity = require(script.Parent.GAErrorSeverity)
-local HTTP = game:GetService("HttpService")
-
-local CategorySessionStart = "user"
-local CategorySessionEnd = "session_end"
-local CategoryBusiness = "business"
-local CategoryResource = "resource"
-local CategoryProgression = "progression"
-local CategoryDesign = "design"
-local CategoryError = "error"
-local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
-local MAX_AGGREGATED_EVENTS = 2000
-
-
-local function addDimensionsToEvent(playerId, eventData)
-	if not eventData then
-		return
-	end
-
-	if not playerId then
-		return
-	end
-
-	local PlayerData = store.PlayerCache[playerId]
-
-	-- add to dict (if not nil)
-	if PlayerData and PlayerData.CurrentCustomDimension01 and #PlayerData.CurrentCustomDimension01 > 0 then
-		eventData["custom_01"] = PlayerData.CurrentCustomDimension01
-	end
-
-	if PlayerData and PlayerData.CurrentCustomDimension02 and #PlayerData.CurrentCustomDimension02 > 0 then
-		eventData["custom_02"] = PlayerData.CurrentCustomDimension02
-	end
-
-	if PlayerData and PlayerData.CurrentCustomDimension03 and #PlayerData.CurrentCustomDimension03 > 0 then
-		eventData["custom_03"] = PlayerData.CurrentCustomDimension03
-	end
-end
-
-local function getClientTsAdjusted(playerId)
-	if not playerId then
-		return os.time()
-	end
-
-	local PlayerData = store.PlayerCache[playerId]
-	local clientTs = os.time()
-	local clientTsAdjustedInteger = clientTs + PlayerData.ClientServerTimeOffset
-	if validation:validateClientTs(clientTsAdjustedInteger) then
-		return clientTsAdjustedInteger
-	else
-		return clientTs
-	end
-end
-
-local DUMMY_SESSION_ID = HTTP:GenerateGUID(false):lower()
-
-local function getEventAnnotations(playerId)
-	local PlayerData
-	local id
-
-	if playerId then
-		id = playerId
-		PlayerData = store.PlayerCache[playerId]
-	else
-		id = "DummyId"
-		PlayerData = {
-			OS = "uwp_desktop 0.0.0",
-			Platform = "uwp_desktop",
-			SessionID = DUMMY_SESSION_ID,
-			Sessions = 1,
-		}
-	end
-
-	local annotations = {
-		-- ---- REQUIRED ----
-		-- collector event API version
-		["v"] = 2,
-		-- User identifier
-		["user_id"] = tostring(id),
-		-- Client Timestamp (the adjusted timestamp)
-		["client_ts"] = getClientTsAdjusted(playerId),
-		-- SDK version
-		["sdk_version"] = "roblox " .. version.SdkVersion,
-		-- Operation system version
-		["os_version"] = PlayerData.OS,
-		-- Device make (hardcoded to apple)
-		["manufacturer"] = "unknown",
-		-- Device version
-		["device"] = "unknown",
-		-- Platform (operating system)
-		["platform"] = PlayerData.Platform,
-		-- Session identifier
-		["session_id"] = PlayerData.SessionID,
-		-- Session number
-		["session_num"] = PlayerData.Sessions,
-	}
-
-	if validation:validateBuild(events._build) then
-		annotations["build"] = events._build
-	end
-
-	return annotations
-end
-
-local function addEventToStore(playerId, eventData)
-	-- Get default annotations
-	local ev = getEventAnnotations(playerId)
-
-	-- Merge with eventData
-	for k in pairs(eventData) do
-		ev[k] = eventData[k]
-	end
-
-	-- Create json string representation
-	local json = HTTP:JSONEncode(ev)
-
-	-- output if VERBOSE LOG enabled
-	logger:ii("Event added to queue: " .. json)
-
-	-- Add to store
-	store.EventsQueue[#store.EventsQueue + 1] = ev
-end
-
-local function dequeueMaxEvents()
-	if #store.EventsQueue <= MAX_EVENTS_TO_SEND_IN_ONE_BATCH then
-		local eventsQueue = store.EventsQueue
-		store.EventsQueue = {}
-		return eventsQueue
-	else
-		logger:w(("More than %d events queued! Sending %d."):format(MAX_EVENTS_TO_SEND_IN_ONE_BATCH, MAX_EVENTS_TO_SEND_IN_ONE_BATCH))
-
-		if #store.EventsQueue > MAX_AGGREGATED_EVENTS then
-			logger:w(("DROPPING EVENTS: More than %d events queued!"):format(MAX_AGGREGATED_EVENTS))
-		end
-
-		-- Expensive operation to get ordered events cleared out (O(n))
-		local eventsQueue = table.create(MAX_EVENTS_TO_SEND_IN_ONE_BATCH)
-		for i = 1, MAX_EVENTS_TO_SEND_IN_ONE_BATCH do
-			eventsQueue[i] = store.EventsQueue[i]
-		end
-
-		-- Shift everything down and overwrite old events
-		local eventCount = #store.EventsQueue
-		for i = 1, math.min(MAX_AGGREGATED_EVENTS, eventCount) do
-			store.EventsQueue[i] = store.EventsQueue[i + MAX_EVENTS_TO_SEND_IN_ONE_BATCH]
-		end
-
-		-- Clear additional events
-		for i = MAX_AGGREGATED_EVENTS + 1, eventCount do
-			store.EventsQueue[i] = nil
-		end
-
-		return eventsQueue
-	end
-end
-
-local function processEvents()
-	local queue = dequeueMaxEvents()
-
-	if #queue == 0 then
-		logger:i("Event queue: No events to send")
-		return
-	end
-
-	-- Log
-	logger:i("Event queue: Sending " .. tostring(#queue) .. " events.")
-
-	local eventsResult = http_api:sendEventsInArray(events.GameKey, events.SecretKey, queue)
-	local statusCode = eventsResult.statusCode
-	local responseBody = eventsResult.body
-
-	if statusCode == http_api.EGAHTTPApiResponse.Ok and responseBody then
-		logger:i("Event queue: " .. tostring(#queue) .. " events sent.")
-	else
-		if statusCode == http_api.EGAHTTPApiResponse.NoResponse then
-			logger:w("Event queue: Failed to send events to collector - Retrying next time")
-			for _, e in pairs(queue) do
-				if #store.EventsQueue < MAX_AGGREGATED_EVENTS then
-					store.EventsQueue[#store.EventsQueue + 1] = e
-				else
-					break
-				end
-			end
-		else
-			if statusCode == http_api.EGAHTTPApiResponse.BadRequest and responseBody then
-				logger:w("Event queue: " .. tostring(#queue) .. " events sent. " .. tostring(#responseBody) .. " events failed GA server validation.")
-			else
-				logger:w("Event queue: Failed to send events.")
-			end
-		end
-	end
-end
-
-function events:processEventQueue()
-	processEvents()
-	threading:scheduleTimer(events.ProcessEventsInterval, function()
-		events:processEventQueue()
-	end)
-end
-
-function events:setBuild(build)
-	if not validation:validateBuild(build) then
-		logger:w("Validation fail - configure build: Cannot be null, empty or above 32 length. String: " .. build)
-		return
-	end
-
-	self._build = build
-	logger:i("Set build version: " .. build)
-end
-
-function events:setAvailableResourceCurrencies(availableResourceCurrencies)
-	if not validation:validateResourceCurrencies(availableResourceCurrencies) then
-		return
-	end
-
-	self._availableResourceCurrencies = availableResourceCurrencies
-	logger:i("Set available resource currencies: (" .. table.concat(availableResourceCurrencies, ", ") .. ")")
-end
-
-function events:setAvailableResourceItemTypes(availableResourceItemTypes)
-	if not validation:validateResourceCurrencies(availableResourceItemTypes) then
-		return
-	end
-
-	self._availableResourceItemTypes = availableResourceItemTypes
-	logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
-end
-
-function events:addSessionStartEvent(playerId, teleportData)
-	local PlayerData = store.PlayerCache[playerId]
-
-	if teleportData then
-		PlayerData.Sessions = teleportData.Sessions
-	else
-		local eventDict = {}
-
-		-- Event specific data
-		eventDict["category"] = CategorySessionStart
-
-		-- Increment session number  and persist
-		PlayerData.Sessions = PlayerData.Sessions + 1
-
-		--  Add custom dimensions
-		addDimensionsToEvent(playerId, eventDict)
-
-		-- Add to store
-		addEventToStore(playerId, eventDict)
-
-		logger:i("Add SESSION START event")
-
-		processEvents()
-	end
-end
-
-function events:addSessionEndEvent(playerId)
-	local PlayerData = store.PlayerCache[playerId]
-	local session_start_ts = PlayerData.SessionStart
-	local client_ts_adjusted = getClientTsAdjusted(playerId)
-	local sessionLength = client_ts_adjusted - session_start_ts
-
-	if sessionLength < 0 then
-		-- Should never happen.
-		-- Could be because of edge cases regarding time altering on device.
-		logger:w("Session length was calculated to be less then 0. Should not be possible. Resetting to 0.")
-		sessionLength = 0
-	end
-
-	-- Event specific data
-	local eventDict = {}
-	eventDict["category"] = CategorySessionEnd
-	eventDict["length"] = sessionLength
-
-	-- Add custom dimensions
-	addDimensionsToEvent(playerId, eventDict)
-
-	-- Add to store
-	addEventToStore(playerId, eventDict)
-
-	logger:i("Add SESSION END event.")
-
-	processEvents()
-end
-
-function events:addBusinessEvent(playerId, currency, amount, itemType, itemId, cartType)
-	-- Validate event params
-	if not validation:validateBusinessEvent(currency, amount, cartType, itemType, itemId) then
-		-- TODO: add sdk error event
-		return
-	end
-
-	-- Create empty eventData
-	local eventDict = {}
-
-	-- Increment transaction number and persist
-	local PlayerData = store.PlayerCache[playerId]
-	PlayerData.Transactions = PlayerData.Transactions + 1
-
-	-- Required
-	eventDict["event_id"] = itemType .. ":" .. itemId
-	eventDict["category"] = CategoryBusiness
-	eventDict["currency"] = currency
-	eventDict["amount"] = amount
-	eventDict["transaction_num"] = PlayerData.Transactions
-
-	-- Optional
-	if not utilities:isStringNullOrEmpty(cartType) then
-		eventDict["cart_type"] = cartType
-	end
-
-	-- Add custom dimensions
-	addDimensionsToEvent(playerId, eventDict)
-
-	logger:i("Add BUSINESS event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. ", cartType:" .. cartType .. "}")
-
-	-- Send to store
-	addEventToStore(playerId, eventDict)
-end
-
-function events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId)
-	-- Validate event params
-	if not validation:validateResourceEvent(GAResourceFlowType, flowType, currency, amount, itemType, itemId, self._availableResourceCurrencies, self._availableResourceItemTypes) then
-		-- TODO: add sdk error event
-		return
-	end
-
-	-- If flow type is sink reverse amount
-	if flowType == GAResourceFlowType.Sink then
-		amount = (-1 * amount)
-	end
-
-	-- Create empty eventData
-	local eventDict = {}
-
-	-- insert event specific values
-	local flowTypeString = GAResourceFlowType[flowType]
-	eventDict["event_id"] = flowTypeString .. ":" .. currency .. ":" .. itemType .. ":" .. itemId
-	eventDict["category"] = CategoryResource
-	eventDict["amount"] = amount
-
-	-- Add custom dimensions
-	addDimensionsToEvent(playerId, eventDict)
-
-	logger:i("Add RESOURCE event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. "}")
-
-	-- Send to store
-	addEventToStore(playerId, eventDict)
-end
-
-function events:addProgressionEvent(playerId, progressionStatus, progression01, progression02, progression03, score)
-	-- Validate event params
-	if not validation:validateProgressionEvent(GAProgressionStatus, progressionStatus, progression01, progression02, progression03) then
-		-- TODO: add sdk error event
-		return
-	end
-
-	-- Create empty eventData
-	local eventDict = {}
-
-	-- Progression identifier
-	local progressionIdentifier
-	if utilities:isStringNullOrEmpty(progression02) then
-		progressionIdentifier = progression01
-	elseif utilities:isStringNullOrEmpty(progression03) then
-		progressionIdentifier = progression01 .. ":" .. progression02
-	else
-		progressionIdentifier = progression01 .. ":" .. progression02 .. ":" .. progression03
-	end
-
-	local statusString = GAProgressionStatus[progressionStatus]
-
-	-- Append event specifics
-	eventDict["category"] = CategoryProgression
-	eventDict["event_id"] = statusString .. ":" .. progressionIdentifier
-
-	-- Attempt
-	local attempt_num = 0
-
-	-- Add score if specified and status is not start
-	if score ~= nil and progressionStatus ~= GAProgressionStatus.Start then
-		eventDict["score"] = score
-	end
-
-	local PlayerData = store.PlayerCache[playerId]
-
-	-- Count attempts on each progression fail and persist
-	if progressionStatus == GAProgressionStatus.Fail then
-		-- Increment attempt number
-		local progressionTries = PlayerData.ProgressionTries[progressionIdentifier] or 0
-		PlayerData.ProgressionTries[progressionIdentifier] = progressionTries + 1
-	end
-
-	-- increment and add attempt_num on complete and delete persisted
-	if progressionStatus == GAProgressionStatus.Complete then
-		-- Increment attempt number
-		local progressionTries = PlayerData.ProgressionTries[progressionIdentifier] or 0
-		PlayerData.ProgressionTries[progressionIdentifier] = progressionTries + 1
-
-		-- Add to event
-		attempt_num = PlayerData.ProgressionTries[progressionIdentifier]
-		eventDict["attempt_num"] = attempt_num
-
-		-- Clear
-		PlayerData.ProgressionTries[progressionIdentifier] = 0
-	end
-
-	-- Add custom dimensions
-	addDimensionsToEvent(playerId, eventDict)
-
-	local progression02String = ""
-	if not utilities:isStringNullOrEmpty(progression02) then
-		progression02String = progression02
-	end
-
-	local progression03String = ""
-	if not utilities:isStringNullOrEmpty(progression03) then
-		progression03String = progression03
-	end
-
-	logger:i("Add PROGRESSION event: {status:" .. statusString .. ", progression01:" .. progression01 .. ", progression02:" .. progression02String .. ", progression03:" .. progression03String .. ", score:" .. tostring(score) .. ", attempt:" .. tostring(attempt_num) .. "}")
-
-	-- Send to store
-	addEventToStore(playerId, eventDict)
-end
-
-function events:addDesignEvent(playerId, eventId, value)
-	-- Validate
-	if not validation:validateDesignEvent(eventId) then
-		-- TODO: add sdk error event
-		return
-	end
-
-	-- Create empty eventData
-	local eventData = {}
-
-	-- Append event specifics
-	eventData["category"] = CategoryDesign
-	eventData["event_id"] = eventId
-
-	if value ~= nil then
-		eventData["value"] = value
-	end
-
-	-- Add custom dimensions
-	addDimensionsToEvent(playerId, eventData)
-
-	logger:i("Add DESIGN event: {eventId:" .. eventId .. ", value:" .. tostring(value) .. "}")
-
-	-- Send to store
-	addEventToStore(playerId, eventData)
-end
-
-function events:addErrorEvent(playerId, severity, message)
-	-- Validate
-	if not validation:validateErrorEvent(GAErrorSeverity, severity, message) then
-		-- TODO: add sdk error event
-		return
-	end
-
-	-- Create empty eventData
-	local eventData = {}
-
-	local severityString = GAErrorSeverity[severity]
-
-	eventData["category"] = CategoryError
-	eventData["severity"] = severityString
-	eventData["message"] = message
-
-	-- Add custom dimensions
-	addDimensionsToEvent(playerId, eventData)
-
-	local messageString = ""
-	if not utilities:isStringNullOrEmpty(message) then
-		messageString = message
-	end
-
-	logger:i("Add ERROR event: {severity:" .. severityString .. ", message:" .. messageString .. "}")
-
-	-- Send to store
-	addEventToStore(playerId, eventData)
-end
-
-return events
+return settings
 ]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBXB90E3FB4B26B45A7B7D0D6258660D260">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">GAErrorSeverity</string>
-					<string name="ScriptGuid">{BAC2A4DD-D9D5-4704-A832-E51E41790F89}</string>
-					<ProtectedString name="Source"><![CDATA[local function readonlytable(table)
-	return setmetatable({}, {
-		__index = table,
-		__metatable = false,
-		__newindex = function(t, k, v)
-			error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
-		end,
-	})
-end
-
-return readonlytable({
-	debug = "debug",
-	info = "info",
-	warning = "warning",
-	error = "error",
-	critical = "critical",
-})
-]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBX1D618F41982B438799D8A80E9F2B00A3">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">GAProgressionStatus</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local function readonlytable(table)
-	return setmetatable({}, {
-		__index = table,
-		__metatable = false,
-		__newindex = function(t, k, v)
-			error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
-		end,
-	})
-end
-
-return readonlytable({
-	Start = "Start",
-	Complete = "Complete",
-	Fail = "Fail",
-})
-]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBX85E3AC64865746C3A978696453F7914A">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">GAResourceFlowType</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local function readonlytable(table)
-	return setmetatable({}, {
-		__index = table,
-		__metatable = false,
-		__newindex = function(t, k, v)
-			error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
-		end,
-	})
-end
-
-return readonlytable({
-	Source = "Source",
-	Sink = "Sink",
-})
-]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBX79B05DB399054AC88CB2762B88116041">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">HttpApi</string>
-					<string name="ScriptGuid">{17B4967F-A485-4137-8FD6-46A51C6FA58D}</string>
-					<ProtectedString name="Source"><![CDATA[local RunService = game:GetService("RunService")
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBXd615e5db16034cae976316f3d4fea9e0">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">HttpApi</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local RunService = game:GetService("RunService")
 local validation = require(script.Parent.Validation)
 local version = require(script.Parent.Version)
 
@@ -1988,15 +1419,14 @@ end
 
 return http_api
 ]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-				<Item class="ModuleScript" referent="RBXE9E8649B18F140249784B4BBF5727672">
-					<Properties>
-						<BinaryString name="AttributesSerialize"></BinaryString>
-						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">HashLib</string>
-						<string name="ScriptGuid"></string>
-						<ProtectedString name="Source"><![CDATA[--[=[------------------------------------------------------------------------------------------------------------------------
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+                <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d9983accce5">
+                    <Properties>
+                        <Content name="LinkedSource"><null></null></Content>
+                        <string name="Name">HashLib</string>
+                        <string name="ScriptGuid"></string>
+                        <ProtectedString name="Source"><![CDATA[--[=[------------------------------------------------------------------------------------------------------------------------
 -- HashLib by Egor Skriptunoff, boatbomber, and howmanysmall
 
 Documentation here: https://devforum.roblox.com/t/open-source-hashlib/416732/1
@@ -3343,15 +2773,14 @@ block_size_for_HMAC = {
 }
 
 return sha]]></ProtectedString>
-						<BinaryString name="Tags"></BinaryString>
-					</Properties>
-					<Item class="ModuleScript" referent="RBX945F0E1C25F34176B84AFD5E4CC9CBC3">
-						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">Base64</string>
-							<string name="ScriptGuid"></string>
-							<ProtectedString name="Source"><![CDATA[-- @original: https://gist.github.com/Reselim/40d62b17d138cc74335a1b0709e19ce2
+                        <BinaryString name="Tags"></BinaryString>
+                    </Properties>
+                    <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683accce5">
+                        <Properties>
+                            <Content name="LinkedSource"><null></null></Content>
+                            <string name="Name">base64</string>
+                            <string name="ScriptGuid"></string>
+                            <ProtectedString name="Source"><![CDATA[-- @original: https://gist.github.com/Reselim/40d62b17d138cc74335a1b0709e19ce2
 local Alphabet = {}
 local Indexes = {}
 
@@ -3485,18 +2914,17 @@ function Base64.Decode(Input)
 end
 
 return Base64]]></ProtectedString>
-							<BinaryString name="Tags"></BinaryString>
-						</Properties>
-					</Item>
-				</Item>
-			</Item>
-			<Item class="ModuleScript" referent="RBXFA0DDB6E97E34D29B3557563257C623B">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Logger</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local RunService = game:GetService("RunService")
+                            <BinaryString name="Tags"></BinaryString>
+                        </Properties>
+                    </Item>
+                </Item>
+            </Item>
+            <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683abdde5">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">Logger</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local RunService = game:GetService("RunService")
 --local GameAnalyticsSendMessage
 
 local logger = {
@@ -3593,43 +3021,678 @@ end
 
 return logger
 ]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBX6944843D86474225BCE075F54BF26CAA">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Settings</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local settings = {
-	EnableInfoLog = true,
-	EnableVerboseLog = false,
-	AutomaticSendBusinessEvents = true,
-	ReportErrors = true,
-	Build = "0.1",
-	AvailableCustomDimensions01 = {},
-	AvailableCustomDimensions02 = {},
-	AvailableCustomDimensions03 = {},
-	AvailableResourceCurrencies = {},
-	AvailableResourceItemTypes = {},
-	GameKey = "",
-	SecretKey = "",
-	AvailableGamepasses = {}, --Array of all game pass ids used to track Roblox.com purchases
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX0fd16702bea24d64882fe169a7f9157d">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">Store</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local DS = game:GetService("DataStoreService")
+local RunService = game:GetService("RunService")
+
+local store = {
+	PlayerDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_PlayerDS_1.0.0"),
+	AutoSaveData = 180, --Set to 0 to disable
+	BasePlayerData = {
+		Sessions = 0,
+		Transactions = 0,
+		ProgressionTries = {},
+		CurrentCustomDimension01 = "",
+		CurrentCustomDimension02 = "",
+		CurrentCustomDimension03 = "",
+		ConfigsHash = "",
+		AbId = "",
+		AbVariantId = "",
+		InitAuthorized = false,
+		SdkConfig = {},
+		ClientServerTimeOffset = 0,
+		Configurations = {},
+		RemoteConfigsIsReady = false,
+		PlayerTeleporting = false,
+		OwnedGamepasses = nil, --nil means a completely new player. {} means player with no game passes
+	},
+
+	DataToSave = {
+		"Sessions",
+		"Transactions",
+		"ProgressionTries",
+		"CurrentCustomDimension01",
+		"CurrentCustomDimension02",
+		"CurrentCustomDimension03",
+		"OwnedGamepasses",
+	},
+
+	--Cache
+	PlayerCache = {},
+	EventsQueue = {},
 }
 
-return settings
+function store:GetPlayerData(Player)
+	local PlayerData
+	local success = pcall(function()
+		PlayerData = RunService:IsStudio() and {} or (store.PlayerDS:GetAsync(Player.UserId) or {})
+	end)
+
+	if not success then
+		PlayerData = {}
+	end
+
+	return PlayerData
+end
+
+function store:GetErrorDataStore(scope)
+	local ErrorDS
+	local success = pcall(function()
+		ErrorDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_ErrorDS_1.0.0", scope)
+	end)
+
+	if not success then
+		ErrorDS = {}
+	end
+
+	return ErrorDS
+end
+
+function store:SavePlayerData(Player)
+
+	--Variables
+	local PlayerData = store.PlayerCache[Player.UserId]
+	local SavePlayerData = {}
+
+	if not PlayerData then
+		return
+	end
+
+	--Fill
+	for _, key in pairs(store.DataToSave) do
+		SavePlayerData[key] = PlayerData[key]
+	end
+
+	--Save
+	if not RunService:IsStudio() then
+		pcall(function()
+			store.PlayerDS:SetAsync(Player.UserId, SavePlayerData)
+		end)
+	end
+end
+
+function store:IncrementErrorCount(ErrorDS, ErrorKey, step)
+	if not ErrorKey then
+		return
+	end
+
+	local count = 0
+	--Increment count
+	if not RunService:IsStudio() then
+		pcall(function()
+			count = ErrorDS:IncrementAsync(ErrorKey, step)
+		end)
+	end
+
+	return count
+end
+
+return store
 ]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBX638D956F9AE3499A910B6D0C6F957EEE">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">State</string>
-					<string name="ScriptGuid">{CE972530-D3F5-4F1E-AE83-95995653B8D6}</string>
-					<ProtectedString name="Source"><![CDATA[local validation = require(script.Parent.Validation)
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBXbba5a886fb3443b989529266284f613e">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">Events</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local events = {
+	ProcessEventsInterval = 8,
+	GameKey = "",
+	SecretKey = "",
+	_build = "",
+	_availableResourceCurrencies = {},
+	_availableResourceItemTypes = {},
+}
+
+local store = require(script.Parent.Store)
+local logger = require(script.Parent.Logger)
+local version = require(script.Parent.Version)
+local validation = require(script.Parent.Validation)
+local threading = require(script.Parent.Threading)
+local http_api = require(script.Parent.HttpApi)
+local utilities = require(script.Parent.Utilities)
+local GAResourceFlowType = require(script.Parent.GAResourceFlowType)
+local GAProgressionStatus = require(script.Parent.GAProgressionStatus)
+local GAErrorSeverity = require(script.Parent.GAErrorSeverity)
+local HTTP = game:GetService("HttpService")
+
+local CategorySessionStart = "user"
+local CategorySessionEnd = "session_end"
+local CategoryBusiness = "business"
+local CategoryResource = "resource"
+local CategoryProgression = "progression"
+local CategoryDesign = "design"
+local CategoryError = "error"
+local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
+local MAX_AGGREGATED_EVENTS = 2000
+
+local function addDimensionsToEvent(playerId, eventData)
+	if not eventData or not playerId then
+		return
+	end
+
+	local PlayerData = store.PlayerCache[playerId]
+
+	-- add to dict (if not nil)
+	if PlayerData and PlayerData.CurrentCustomDimension01 and #PlayerData.CurrentCustomDimension01 > 0 then
+		eventData["custom_01"] = PlayerData.CurrentCustomDimension01
+	end
+
+	if PlayerData and PlayerData.CurrentCustomDimension02 and #PlayerData.CurrentCustomDimension02 > 0 then
+		eventData["custom_02"] = PlayerData.CurrentCustomDimension02
+	end
+
+	if PlayerData and PlayerData.CurrentCustomDimension03 and #PlayerData.CurrentCustomDimension03 > 0 then
+		eventData["custom_03"] = PlayerData.CurrentCustomDimension03
+	end
+end
+
+local function getClientTsAdjusted(playerId)
+	if not playerId then
+		return os.time()
+	end
+
+	local PlayerData = store.PlayerCache[playerId]
+	local clientTs = os.time()
+	local clientTsAdjustedInteger = clientTs + PlayerData.ClientServerTimeOffset
+	if validation:validateClientTs(clientTsAdjustedInteger) then
+		return clientTsAdjustedInteger
+	else
+		return clientTs
+	end
+end
+
+local DUMMY_SESSION_ID = HTTP:GenerateGUID(false):lower()
+
+local function getEventAnnotations(playerId)
+	local PlayerData
+	local id
+
+	if playerId then
+		id = playerId
+		PlayerData = store.PlayerCache[playerId]
+	else
+		id = "DummyId"
+		PlayerData = {
+			OS = "uwp_desktop 0.0.0",
+			Platform = "uwp_desktop",
+			SessionID = DUMMY_SESSION_ID,
+			Sessions = 1,
+		}
+	end
+
+	local annotations = {
+		-- ---- REQUIRED ----
+		-- collector event API version
+		["v"] = 2,
+		-- User identifier
+		["user_id"] = tostring(id),
+		-- Client Timestamp (the adjusted timestamp)
+		["client_ts"] = getClientTsAdjusted(playerId),
+		-- SDK version
+		["sdk_version"] = "roblox " .. version.SdkVersion,
+		-- Operation system version
+		["os_version"] = PlayerData.OS,
+		-- Device make (hardcoded to apple)
+		["manufacturer"] = "unknown",
+		-- Device version
+		["device"] = "unknown",
+		-- Platform (operating system)
+		["platform"] = PlayerData.Platform,
+		-- Session identifier
+		["session_id"] = PlayerData.SessionID,
+		-- Session number
+		["session_num"] = PlayerData.Sessions,
+	}
+
+	if validation:validateBuild(events._build) then
+		annotations["build"] = events._build
+	end
+
+	return annotations
+end
+
+local function addEventToStore(playerId, eventData)
+	-- Get default annotations
+	local ev = getEventAnnotations(playerId)
+
+	-- Merge with eventData
+	for k in pairs(eventData) do
+		ev[k] = eventData[k]
+	end
+
+	-- Create json string representation
+	local json = HTTP:JSONEncode(ev)
+
+	-- output if VERBOSE LOG enabled
+	logger:ii("Event added to queue: " .. json)
+
+	-- Add to store
+	store.EventsQueue[#store.EventsQueue + 1] = ev
+end
+
+local function dequeueMaxEvents()
+	if #store.EventsQueue <= MAX_EVENTS_TO_SEND_IN_ONE_BATCH then
+		local eventsQueue = store.EventsQueue
+		store.EventsQueue = {}
+		return eventsQueue
+	else
+		logger:w(("More than %d events queued! Sending %d."):format(MAX_EVENTS_TO_SEND_IN_ONE_BATCH, MAX_EVENTS_TO_SEND_IN_ONE_BATCH))
+
+		if #store.EventsQueue > MAX_AGGREGATED_EVENTS then
+			logger:w(("DROPPING EVENTS: More than %d events queued!"):format(MAX_AGGREGATED_EVENTS))
+		end
+
+		-- Expensive operation to get ordered events cleared out (O(n))
+		local eventsQueue = table.create(MAX_EVENTS_TO_SEND_IN_ONE_BATCH)
+		for i = 1, MAX_EVENTS_TO_SEND_IN_ONE_BATCH do
+			eventsQueue[i] = store.EventsQueue[i]
+		end
+
+		-- Shift everything down and overwrite old events
+		local eventCount = #store.EventsQueue
+		for i = 1, math.min(MAX_AGGREGATED_EVENTS, eventCount) do
+			store.EventsQueue[i] = store.EventsQueue[i + MAX_EVENTS_TO_SEND_IN_ONE_BATCH]
+		end
+
+		-- Clear additional events
+		for i = MAX_AGGREGATED_EVENTS + 1, eventCount do
+			store.EventsQueue[i] = nil
+		end
+
+		return eventsQueue
+	end
+end
+
+local function processEvents()
+	local queue = dequeueMaxEvents()
+
+	if #queue == 0 then
+		logger:i("Event queue: No events to send")
+		return
+	end
+
+	-- Log
+	logger:i("Event queue: Sending " .. tostring(#queue) .. " events.")
+
+	local eventsResult = http_api:sendEventsInArray(events.GameKey, events.SecretKey, queue)
+	local statusCode = eventsResult.statusCode
+	local responseBody = eventsResult.body
+
+	if statusCode == http_api.EGAHTTPApiResponse.Ok and responseBody then
+		logger:i("Event queue: " .. tostring(#queue) .. " events sent.")
+	else
+		if statusCode == http_api.EGAHTTPApiResponse.NoResponse then
+			logger:w("Event queue: Failed to send events to collector - Retrying next time")
+			for _, e in pairs(queue) do
+				if #store.EventsQueue < MAX_AGGREGATED_EVENTS then
+					store.EventsQueue[#store.EventsQueue + 1] = e
+				else
+					break
+				end
+			end
+		else
+			if statusCode == http_api.EGAHTTPApiResponse.BadRequest and responseBody then
+				logger:w("Event queue: " .. tostring(#queue) .. " events sent. " .. tostring(#responseBody) .. " events failed GA server validation.")
+			else
+				logger:w("Event queue: Failed to send events.")
+			end
+		end
+	end
+end
+
+function events:processEventQueue()
+	processEvents()
+	threading:scheduleTimer(events.ProcessEventsInterval, function()
+		events:processEventQueue()
+	end)
+end
+
+function events:setBuild(build)
+	if not validation:validateBuild(build) then
+		logger:w("Validation fail - configure build: Cannot be null, empty or above 32 length. String: " .. build)
+		return
+	end
+
+	self._build = build
+	logger:i("Set build version: " .. build)
+end
+
+function events:setAvailableResourceCurrencies(availableResourceCurrencies)
+	if not validation:validateResourceCurrencies(availableResourceCurrencies) then
+		return
+	end
+
+	self._availableResourceCurrencies = availableResourceCurrencies
+	logger:i("Set available resource currencies: (" .. table.concat(availableResourceCurrencies, ", ") .. ")")
+end
+
+function events:setAvailableResourceItemTypes(availableResourceItemTypes)
+	if not validation:validateResourceCurrencies(availableResourceItemTypes) then
+		return
+	end
+
+	self._availableResourceItemTypes = availableResourceItemTypes
+	logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
+end
+
+function events:addSessionStartEvent(playerId, teleportData)
+	local PlayerData = store.PlayerCache[playerId]
+
+	if teleportData then
+		PlayerData.Sessions = teleportData.Sessions
+	else
+		local eventDict = {}
+
+		-- Event specific data
+		eventDict["category"] = CategorySessionStart
+
+		-- Increment session number  and persist
+		PlayerData.Sessions = PlayerData.Sessions + 1
+
+		--  Add custom dimensions
+		addDimensionsToEvent(playerId, eventDict)
+
+		-- Add to store
+		addEventToStore(playerId, eventDict)
+
+		logger:i("Add SESSION START event")
+
+		processEvents()
+	end
+end
+
+function events:addSessionEndEvent(playerId)
+	local PlayerData = store.PlayerCache[playerId]
+	local session_start_ts = PlayerData.SessionStart
+	local client_ts_adjusted = getClientTsAdjusted(playerId)
+	local sessionLength = client_ts_adjusted - session_start_ts
+
+	if sessionLength < 0 then
+		-- Should never happen.
+		-- Could be because of edge cases regarding time altering on device.
+		logger:w("Session length was calculated to be less then 0. Should not be possible. Resetting to 0.")
+		sessionLength = 0
+	end
+
+	-- Event specific data
+	local eventDict = {}
+	eventDict["category"] = CategorySessionEnd
+	eventDict["length"] = sessionLength
+
+	-- Add custom dimensions
+	addDimensionsToEvent(playerId, eventDict)
+
+	-- Add to store
+	addEventToStore(playerId, eventDict)
+
+	logger:i("Add SESSION END event.")
+
+	processEvents()
+end
+
+function events:addBusinessEvent(playerId, currency, amount, itemType, itemId, cartType)
+	-- Validate event params
+	if not validation:validateBusinessEvent(currency, amount, cartType, itemType, itemId) then
+		-- TODO: add sdk error event
+		return
+	end
+
+	-- Create empty eventData
+	local eventDict = {}
+
+	-- Increment transaction number and persist
+	local PlayerData = store.PlayerCache[playerId]
+	PlayerData.Transactions = PlayerData.Transactions + 1
+
+	-- Required
+	eventDict["event_id"] = itemType .. ":" .. itemId
+	eventDict["category"] = CategoryBusiness
+	eventDict["currency"] = currency
+	eventDict["amount"] = amount
+	eventDict["transaction_num"] = PlayerData.Transactions
+
+	-- Optional
+	if not utilities:isStringNullOrEmpty(cartType) then
+		eventDict["cart_type"] = cartType
+	end
+
+	-- Add custom dimensions
+	addDimensionsToEvent(playerId, eventDict)
+
+	logger:i("Add BUSINESS event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. ", cartType:" .. cartType .. "}")
+
+	-- Send to store
+	addEventToStore(playerId, eventDict)
+end
+
+function events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId)
+	-- Validate event params
+	if not validation:validateResourceEvent(GAResourceFlowType, flowType, currency, amount, itemType, itemId, self._availableResourceCurrencies, self._availableResourceItemTypes) then
+		-- TODO: add sdk error event
+		return
+	end
+
+	-- If flow type is sink reverse amount
+	if flowType == GAResourceFlowType.Sink then
+		amount = (-1 * amount)
+	end
+
+	-- Create empty eventData
+	local eventDict = {}
+
+	-- insert event specific values
+	local flowTypeString = GAResourceFlowType[flowType]
+	eventDict["event_id"] = flowTypeString .. ":" .. currency .. ":" .. itemType .. ":" .. itemId
+	eventDict["category"] = CategoryResource
+	eventDict["amount"] = amount
+
+	-- Add custom dimensions
+	addDimensionsToEvent(playerId, eventDict)
+
+	logger:i("Add RESOURCE event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. "}")
+
+	-- Send to store
+	addEventToStore(playerId, eventDict)
+end
+
+function events:addProgressionEvent(playerId, progressionStatus, progression01, progression02, progression03, score)
+	-- Validate event params
+	if not validation:validateProgressionEvent(GAProgressionStatus, progressionStatus, progression01, progression02, progression03) then
+		-- TODO: add sdk error event
+		return
+	end
+
+	-- Create empty eventData
+	local eventDict = {}
+
+	-- Progression identifier
+	local progressionIdentifier
+	if utilities:isStringNullOrEmpty(progression02) then
+		progressionIdentifier = progression01
+	elseif utilities:isStringNullOrEmpty(progression03) then
+		progressionIdentifier = progression01 .. ":" .. progression02
+	else
+		progressionIdentifier = progression01 .. ":" .. progression02 .. ":" .. progression03
+	end
+
+	local statusString = GAProgressionStatus[progressionStatus]
+
+	-- Append event specifics
+	eventDict["category"] = CategoryProgression
+	eventDict["event_id"] = statusString .. ":" .. progressionIdentifier
+
+	-- Attempt
+	local attempt_num = 0
+
+	-- Add score if specified and status is not start
+	if score ~= nil and progressionStatus ~= GAProgressionStatus.Start then
+		eventDict["score"] = score
+	end
+
+	local PlayerData = store.PlayerCache[playerId]
+
+	-- Count attempts on each progression fail and persist
+	if progressionStatus == GAProgressionStatus.Fail then
+		-- Increment attempt number
+		local progressionTries = PlayerData.ProgressionTries[progressionIdentifier] or 0
+		PlayerData.ProgressionTries[progressionIdentifier] = progressionTries + 1
+	end
+
+	-- increment and add attempt_num on complete and delete persisted
+	if progressionStatus == GAProgressionStatus.Complete then
+		-- Increment attempt number
+		local progressionTries = PlayerData.ProgressionTries[progressionIdentifier] or 0
+		PlayerData.ProgressionTries[progressionIdentifier] = progressionTries + 1
+
+		-- Add to event
+		attempt_num = PlayerData.ProgressionTries[progressionIdentifier]
+		eventDict["attempt_num"] = attempt_num
+
+		-- Clear
+		PlayerData.ProgressionTries[progressionIdentifier] = 0
+	end
+
+	-- Add custom dimensions
+	addDimensionsToEvent(playerId, eventDict)
+
+	local progression02String = ""
+	if not utilities:isStringNullOrEmpty(progression02) then
+		progression02String = progression02
+	end
+
+	local progression03String = ""
+	if not utilities:isStringNullOrEmpty(progression03) then
+		progression03String = progression03
+	end
+
+	logger:i("Add PROGRESSION event: {status:" .. statusString .. ", progression01:" .. progression01 .. ", progression02:" .. progression02String .. ", progression03:" .. progression03String .. ", score:" .. tostring(score) .. ", attempt:" .. tostring(attempt_num) .. "}")
+
+	-- Send to store
+	addEventToStore(playerId, eventDict)
+end
+
+function events:addDesignEvent(playerId, eventId, value)
+	-- Validate
+	if not validation:validateDesignEvent(eventId) then
+		-- TODO: add sdk error event
+		return
+	end
+
+	-- Create empty eventData
+	local eventData = {}
+
+	-- Append event specifics
+	eventData["category"] = CategoryDesign
+	eventData["event_id"] = eventId
+
+	if value ~= nil then
+		eventData["value"] = value
+	end
+
+	-- Add custom dimensions
+	addDimensionsToEvent(playerId, eventData)
+
+	logger:i("Add DESIGN event: {eventId:" .. eventId .. ", value:" .. tostring(value) .. "}")
+
+	-- Send to store
+	addEventToStore(playerId, eventData)
+end
+
+function events:addErrorEvent(playerId, severity, message)
+	-- Validate
+	if not validation:validateErrorEvent(GAErrorSeverity, severity, message) then
+		-- TODO: add sdk error event
+		return
+	end
+
+	-- Create empty eventData
+	local eventData = {}
+
+	local severityString = GAErrorSeverity[severity]
+
+	eventData["category"] = CategoryError
+	eventData["severity"] = severityString
+	eventData["message"] = message
+
+	-- Add custom dimensions
+	addDimensionsToEvent(playerId, eventData)
+
+	local messageString = ""
+	if not utilities:isStringNullOrEmpty(message) then
+		messageString = message
+	end
+
+	logger:i("Add ERROR event: {severity:" .. severityString .. ", message:" .. messageString .. "}")
+
+	-- Send to store
+	addEventToStore(playerId, eventData)
+end
+
+return events
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX5190ffbee57e4a9b94c4e0a74eb63cab">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">Utilities</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local utilities = {}
+
+function utilities:isStringNullOrEmpty(s)
+	return (not s) or #s == 0
+end
+
+function utilities:stringArrayContainsString(array, search)
+	if #array == 0 then
+		return false
+	end
+
+	for _, s in ipairs(array) do
+		if s == search then
+			return true
+		end
+	end
+
+	return false
+end
+
+return utilities
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX02095c98e62847afaf7fdea69dab9f66">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">Version</string>
+                    <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
+                    <ProtectedString name="Source"><![CDATA[local version = {
+	SdkVersion = "2.1.3"
+}
+
+return version
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX8bd464ce27cb4e64ab219c6cb8ccb43d">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">State</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local validation = require(script.Parent.Validation)
 local logger = require(script.Parent.Logger)
 local http_api = require(script.Parent.HttpApi)
 local store = require(script.Parent.Store)
@@ -3903,289 +3966,15 @@ end
 
 return state
 ]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBX642F5AE6DF4B4BD085D411F9092FCA9E">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Store</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local DS = game:GetService("DataStoreService")
-local RunService = game:GetService("RunService")
-
-local store = {
-	PlayerDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_PlayerDS_1.0.0"),
-	AutoSaveData = 180, --Set to 0 to disable
-	BasePlayerData = {
-		Sessions = 0,
-		Transactions = 0,
-		ProgressionTries = {},
-		CurrentCustomDimension01 = "",
-		CurrentCustomDimension02 = "",
-		CurrentCustomDimension03 = "",
-		ConfigsHash = "",
-		AbId = "",
-		AbVariantId = "",
-		InitAuthorized = false,
-		SdkConfig = {},
-		ClientServerTimeOffset = 0,
-		Configurations = {},
-		RemoteConfigsIsReady = false,
-		PlayerTeleporting = false,
-		OwnedGamepasses = nil, --nil means a completely new player. {} means player with no game passes
-	},
-
-	DataToSave = {
-		"Sessions",
-		"Transactions",
-		"ProgressionTries",
-		"CurrentCustomDimension01",
-		"CurrentCustomDimension02",
-		"CurrentCustomDimension03",
-		"OwnedGamepasses",
-	},
-
-	--Cache
-	PlayerCache = {},
-	EventsQueue = {},
-}
-
-function store:GetPlayerData(Player)
-	local PlayerData
-	local success = pcall(function()
-		PlayerData = RunService:IsStudio() and {} or (store.PlayerDS:GetAsync(Player.UserId) or {})
-	end)
-
-	if not success then
-		PlayerData = {}
-	end
-
-	return PlayerData
-end
-
-function store:GetErrorDataStore(scope)
-	local ErrorDS
-	local success = pcall(function()
-		ErrorDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_ErrorDS_1.0.0", scope)
-	end)
-
-	if not success then
-		ErrorDS = {}
-	end
-
-	return ErrorDS
-end
-
-function store:SavePlayerData(Player)
-
-	--Variables
-	local PlayerData = store.PlayerCache[Player.UserId]
-	local SavePlayerData = {}
-
-	if not PlayerData then
-		return
-	end
-
-	--Fill
-	for _, key in pairs(store.DataToSave) do
-		SavePlayerData[key] = PlayerData[key]
-	end
-
-	--Save
-	if not RunService:IsStudio() then
-		pcall(function()
-			store.PlayerDS:SetAsync(Player.UserId, SavePlayerData)
-		end)
-	end
-end
-
-function store:IncrementErrorCount(ErrorDS, ErrorKey, step)
-	if not ErrorKey then
-		return
-	end
-
-	local count = 0
-	--Increment count
-	if not RunService:IsStudio() then
-		pcall(function()
-			count = ErrorDS:IncrementAsync(ErrorKey, step)
-		end)
-	end
-
-	return count
-end
-
-return store
-]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBX5D6A85C1A4B44E849582E370736A1B1A">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Threading</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local threading = {
-	_canSafelyClose = true,
-	_endThread = false,
-	_isRunning = false,
-	_blocks = {},
-	_scheduledBlock = nil,
-	_hasScheduledBlockRun = true,
-}
-
-local logger = require(script.Parent.Logger)
-local RunService = game:GetService("RunService")
-
-local function getScheduledBlock()
-	local now = tick()
-
-	if not threading._hasScheduledBlockRun and threading._scheduledBlock ~= nil and threading._scheduledBlock.deadline <= now then
-		threading._hasScheduledBlockRun = true
-		return threading._scheduledBlock
-	else
-		return nil
-	end
-end
-
-local function run()
-
-	spawn(function()
-		logger:d("Starting GA thread")
-
-		while not threading._endThread do
-			threading._canSafelyClose = false
-
-			if #threading._blocks ~= 0 then
-				for _, b in pairs(threading._blocks) do
-					pcall(b.block)
-				end
-
-				threading._blocks = {}
-			end
-
-			local timedBlock = getScheduledBlock()
-			if timedBlock ~= nil then
-				pcall(timedBlock.block)
-			end
-
-			threading._canSafelyClose = true
-			wait(1)
-		end
-
-		logger:d("GA thread stopped")
-	end)
-
-	--Safely Close
-	game:BindToClose(function()
-
-		-- waiting bug fix to work inside studio
-		if RunService:IsStudio() then
-			return
-		end
-
-		--Give game.Players.PlayerRemoving time to to its thang
-		wait(1)
-
-		--Delay
-		if not threading._canSafelyClose then
-			repeat
-				wait()
-			until threading._canSafelyClose
-		end
-
-		wait(3)
-	end)
-end
-
-function threading:scheduleTimer(interval, callback)
-	if self._endThread then
-		return
-	end
-
-	if not self._isRunning then
-		self._isRunning = true
-		run()
-	end
-
-	local timedBlock = {
-		block = callback,
-		deadline = tick() + interval,
-	}
-
-	if self._hasScheduledBlockRun then
-		self._scheduledBlock = timedBlock
-		self._hasScheduledBlockRun = false
-	end
-end
-
-function threading:performTaskOnGAThread(callback)
-	if self._endThread then
-		return
-	end
-
-	if not self._isRunning then
-		self._isRunning = true
-		run()
-	end
-
-	local timedBlock = {
-		block = callback,
-	}
-
-	self._blocks[#self._blocks + 1] = timedBlock
-end
-
-function threading:stopThread()
-	self._endThread = true
-end
-
-return threading
-]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBXAF088237B4AF479F87F5B1441C7A5187">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Utilities</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local utilities = {}
-
-function utilities:isStringNullOrEmpty(s)
-	return (not s) or #s == 0
-end
-
-function utilities:stringArrayContainsString(array, search)
-	if #array == 0 then
-		return false
-	end
-
-	for _, s in ipairs(array) do
-		if s == search then
-			return true
-		end
-	end
-
-	return false
-end
-
-return utilities
-]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBXD971AE8C27D941E8BCA2AC9BE4F0F83D">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Validation</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local validation = {}
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX4f67f666894641cf9fa8b191f2a175c9">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">Validation</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local validation = {}
 
 local logger = require(script.Parent.Logger)
 local utilities = require(script.Parent.Utilities)
@@ -4617,24 +4406,207 @@ end
 
 return validation
 ]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-			<Item class="ModuleScript" referent="RBXA199126A20D847F38A907163464D78A6">
-				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Version</string>
-					<string name="ScriptGuid"></string>
-					<ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.2",
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX14584cc0d6704a73828d545fa96d87a7">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">Threading</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local threading = {
+	_canSafelyClose = true,
+	_endThread = false,
+	_isRunning = false,
+	_blocks = {},
+	_scheduledBlock = nil,
+	_hasScheduledBlockRun = true,
 }
 
-return version
+local logger = require(script.Parent.Logger)
+local RunService = game:GetService("RunService")
+
+local function getScheduledBlock()
+	local now = tick()
+
+	if not threading._hasScheduledBlockRun and threading._scheduledBlock ~= nil and threading._scheduledBlock.deadline <= now then
+		threading._hasScheduledBlockRun = true
+		return threading._scheduledBlock
+	else
+		return nil
+	end
+end
+
+local function run()
+
+	spawn(function()
+		logger:d("Starting GA thread")
+
+		while not threading._endThread do
+			threading._canSafelyClose = false
+
+			if #threading._blocks ~= 0 then
+				for _, b in pairs(threading._blocks) do
+					pcall(b.block)
+				end
+
+				threading._blocks = {}
+			end
+
+			local timedBlock = getScheduledBlock()
+			if timedBlock ~= nil then
+				pcall(timedBlock.block)
+			end
+
+			threading._canSafelyClose = true
+			wait(1)
+		end
+
+		logger:d("GA thread stopped")
+	end)
+
+	--Safely Close
+	game:BindToClose(function()
+
+		-- waiting bug fix to work inside studio
+		if RunService:IsStudio() then
+			return
+		end
+
+		--Give game.Players.PlayerRemoving time to to its thang
+		wait(1)
+
+		--Delay
+		if not threading._canSafelyClose then
+			repeat
+				wait()
+			until threading._canSafelyClose
+		end
+
+		wait(3)
+	end)
+end
+
+function threading:scheduleTimer(interval, callback)
+	if self._endThread then
+		return
+	end
+
+	if not self._isRunning then
+		self._isRunning = true
+		run()
+	end
+
+	local timedBlock = {
+		block = callback,
+		deadline = tick() + interval,
+	}
+
+	if self._hasScheduledBlockRun then
+		self._scheduledBlock = timedBlock
+		self._hasScheduledBlockRun = false
+	end
+end
+
+function threading:performTaskOnGAThread(callback)
+	if self._endThread then
+		return
+	end
+
+	if not self._isRunning then
+		self._isRunning = true
+		run()
+	end
+
+	local timedBlock = {
+		block = callback,
+	}
+
+	self._blocks[#self._blocks + 1] = timedBlock
+end
+
+function threading:stopThread()
+	self._endThread = true
+end
+
+return threading
 ]]></ProtectedString>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-		</Item>
-	</Item>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX99cd668c174048349f2ece6db3c8afd4">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">GAErrorSeverity</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local function readonlytable(table)
+	return setmetatable({}, {
+		__index = table,
+		__metatable = false,
+		__newindex = function(t, k, v)
+			error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
+		end,
+	})
+end
+
+return readonlytable({
+	debug = "debug",
+	info = "info",
+	warning = "warning",
+	error = "error",
+	critical = "critical",
+})
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBX9a762c40155746f09057ee57f778235c">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">GAProgressionStatus</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local function readonlytable(table)
+	return setmetatable({}, {
+		__index = table,
+		__metatable = false,
+		__newindex = function(t, k, v)
+			error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
+		end,
+	})
+end
+
+return readonlytable({
+	Start = "Start",
+	Complete = "Complete",
+	Fail = "Fail",
+})
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="RBXeaa8109bf36e45c987ef4664347edc33">
+                <Properties>
+                    <Content name="LinkedSource"><null></null></Content>
+                    <string name="Name">GAResourceFlowType</string>
+                    <string name="ScriptGuid"></string>
+                    <ProtectedString name="Source"><![CDATA[local function readonlytable(table)
+	return setmetatable({}, {
+		__index = table,
+		__metatable = false,
+		__newindex = function(t, k, v)
+			error("Attempt to modify read-only table: " .. t .. ", key=" .. k .. ", value=" .. v)
+		end,
+	})
+end
+
+return readonlytable({
+	Source = "Source",
+	Sink = "Sink",
+})
+]]></ProtectedString>
+                    <BinaryString name="Tags"></BinaryString>
+                </Properties>
+            </Item>
+        </Item>
+    </Item>
 </roblox>

@@ -86,32 +86,23 @@ return module
                     <ProtectedString name="Source"><![CDATA[HttpApi_BODY]]></ProtectedString>
                     <BinaryString name="Tags"></BinaryString>
                 </Properties>
-                <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683accce5">
+                <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d9983accce5">
                     <Properties>
                         <Content name="LinkedSource"><null></null></Content>
-                        <string name="Name">base64</string>
+                        <string name="Name">HashLib</string>
                         <string name="ScriptGuid"></string>
-                        <ProtectedString name="Source"><![CDATA[Base64_BODY]]></ProtectedString>
+                        <ProtectedString name="Source"><![CDATA[HashLib_BODY]]></ProtectedString>
                         <BinaryString name="Tags"></BinaryString>
                     </Properties>
-                </Item>
-                <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683addde5">
-                    <Properties>
-                        <Content name="LinkedSource"><null></null></Content>
-                        <string name="Name">hmac</string>
-                        <string name="ScriptGuid"></string>
-                        <ProtectedString name="Source"><![CDATA[Hmac_BODY]]></ProtectedString>
-                        <BinaryString name="Tags"></BinaryString>
-                    </Properties>
-                </Item>
-                <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683afffe5">
-                    <Properties>
-                        <Content name="LinkedSource"><null></null></Content>
-                        <string name="Name">sha256</string>
-                        <string name="ScriptGuid"></string>
-                        <ProtectedString name="Source"><![CDATA[Sha256_BODY]]></ProtectedString>
-                        <BinaryString name="Tags"></BinaryString>
-                    </Properties>
+                    <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683accce5">
+                        <Properties>
+                            <Content name="LinkedSource"><null></null></Content>
+                            <string name="Name">base64</string>
+                            <string name="ScriptGuid"></string>
+                            <ProtectedString name="Source"><![CDATA[Base64_BODY]]></ProtectedString>
+                            <BinaryString name="Tags"></BinaryString>
+                        </Properties>
+                    </Item>
                 </Item>
             </Item>
             <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683abdde5">

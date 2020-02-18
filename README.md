@@ -13,6 +13,12 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.3**
+* Replaced previous HMAC + SHA256 + Base64 implementation with HashLib. This version is around 23 - 25% faster.
+* Changed indenting from spaces to tabs (Roblox default).
+* Worked on reformatting so it followed the Roblox Lua style guide a little better..
+* Updated the luacheck files more.
+
 **2.1.2**
 * fixed rojo file
 
