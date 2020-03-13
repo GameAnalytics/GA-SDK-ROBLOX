@@ -40,6 +40,7 @@ local function getInitAnnotations(playerData, playerId)
 		["os_version"] = playerData.OS,
 		["platform"] = playerData.Platform,
 		["build"] = nil,
+		["session_num"] = playerData.Sessions,
 		["random_salt"] = playerData.Sessions,
 	}
 
