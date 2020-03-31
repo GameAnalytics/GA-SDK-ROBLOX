@@ -97,7 +97,7 @@ return module
                     <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683accce5">
                         <Properties>
                             <Content name="LinkedSource"><null></null></Content>
-                            <string name="Name">base64</string>
+                            <string name="Name">Base64</string>
                             <string name="ScriptGuid"></string>
                             <ProtectedString name="Source"><![CDATA[Base64_BODY]]></ProtectedString>
                             <BinaryString name="Tags"></BinaryString>

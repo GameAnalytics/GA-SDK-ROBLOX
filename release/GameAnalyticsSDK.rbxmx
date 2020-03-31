@@ -2779,7 +2779,7 @@ return sha]]></ProtectedString>
                     <Item class="ModuleScript" referent="RBX4b14a91351d1404f89ac5d7683accce5">
                         <Properties>
                             <Content name="LinkedSource"><null></null></Content>
-                            <string name="Name">base64</string>
+                            <string name="Name">Base64</string>
                             <string name="ScriptGuid"></string>
                             <ProtectedString name="Source"><![CDATA[-- @original: https://gist.github.com/Reselim/40d62b17d138cc74335a1b0709e19ce2
 local Alphabet = {}
