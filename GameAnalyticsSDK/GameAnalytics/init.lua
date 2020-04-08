@@ -18,6 +18,7 @@ local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LS = game:GetService("LogService")
 local Postie = require(ReplicatedStorage.Postie)
 local ProductCache = {}
 local OnPlayerReadyEvent
@@ -136,31 +137,7 @@ function ga:configureAvailableGamepasses(availableGamepasses)
 	end)
 end
 
-function ga:initialize(options)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("SDK already initialized. Can only be called once.")
-			return
-		end
-
-		local gameKey = options["gameKey"]
-		local secretKey = options["secretKey"]
-
-		if not validation:validateKeys(gameKey, secretKey) then
-			logger:w("SDK failed initialize. Game key or secret key is invalid. Can only contain characters A-z 0-9, gameKey is 32 length, secretKey is 40 length. Failed keys - gameKey: " .. gameKey .. ", secretKey: " .. secretKey)
-			return
-		end
-
-		events.GameKey = gameKey
-		events.SecretKey = secretKey
-
-		state.Initialized = true
-		events:processEventQueue()
-
-	end)
-end
-
-function ga:startNewSession(player, teleportData)
+function ga:startNewSession(player, gaData)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -171,7 +148,7 @@ function ga:startNewSession(player, teleportData)
 			return
 		end
 
-		state:startNewSession(player, teleportData)
+		state:startNewSession(player, gaData)
 	end)
 end
 
@@ -433,9 +410,16 @@ function ga:getRemoteConfigsContentAsString(playerId)
 	return state:getRemoteConfigsContentAsString(playerId)
 end
 
-function ga:PlayerJoined(Player, teleportData)
+function ga:PlayerJoined(Player)
 	if store.PlayerCache[Player.UserId] then
 		return
+	end
+
+	local joinData = Player:GetJoinData()
+	local teleportData = joinData.TeleportData
+	local gaData = nil
+	if teleportData then
+		gaData = teleportData.gameanalyticsData and teleportData.gameanalyticsData[tostring(Player.UserId)]
 	end
 
 	--Variables
@@ -457,54 +441,57 @@ function ga:PlayerJoined(Player, teleportData)
 	PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or "uwp_desktop"
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
-	ga:startNewSession(Player, teleportData)
+	self:startNewSession(Player, gaData)
 
 	OnPlayerReadyEvent = OnPlayerReadyEvent or ReplicatedStorage:WaitForChild("OnPlayerReadyEvent")
 	OnPlayerReadyEvent:Fire(Player)
 
-	--Website gamepasses
-	if PlayerData.OwnedGamepasses == nil then --player is new (or is playing after SDK update)
-		PlayerData.OwnedGamepasses = {}
-		for _, id in ipairs(state._availableGamepasses) do
-			if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
-				table.insert(PlayerData.OwnedGamepasses, id)
+	--Validate
+	if state.AutomaticSendBusinessEvents then
+		--Website gamepasses
+		if PlayerData.OwnedGamepasses == nil then --player is new (or is playing after SDK update)
+			PlayerData.OwnedGamepasses = {}
+			for _, id in ipairs(state._availableGamepasses) do
+				if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
+					table.insert(PlayerData.OwnedGamepasses, id)
+				end
 			end
-		end
-		--Player's data is now up to date. gamepass purchases on website can now be tracked in future visits
-		store.PlayerCache[Player.UserId] = PlayerData
-		store:SavePlayerData(Player)
-	else
-		--build a list of the game passes a user owns
-		local currentlyOwned = {}
-		for _, id in ipairs(state._availableGamepasses) do
-			if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
-				table.insert(currentlyOwned, id)
+			--Player's data is now up to date. gamepass purchases on website can now be tracked in future visits
+			store.PlayerCache[Player.UserId] = PlayerData
+			store:SavePlayerData(Player)
+		else
+			--build a list of the game passes a user owns
+			local currentlyOwned = {}
+			for _, id in ipairs(state._availableGamepasses) do
+				if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
+					table.insert(currentlyOwned, id)
+				end
 			end
-		end
 
-		--make a table so it's easier to compare to stored game passes
-		local storedGamepassesTable = {}
-		for _, id in ipairs(PlayerData.OwnedGamepasses) do
-			storedGamepassesTable[id] = true
-		end
-
-		--compare stored game passes to currently owned game passses
-		for _, id in ipairs(currentlyOwned) do
-			if not storedGamepassesTable[id] then
-				table.insert(PlayerData.OwnedGamepasses, id)
-				local gamepassInfo = MKT:GetProductInfo(id, Enum.InfoType.GamePass)
-				ga:addBusinessEvent(Player.UserId, {
-					amount = gamepassInfo.PriceInRobux,
-					itemType = "Gamepass",
-					itemId = ga:filterForBusinessEvent(gamepassInfo.Name),
-					cartType = "Website",
-				})
+			--make a table so it's easier to compare to stored game passes
+			local storedGamepassesTable = {}
+			for _, id in ipairs(PlayerData.OwnedGamepasses) do
+				storedGamepassesTable[id] = true
 			end
+
+			--compare stored game passes to currently owned game passses
+			for _, id in ipairs(currentlyOwned) do
+				if not storedGamepassesTable[id] then
+					table.insert(PlayerData.OwnedGamepasses, id)
+					local gamepassInfo = MKT:GetProductInfo(id, Enum.InfoType.GamePass)
+					self:addBusinessEvent(Player.UserId, {
+						amount = gamepassInfo.PriceInRobux,
+						itemType = "Gamepass",
+						itemId = ga:filterForBusinessEvent(gamepassInfo.Name),
+						cartType = "Website",
+					})
+				end
+			end
+
+			store.PlayerCache[Player.UserId] = PlayerData
+
+			store:SavePlayerData(Player)
 		end
-
-		store.PlayerCache[Player.UserId] = PlayerData
-
-		store:SavePlayerData(Player)
 	end
 
 	--Autosave
@@ -533,7 +520,7 @@ function ga:PlayerRemoved(Player)
 
 	local PlayerData = store.PlayerCache[Player.UserId]
 	if PlayerData and not PlayerData.PlayerTeleporting then
-		ga:endSession(Player.UserId)
+		self:endSession(Player.UserId)
 	end
 end
 
@@ -557,11 +544,199 @@ function ga:ProcessReceiptCallback(Info)
 		ProductCache[Info.ProductId] = ProductInfo
 	end
 
-	ga:addBusinessEvent(Info.PlayerId, {
+	self:addBusinessEvent(Info.PlayerId, {
 		amount = Info.CurrencySpent,
 		itemType = "DeveloperProduct",
-		itemId = ga:filterForBusinessEvent(ProductInfo.Name),
+		itemId = self:filterForBusinessEvent(ProductInfo.Name),
 	})
 end
+
+
+function ga:initialize(options)
+	threading:performTaskOnGAThread(function()
+
+		if options.enableInfoLog then
+			self:setEnabledInfoLog(options.enableInfoLog)
+		end
+		
+		if options.enableVerboseLog then
+			self:setEnabledVerboseLog(options.enableVerboseLog)
+		end
+		
+		if #options.availableCustomDimensions01 > 0 then
+			self:configureAvailableCustomDimensions01(options.availableCustomDimensions01)
+		end
+		
+		if #options.availableCustomDimensions02 > 0 then
+			self:configureAvailableCustomDimensions02(options.availableCustomDimensions02)
+		end
+		
+		if #options.availableCustomDimensions03 > 0 then
+			self:configureAvailableCustomDimensions03(options.availableCustomDimensions03)
+		end
+		
+		if #options.availableResourceCurrencies > 0 then
+			self:configureAvailableResourceCurrencies(options.availableResourceCurrencies)
+		end
+		
+		if #options.availableResourceItemTypes > 0 then
+			self:configureAvailableResourceItemTypes(options.availableResourceItemTypes)
+		end
+		
+		if #options.build > 0 then
+			self:configureBuild(options.build)
+		end
+		
+		if #options.availableGamepasses > 0 then
+			self:configureAvailableGamepasses(options.availableGamepasses)
+		end
+
+		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+			logger:w("SDK already initialized. Can only be called once.")
+			return
+		end
+
+		local gameKey = options["gameKey"]
+		local secretKey = options["secretKey"]
+
+		if not validation:validateKeys(gameKey, secretKey) then
+			logger:w("SDK failed initialize. Game key or secret key is invalid. Can only contain characters A-z 0-9, gameKey is 32 length, secretKey is 40 length. Failed keys - gameKey: " .. gameKey .. ", secretKey: " .. secretKey)
+			return
+		end
+
+		events.GameKey = gameKey
+		events.SecretKey = secretKey
+
+		state.Initialized = true
+		events:processEventQueue()
+
+
+		-- Fire for players already in game
+		for _, Player in ipairs(Players:GetPlayers()) do
+			self:PlayerJoined(Player)
+		end
+	end)
+end
+
+
+if not ReplicatedStorage:FindFirstChild("GameAnalyticsRemoteConfigs") then
+	--Create
+	local f = Instance.new("RemoteEvent")
+	f.Name = "GameAnalyticsRemoteConfigs"
+	f.Parent = ReplicatedStorage
+end
+
+if not ReplicatedStorage:FindFirstChild("OnPlayerReadyEvent") then
+	--Create
+	local f = Instance.new("BindableEvent")
+	f.Name = "OnPlayerReadyEvent"
+	f.Parent = ReplicatedStorage
+end
+
+
+spawn(function()
+	local currentHour = math.floor(os.time() / 3600)
+	ErrorDS = store:GetErrorDataStore(currentHour)
+
+	while wait(ONE_HOUR_IN_SECONDS) do
+		currentHour = math.floor(os.time() / 3600)
+		ErrorDS = store:GetErrorDataStore(currentHour)
+		errorCountCache = {}
+		errorCountCacheKeys = {}
+	end
+end)
+
+spawn(function()
+	while wait(store.AutoSaveData) do
+		for _, key in pairs(errorCountCacheKeys) do
+			local errorCount = errorCountCache[key]
+			local step = errorCount.currentCount - errorCount.countInDS
+			errorCountCache[key].countInDS = store:IncrementErrorCount(ErrorDS, key, step)
+			errorCountCache[key].currentCount = errorCountCache[key].countInDS
+		end
+	end
+end)
+
+
+
+--Error Logging
+LS.MessageOut:Connect(function(message, messageType)
+
+	--Validate
+	if not state.ReportErrors or messageType ~= Enum.MessageType.MessageError then
+		return
+	end
+
+	local m = message
+	if #m > 8192 then
+		m = string.sub(m, 1, 8192)
+	end
+
+	local key = m
+	if #key > 50 then
+		key = string.sub(key, 1, 50)
+	end
+
+	if errorCountCache[key] == nil then
+		errorCountCacheKeys[#errorCountCacheKeys + 1] = key
+		errorCountCache[key] = {}
+		errorCountCache[key].countInDS = 0
+		errorCountCache[key].currentCount = 0
+	end
+
+	-- don't report error if limit has been exceeded
+	if errorCountCache[key].currentCount > MaxErrorsPerHour then
+		return
+	end
+
+	--Report (use nil for playerId as real player id is not available)
+	ga:addErrorEvent(nil, {
+		severity = ga.EGAErrorSeverity.error,
+		message = m,
+	})
+
+	-- increment error count
+	errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
+end)
+
+
+--Record Gamepasses.
+MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
+
+	--Validate
+	if not state.AutomaticSendBusinessEvents or not Purchased then
+		return
+	end
+
+	--Variables
+	local GamepassInfo = ProductCache[ID]
+
+	--Cache
+	if not GamepassInfo then
+
+		--Get
+		GamepassInfo = MKT:GetProductInfo(ID, Enum.InfoType.GamePass)
+		ProductCache[ID] = GamepassInfo
+	end
+
+	ga:addBusinessEvent(Player.UserId, {
+		amount = GamepassInfo.PriceInRobux,
+		itemType = "Gamepass",
+		itemId = ga:filterForBusinessEvent(GamepassInfo.Name),
+		gamepassId = ID,
+	})
+end)
+
+
+-- New Players
+Players.PlayerAdded:Connect(function(Player)
+	ga:PlayerJoined(Player)
+end)
+
+-- Players leaving
+Players.PlayerRemoving:Connect(function(Player)
+	ga:PlayerRemoved(Player)
+end)
+
 
 return ga
