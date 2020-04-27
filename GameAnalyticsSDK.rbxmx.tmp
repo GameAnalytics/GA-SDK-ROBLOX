@@ -11,16 +11,6 @@ return module
 ]]></ProtectedString>
             <BinaryString name="Tags"></BinaryString>
         </Properties>
-        <Item class="Script" referent="RBXa82cd927306847a28e2acd9083a050b2">
-            <Properties>
-                <bool name="Disabled">false</bool>
-                <Content name="LinkedSource"><null></null></Content>
-                <string name="Name">GameAnalyticsServer</string>
-                <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
-                <ProtectedString name="Source"><![CDATA[GameAnalyticsServer_BODY]]></ProtectedString>
-                <BinaryString name="Tags"></BinaryString>
-            </Properties>
-        </Item>
         <Item class="ModuleScript" referent="RBXa82cd927306847a28e2acd9083a990b2">
             <Properties>
                 <bool name="Disabled">false</bool>
@@ -35,9 +25,9 @@ return module
             <Properties>
                 <bool name="Disabled">false</bool>
                 <Content name="LinkedSource"><null></null></Content>
-                <string name="Name">GameAnalyticsServerInitUsingSettings</string>
+                <string name="Name">GameAnalyticsServerInit</string>
                 <string name="ScriptGuid">{4efacb9d-efec-45dc-892a-1ddedb9a9ae3}</string>
-                <ProtectedString name="Source"><![CDATA[GameAnalyticsServerInitUsingSettings_BODY]]></ProtectedString>
+                <ProtectedString name="Source"><![CDATA[GameAnalyticsServerInit_BODY]]></ProtectedString>
                 <BinaryString name="Tags"></BinaryString>
             </Properties>
         </Item>

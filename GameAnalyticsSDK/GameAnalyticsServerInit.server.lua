@@ -21,7 +21,7 @@ GameAnalytics:initialize({
 
 	automaticSendBusinessEvents = true;
 	reportErrors = true;
-	
+
 	availableCustomDimensions01 = {};
 	availableCustomDimensions02 = {};
 	availableCustomDimensions03 = {};
