@@ -128,7 +128,7 @@ function state:setAvailableCustomDimensions03(availableCustomDimensions)
 end
 
 function state:setAvailableGamepasses(availableGamepasses)
-	if not validation:validateCustomDimensions(availableCustomDimensions) then
+	if not validation:validateCustomDimensions(availableGamepasses) then
 		return
 	end
 

@@ -17,12 +17,6 @@
                 }
             }
         },
-        "ServerScriptService": {
-            "$className": "ServerScriptService",
-            "server": {
-                "$path": "GameAnalyticsSDK/GameAnalyticsServer.server.lua"
-            }
-        },
         "ReplicatedStorage": {
             "$className": "ReplicatedStorage",
             "Postie": {

@@ -31,7 +31,10 @@ local function run()
 
 			if #threading._blocks ~= 0 then
 				for _, b in pairs(threading._blocks) do
-					pcall(b.block)
+					local s, e = pcall(b.block)
+					if not s then
+						logger:e(e)
+					end
 				end
 
 				threading._blocks = {}
@@ -39,7 +42,10 @@ local function run()
 
 			local timedBlock = getScheduledBlock()
 			if timedBlock ~= nil then
-				pcall(timedBlock.block)
+				local s, e = pcall(timedBlock.block)
+				if not s then
+					logger:e(e)
+				end
 			end
 
 			threading._canSafelyClose = true

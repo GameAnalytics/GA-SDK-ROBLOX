@@ -18,9 +18,51 @@ local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LS = game:GetService("LogService")
 local Postie = require(ReplicatedStorage.Postie)
-local ProductCache = {}
 local OnPlayerReadyEvent
+local ProductCache = {}
+local ONE_HOUR_IN_SECONDS = 3600
+local MaxErrorsPerHour = 10
+local ErrorDS = {}
+local errorCountCache = {}
+local errorCountCacheKeys = {}
+
+local InitializationQueue = {}
+local InitializationQueueByUserId = {}
+
+local function addToInitializationQueue(func, ...)
+	if InitializationQueue ~= nil then
+		table.insert(InitializationQueue, {
+			Func = func;
+			Args = {...};
+		})
+
+		logger:i("Added event to initialization queue")
+	else
+		--This should never happen
+		logger:w("Initialization queue already cleared.")
+	end
+end
+
+local function addToInitializationQueueByUserId(userId, func, ...)
+	if not ga:isPlayerReady(userId) then
+		if InitializationQueueByUserId[userId] == nil then
+			InitializationQueueByUserId[userId] = {}
+		end
+
+		table.insert(InitializationQueueByUserId[userId], {
+			Func = func;
+			Args = {...};
+		})
+
+		logger:i("Added event to player initialization queue")
+	else
+		--This should never happen
+		logger:w("Player initialization queue already cleared.")
+	end
+end
+
 
 -- local functions
 local function isSdkReady(options)
@@ -60,107 +102,69 @@ local function isSdkReady(options)
 end
 
 function ga:configureAvailableCustomDimensions01(customDimensions)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("Available custom dimensions must be set before SDK is initialized")
-			return
-		end
+	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+		logger:w("Available custom dimensions must be set before SDK is initialized")
+		return
+	end
 
-		state:setAvailableCustomDimensions01(customDimensions)
-	end)
+	state:setAvailableCustomDimensions01(customDimensions)
 end
 
 function ga:configureAvailableCustomDimensions02(customDimensions)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("Available custom dimensions must be set before SDK is initialized")
-			return
-		end
+	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+		logger:w("Available custom dimensions must be set before SDK is initialized")
+		return
+	end
 
-		state:setAvailableCustomDimensions02(customDimensions)
-	end)
+	state:setAvailableCustomDimensions02(customDimensions)
 end
 
 function ga:configureAvailableCustomDimensions03(customDimensions)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("Available custom dimensions must be set before SDK is initialized")
-			return
-		end
+	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+		logger:w("Available custom dimensions must be set before SDK is initialized")
+		return
+	end
 
-		state:setAvailableCustomDimensions03(customDimensions)
-	end)
+	state:setAvailableCustomDimensions03(customDimensions)
 end
 
 function ga:configureAvailableResourceCurrencies(resourceCurrencies)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("Available resource currencies must be set before SDK is initialized")
-			return
-		end
+	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+		logger:w("Available resource currencies must be set before SDK is initialized")
+		return
+	end
 
-		events:setAvailableResourceCurrencies(resourceCurrencies)
-	end)
+	events:setAvailableResourceCurrencies(resourceCurrencies)
 end
 
 function ga:configureAvailableResourceItemTypes(resourceItemTypes)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("Available resource item types must be set before SDK is initialized")
-			return
-		end
+	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+		logger:w("Available resource item types must be set before SDK is initialized")
+		return
+	end
 
-		events:setAvailableResourceItemTypes(resourceItemTypes)
-	end)
+	events:setAvailableResourceItemTypes(resourceItemTypes)
 end
 
 function ga:configureBuild(build)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("Build version must be set before SDK is initialized.")
-			return
-		end
+	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+		logger:w("Build version must be set before SDK is initialized.")
+		return
+	end
 
-		events:setBuild(build)
-	end)
+	events:setBuild(build)
 end
 
 function ga:configureAvailableGamepasses(availableGamepasses)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("Available gamepasses must be set before SDK is initialized.")
-			return
-		end
+	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+		logger:w("Available gamepasses must be set before SDK is initialized.")
+		return
+	end
 
-		state:setAvailableGamepasses(availableGamepasses)
-	end)
+	state:setAvailableGamepasses(availableGamepasses)
 end
 
-function ga:initialize(options)
-	threading:performTaskOnGAThread(function()
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
-			logger:w("SDK already initialized. Can only be called once.")
-			return
-		end
-
-		local gameKey = options["gameKey"]
-		local secretKey = options["secretKey"]
-
-		if not validation:validateKeys(gameKey, secretKey) then
-			logger:w("SDK failed initialize. Game key or secret key is invalid. Can only contain characters A-z 0-9, gameKey is 32 length, secretKey is 40 length. Failed keys - gameKey: " .. gameKey .. ", secretKey: " .. secretKey)
-			return
-		end
-
-		events.GameKey = gameKey
-		events.SecretKey = secretKey
-
-		state.Initialized = true
-		events:processEventQueue()
-
-	end)
-end
-
-function ga:startNewSession(player, teleportData)
+function ga:startNewSession(player, gaData)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -171,7 +175,7 @@ function ga:startNewSession(player, teleportData)
 			return
 		end
 
-		state:startNewSession(player, teleportData)
+		state:startNewSession(player, gaData)
 	end)
 end
 
@@ -193,7 +197,12 @@ function ga:addBusinessEvent(playerId, options)
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = true, message = "Could not add business event"}) then
+		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add business event"}) then
+			if playerId then
+				addToInitializationQueueByUserId(playerId, ga.addBusinessEvent, ga, playerId, options)
+			else
+				addToInitializationQueue(ga.addBusinessEvent, ga, playerId, options)
+			end
 			return
 		end
 
@@ -222,7 +231,12 @@ function ga:addResourceEvent(playerId, options)
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = true, message = "Could not add resource event"}) then
+		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add resource event"}) then
+			if playerId then
+				addToInitializationQueueByUserId(playerId, ga.addResourceEvent, ga, playerId, options)
+			else
+				addToInitializationQueue(ga.addResourceEvent, ga, playerId, options)
+			end
 			return
 		end
 
@@ -242,7 +256,12 @@ function ga:addProgressionEvent(playerId, options)
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = true, message = "Could not add progression event"}) then
+		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add progression event"}) then
+			if playerId then
+				addToInitializationQueueByUserId(playerId, ga.addProgressionEvent, ga, playerId, options)
+			else
+				addToInitializationQueue(ga.addProgressionEvent, ga, playerId, options)
+			end
 			return
 		end
 
@@ -262,7 +281,12 @@ function ga:addDesignEvent(playerId, options)
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = true, message = "Could not add design event"}) then
+		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add design event"}) then
+			if playerId then
+				addToInitializationQueueByUserId(playerId, ga.addDesignEvent, ga, playerId, options)
+			else
+				addToInitializationQueue(ga.addDesignEvent, ga, playerId, options)
+			end
 			return
 		end
 
@@ -279,7 +303,12 @@ function ga:addErrorEvent(playerId, options)
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = true, message = "Could not add error event"}) then
+		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add error event"}) then
+			if playerId then
+				addToInitializationQueueByUserId(playerId, ga.addErrorEvent, ga, playerId, options)
+			else
+				addToInitializationQueue(ga.addErrorEvent, ga, playerId, options)
+			end
 			return
 		end
 
@@ -292,44 +321,39 @@ function ga:addErrorEvent(playerId, options)
 end
 
 function ga:setEnabledDebugLog(flag)
-	threading:performTaskOnGAThread(function()
-		if RunService:IsStudio() then
-			if flag then
-				logger:setDebugLog(flag)
-				logger:i("Debug logging enabled")
-			else
-				logger:i("Debug logging disabled")
-				logger:setDebugLog(flag)
-			end
+	if RunService:IsStudio() then
+		if flag then
+			logger:setDebugLog(flag)
+			logger:i("Debug logging enabled")
 		else
-			logger:i("setEnabledDebugLog can only be used in studio")
+			logger:i("Debug logging disabled")
+			logger:setDebugLog(flag)
 		end
-	end)
+	else
+		logger:i("setEnabledDebugLog can only be used in studio")
+	end
 end
 
 function ga:setEnabledInfoLog(flag)
-	threading:performTaskOnGAThread(function()
-		if flag then
-			logger:setInfoLog(flag)
-			logger:i("Info logging enabled")
-		else
-			logger:i("Info logging disabled")
-			logger:setInfoLog(flag)
-		end
-	end)
+	if flag then
+		logger:setInfoLog(flag)
+		logger:i("Info logging enabled")
+	else
+		logger:i("Info logging disabled")
+		logger:setInfoLog(flag)
+	end
 end
 
 function ga:setEnabledVerboseLog(flag)
-	threading:performTaskOnGAThread(function()
-		if flag then
-			logger:setVerboseLog(flag)
-			logger:ii("Verbose logging enabled")
-		else
-			logger:ii("Verbose logging disabled")
-			logger:setVerboseLog(flag)
-		end
-	end)
+	if flag then
+		logger:setVerboseLog(flag)
+		logger:ii("Verbose logging enabled")
+	else
+		logger:ii("Verbose logging disabled")
+		logger:setVerboseLog(flag)
+	end
 end
+
 
 function ga:setEnabledEventSubmission(flag)
 	threading:performTaskOnGAThread(function()
@@ -433,9 +457,16 @@ function ga:getRemoteConfigsContentAsString(playerId)
 	return state:getRemoteConfigsContentAsString(playerId)
 end
 
-function ga:PlayerJoined(Player, teleportData)
+function ga:PlayerJoined(Player)
 	if store.PlayerCache[Player.UserId] then
 		return
+	end
+
+	local joinData = Player:GetJoinData()
+	local teleportData = joinData.TeleportData
+	local gaData = nil
+	if teleportData then
+		gaData = teleportData.gameanalyticsData and teleportData.gameanalyticsData[tostring(Player.UserId)]
 	end
 
 	--Variables
@@ -457,54 +488,76 @@ function ga:PlayerJoined(Player, teleportData)
 	PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or "uwp_desktop"
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
-	ga:startNewSession(Player, teleportData)
+	ga:startNewSession(Player, gaData)
 
 	OnPlayerReadyEvent = OnPlayerReadyEvent or ReplicatedStorage:WaitForChild("OnPlayerReadyEvent")
 	OnPlayerReadyEvent:Fire(Player)
 
-	--Website gamepasses
-	if PlayerData.OwnedGamepasses == nil then --player is new (or is playing after SDK update)
-		PlayerData.OwnedGamepasses = {}
-		for _, id in ipairs(state._availableGamepasses) do
-			if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
-				table.insert(PlayerData.OwnedGamepasses, id)
+	--Validate
+	if state.AutomaticSendBusinessEvents then
+		--Website gamepasses
+		if PlayerData.OwnedGamepasses == nil then --player is new (or is playing after SDK update)
+			PlayerData.OwnedGamepasses = {}
+			for _, id in ipairs(state._availableGamepasses) do
+				if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
+					table.insert(PlayerData.OwnedGamepasses, id)
+				end
 			end
-		end
-		--Player's data is now up to date. gamepass purchases on website can now be tracked in future visits
-		store.PlayerCache[Player.UserId] = PlayerData
-		store:SavePlayerData(Player)
-	else
-		--build a list of the game passes a user owns
-		local currentlyOwned = {}
-		for _, id in ipairs(state._availableGamepasses) do
-			if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
-				table.insert(currentlyOwned, id)
+			--Player's data is now up to date. gamepass purchases on website can now be tracked in future visits
+			store.PlayerCache[Player.UserId] = PlayerData
+			store:SavePlayerData(Player)
+		else
+			--build a list of the game passes a user owns
+			local currentlyOwned = {}
+			for _, id in ipairs(state._availableGamepasses) do
+				if MKT:UserOwnsGamePassAsync(Player.UserId, id) then
+					table.insert(currentlyOwned, id)
+				end
 			end
-		end
 
-		--make a table so it's easier to compare to stored game passes
-		local storedGamepassesTable = {}
-		for _, id in ipairs(PlayerData.OwnedGamepasses) do
-			storedGamepassesTable[id] = true
-		end
-
-		--compare stored game passes to currently owned game passses
-		for _, id in ipairs(currentlyOwned) do
-			if not storedGamepassesTable[id] then
-				table.insert(PlayerData.OwnedGamepasses, id)
-				local gamepassInfo = MKT:GetProductInfo(id, Enum.InfoType.GamePass)
-				ga:addBusinessEvent(Player.UserId, {
-					amount = gamepassInfo.PriceInRobux,
-					itemType = "Gamepass",
-					itemId = ga:filterForBusinessEvent(gamepassInfo.Name),
-					cartType = "Website",
-				})
+			--make a table so it's easier to compare to stored game passes
+			local storedGamepassesTable = {}
+			for _, id in ipairs(PlayerData.OwnedGamepasses) do
+				storedGamepassesTable[id] = true
 			end
+
+			--compare stored game passes to currently owned game passses
+			for _, id in ipairs(currentlyOwned) do
+				if not storedGamepassesTable[id] then
+					table.insert(PlayerData.OwnedGamepasses, id)
+
+					local gamepassInfo = ProductCache[id]
+
+					--Cache
+					if not gamepassInfo then
+						--Get
+						gamepassInfo = MKT:GetProductInfo(id, Enum.InfoType.GamePass)
+						ProductCache[id] = gamepassInfo
+					end
+
+					ga:addBusinessEvent(Player.UserId, {
+						amount = gamepassInfo.PriceInRobux,
+						itemType = "Gamepass",
+						itemId = ga:filterForBusinessEvent(gamepassInfo.Name),
+						cartType = "Website",
+					})
+				end
+			end
+
+			store.PlayerCache[Player.UserId] = PlayerData
+
+			store:SavePlayerData(Player)
+		end
+	end
+
+	local playerEventQueue = InitializationQueueByUserId[Player.UserId]
+	if playerEventQueue then
+		InitializationQueueByUserId[Player.UserId] = nil
+		for _, queuedFunction in ipairs(playerEventQueue) do
+			queuedFunction.Func(unpack(queuedFunction.Args))
 		end
 
-		store.PlayerCache[Player.UserId] = PlayerData
-
-		store:SavePlayerData(Player)
+		logger:i("Player initialization queue called #" .. #playerEventQueue .. " events")
 	end
 
 	--Autosave
@@ -563,5 +616,203 @@ function ga:ProcessReceiptCallback(Info)
 		itemId = ga:filterForBusinessEvent(ProductInfo.Name),
 	})
 end
+
+--customGamepassInfo argument to optinaly provide our own name or price
+function ga:GamepassPurchased(player, id, customGamepassInfo)
+	local gamepassInfo = ProductCache[id]
+
+	--Cache
+	if not gamepassInfo then
+
+		--Get
+		gamepassInfo = MKT:GetProductInfo(id, Enum.InfoType.GamePass)
+		ProductCache[id] = gamepassInfo
+	end
+
+	ga:addBusinessEvent(player.UserId, {
+		amount = customGamepassInfo.PriceInRobux or gamepassInfo.PriceInRobux,
+		itemType = "Gamepass",
+		itemId = ga:filterForBusinessEvent(customGamepassInfo.Name or gamepassInfo.Name),
+		gamepassId = id,
+	})
+end
+
+
+local initializationOptions = {"build", "gameKey", "secretKey", "enableInfoLog", "enableVerboseLog", "automaticSendBusinessEvents", "reportErrors", "availableCustomDimensions01", "availableCustomDimensions02", "availableCustomDimensions03", "availableResourceCurrencies", "availableResourceItemTypes", "availableGamepasses"}
+
+function ga:initialize(options)
+	threading:performTaskOnGAThread(function()
+		for _, option in ipairs(initializationOptions) do
+			if options[option] == nil then
+				logger:e("Initialize '"..option.."' option missing")
+				return
+			end
+		end
+		if options.enableInfoLog then
+			ga:setEnabledInfoLog(options.enableInfoLog)
+		end
+		if options.enableVerboseLog then
+			ga:setEnabledVerboseLog(options.enableVerboseLog)
+		end
+		if #options.availableCustomDimensions01 > 0 then
+			ga:configureAvailableCustomDimensions01(options.availableCustomDimensions01)
+		end
+		if #options.availableCustomDimensions02 > 0 then
+			ga:configureAvailableCustomDimensions02(options.availableCustomDimensions02)
+		end
+		if #options.availableCustomDimensions03 > 0 then
+			ga:configureAvailableCustomDimensions03(options.availableCustomDimensions03)
+		end
+		if #options.availableResourceCurrencies > 0 then
+			ga:configureAvailableResourceCurrencies(options.availableResourceCurrencies)
+		end
+		if #options.availableResourceItemTypes > 0 then
+			ga:configureAvailableResourceItemTypes(options.availableResourceItemTypes)
+		end
+		if #options.build > 0 then
+			ga:configureBuild(options.build)
+		end
+		if #options.availableGamepasses > 0 then
+			ga:configureAvailableGamepasses(options.availableGamepasses)
+		end
+		if options.enableDebugLog ~= nil then
+			ga:setEnabledDebugLog(options.enableDebugLog)
+		end
+
+		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+			logger:w("SDK already initialized. Can only be called once.")
+			return
+		end
+
+		local gameKey = options["gameKey"]
+		local secretKey = options["secretKey"]
+
+		if not validation:validateKeys(gameKey, secretKey) then
+			logger:w("SDK failed initialize. Game key or secret key is invalid. Can only contain characters A-z 0-9, gameKey is 32 length, secretKey is 40 length. Failed keys - gameKey: " .. gameKey .. ", secretKey: " .. secretKey)
+			return
+		end
+
+		events.GameKey = gameKey
+		events.SecretKey = secretKey
+
+		state.Initialized = true
+
+		-- New Players
+		Players.PlayerAdded:Connect(function(Player)
+			ga:PlayerJoined(Player)
+		end)
+
+		-- Players leaving
+		Players.PlayerRemoving:Connect(function(Player)
+			ga:PlayerRemoved(Player)
+		end)
+
+		-- Fire for players already in game
+		for _, Player in ipairs(Players:GetPlayers()) do
+			coroutine.wrap(ga.PlayerJoined)(ga, Player)
+		end
+
+		for _, queuedFunction in ipairs(InitializationQueue) do
+			spawn(queuedFunction.Func, unpack(queuedFunction.Args))
+		end
+		logger:i("Server initialization queue called #" .. #InitializationQueue .. " events")
+		InitializationQueue = nil
+
+		events:processEventQueue()
+	end)
+end
+
+
+if not ReplicatedStorage:FindFirstChild("GameAnalyticsRemoteConfigs") then
+	--Create
+	local f = Instance.new("RemoteEvent")
+	f.Name = "GameAnalyticsRemoteConfigs"
+	f.Parent = ReplicatedStorage
+end
+
+if not ReplicatedStorage:FindFirstChild("OnPlayerReadyEvent") then
+	--Create
+	local f = Instance.new("BindableEvent")
+	f.Name = "OnPlayerReadyEvent"
+	f.Parent = ReplicatedStorage
+end
+
+
+spawn(function()
+	local currentHour = math.floor(os.time() / 3600)
+	ErrorDS = store:GetErrorDataStore(currentHour)
+
+	while wait(ONE_HOUR_IN_SECONDS) do
+		currentHour = math.floor(os.time() / 3600)
+		ErrorDS = store:GetErrorDataStore(currentHour)
+		errorCountCache = {}
+		errorCountCacheKeys = {}
+	end
+end)
+
+spawn(function()
+	while wait(store.AutoSaveData) do
+		for _, key in pairs(errorCountCacheKeys) do
+			local errorCount = errorCountCache[key]
+			local step = errorCount.currentCount - errorCount.countInDS
+			errorCountCache[key].countInDS = store:IncrementErrorCount(ErrorDS, key, step)
+			errorCountCache[key].currentCount = errorCountCache[key].countInDS
+		end
+	end
+end)
+
+
+
+--Error Logging
+LS.MessageOut:Connect(function(message, messageType)
+
+	--Validate
+	if not state.ReportErrors or messageType ~= Enum.MessageType.MessageError then
+		return
+	end
+
+	local m = message
+	if #m > 8192 then
+		m = string.sub(m, 1, 8192)
+	end
+
+	local key = m
+	if #key > 50 then
+		key = string.sub(key, 1, 50)
+	end
+
+	if errorCountCache[key] == nil then
+		errorCountCacheKeys[#errorCountCacheKeys + 1] = key
+		errorCountCache[key] = {}
+		errorCountCache[key].countInDS = 0
+		errorCountCache[key].currentCount = 0
+	end
+
+	-- don't report error if limit has been exceeded
+	if errorCountCache[key].currentCount > MaxErrorsPerHour then
+		return
+	end
+
+	--Report (use nil for playerId as real player id is not available)
+	ga:addErrorEvent(nil, {
+		severity = ga.EGAErrorSeverity.error,
+		message = m,
+	})
+
+	-- increment error count
+	errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
+end)
+
+
+--Record Gamepasses.
+MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
+
+	--Validate
+	if not state.AutomaticSendBusinessEvents or not Purchased then
+		return
+	end
+
+	ga:GamepassPurchased(Player, ID)
+end)
 
 return ga
