@@ -291,13 +291,12 @@ To start using the plugin, follow these steps:
 2. Get your game key and secret key
 3. Add the keys to 'GameKey' and 'SecretKey' under GameAnalytics.Settings script
 4. Move the 'GameAnalytics' script (together with its children) under 'ServerStorage'
-5. Move the 'GameAnalyticsServer' script under 'ServerScriptService'
-6. Move the 'GameAnalyticsServerInit' script under 'ServerScriptService' (optional, NOT needed if you want to programmatically initialize the SDK from your own script)
-7. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'
-8. Move the 'Postie' script under 'ReplicatedStorage'
-9. You're ready!
+5. Move the 'GameAnalyticsServerInit' script under 'ServerScriptService' (optional, NOT needed if you want to programmatically initialize the SDK from your own script)
+6. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'
+7. Move the 'Postie' script under 'ReplicatedStorage'
+8. You're ready!
 
-NOTE: The provided rojo.json in the repository is set up to perform steps 4, 5 and 6 automatically through the Rojo workflow.
+NOTE: The provided rojo file in the repository is set up to perform steps of moving the files automatically through the Rojo workflow.
 
 For details on how to send events and more with the SDK go to this page: https://gameanalytics.com/docs/item/roblox-sdk
 
@@ -3727,7 +3726,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.5"
+	SdkVersion = "2.1.6"
 }
 
 return version

@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.6**
+* corrected install instructions
+
 **2.1.5**
 * Moved everything from GameAnalyticsServer to GameAnalytics module and created a template server script for calling the initialize function.
 * Added queue for functions like addDesignEvent etc. that are called before player or GA is initialized
