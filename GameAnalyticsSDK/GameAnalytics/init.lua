@@ -18,6 +18,7 @@ local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalizationService = game:GetService("LocalizationService")
 local LS = game:GetService("LogService")
 local Postie = require(ReplicatedStorage.Postie)
 local OnPlayerReadyEvent
@@ -481,6 +482,14 @@ function ga:PlayerJoined(Player)
 	--Fill Data
 	for key, value in pairs(store.BasePlayerData) do
 		PlayerData[key] = PlayerData[key] or value
+	end
+
+	local countryCodeResult, countryCode = pcall(function()
+		return LocalizationService:GetCountryRegionForPlayerAsync(Player)
+	end)
+
+	if countryCodeResult then
+		PlayerData.CountryCode = countryCode
 	end
 
 	store.PlayerCache[Player.UserId] = PlayerData

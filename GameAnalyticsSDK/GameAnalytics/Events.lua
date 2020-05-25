@@ -84,6 +84,8 @@ local function getEventAnnotations(playerId)
 		}
 	end
 
+
+
 	local annotations = {
 		-- ---- REQUIRED ----
 		-- collector event API version
@@ -105,8 +107,12 @@ local function getEventAnnotations(playerId)
 		-- Session identifier
 		["session_id"] = PlayerData.SessionID,
 		-- Session number
-		["session_num"] = PlayerData.Sessions,
+		["session_num"] = PlayerData.Sessions
 	}
+
+	if not utilities:isStringNullOrEmpty(PlayerData.CountryCode) then
+		annotations["country_code"] = PlayerData.CountryCode
+	end
 
 	if validation:validateBuild(events._build) then
 		annotations["build"] = events._build

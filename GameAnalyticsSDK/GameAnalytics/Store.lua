@@ -21,6 +21,7 @@ local store = {
 		RemoteConfigsIsReady = false,
 		PlayerTeleporting = false,
 		OwnedGamepasses = nil, --nil means a completely new player. {} means player with no game passes
+		CountryCode = ""
 	},
 
 	DataToSave = {
