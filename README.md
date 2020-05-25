@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.8**
+* correct business event for 'Gamepass' itemType
+
 **2.1.7**
 * added country code to events to get correct country of users
 

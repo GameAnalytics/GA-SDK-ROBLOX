@@ -221,7 +221,7 @@ function ga:addBusinessEvent(playerId, options)
 			local player = Players:GetPlayerByUserId(playerId)
 			local playerData = store:GetPlayerData(player)
 			table.insert(playerData.OwnedGamepasses, gamepassId)
-			store.PlayerCache[player] = playerData
+			store.PlayerCache[playerId] = playerData
 			store:SavePlayerData(player)
 		end
 	end)
