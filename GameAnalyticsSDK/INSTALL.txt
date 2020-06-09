@@ -6,7 +6,7 @@ To start using the plugin, follow these steps:
 
 1. Create an account on gameanalytics.com and create a game
 2. Get your game key and secret key
-3. Add the keys to 'GameKey' and 'SecretKey' under GameAnalytics.Settings script
+3. Use the keys to initialize SDK manually from your own script or enter them in the 'GameAnalyticsServerInit' script if you want automatic initialization of the SDK
 4. Move the 'GameAnalytics' script (together with its children) under 'ServerStorage'
 5. Move the 'GameAnalyticsServerInit' script under 'ServerScriptService' (optional, NOT needed if you want to programmatically initialize the SDK from your own script)
 6. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'

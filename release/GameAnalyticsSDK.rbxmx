@@ -250,26 +250,26 @@ local ServerStorage = game:GetService("ServerStorage")
 local GameAnalytics = require(ServerStorage.GameAnalytics)
 
 GameAnalytics:initialize({
-	build = "0.1";
+	build = "0.1",
 
-	gameKey = "";
-	secretKey = "";
+	gameKey = "",
+	secretKey = "",
 
-	enableInfoLog = true;
-	enableVerboseLog = false;
+	enableInfoLog = true,
+	enableVerboseLog = false,
 
 	--debug is by default enabled in studio only
-	enableDebugLog = nil;
+	enableDebugLog = nil,
 
-	automaticSendBusinessEvents = true;
-	reportErrors = true;
+	automaticSendBusinessEvents = true,
+	reportErrors = true,
 
-	availableCustomDimensions01 = {};
-	availableCustomDimensions02 = {};
-	availableCustomDimensions03 = {};
-	availableResourceCurrencies = {};
-	availableResourceItemTypes = {};
-	availableGamepasses = {};
+	availableCustomDimensions01 = {},
+	availableCustomDimensions02 = {},
+	availableCustomDimensions03 = {},
+	availableResourceCurrencies = {},
+	availableResourceItemTypes = {},
+	availableGamepasses = {}
 })
 ]]></ProtectedString>
                 <BinaryString name="Tags"></BinaryString>
@@ -289,7 +289,7 @@ To start using the plugin, follow these steps:
 
 1. Create an account on gameanalytics.com and create a game
 2. Get your game key and secret key
-3. Add the keys to 'GameKey' and 'SecretKey' under GameAnalytics.Settings script
+3. Use the keys to initialize SDK manually from your own script or enter them in the 'GameAnalyticsServerInit' script if you want automatic initialization of the SDK
 4. Move the 'GameAnalytics' script (together with its children) under 'ServerStorage'
 5. Move the 'GameAnalyticsServerInit' script under 'ServerScriptService' (optional, NOT needed if you want to programmatically initialize the SDK from your own script)
 6. Move the 'GameAnalyticsClient' script under 'StarterPlayer/StarerPlayerScripts'
@@ -1001,46 +1001,52 @@ function ga:GamepassPurchased(player, id, customGamepassInfo)
 	})
 end
 
-
-local initializationOptions = {"build", "gameKey", "secretKey", "enableInfoLog", "enableVerboseLog", "automaticSendBusinessEvents", "reportErrors", "availableCustomDimensions01", "availableCustomDimensions02", "availableCustomDimensions03", "availableResourceCurrencies", "availableResourceItemTypes", "availableGamepasses"}
+local requiredInitializationOptions = {"gameKey", "secretKey"}
 
 function ga:initialize(options)
 	threading:performTaskOnGAThread(function()
-		for _, option in ipairs(initializationOptions) do
+		for _, option in ipairs(requiredInitializationOptions) do
 			if options[option] == nil then
 				logger:e("Initialize '"..option.."' option missing")
 				return
 			end
 		end
-		if options.enableInfoLog then
+		if options.enableInfoLog ~= nil and options.enableInfoLog then
 			ga:setEnabledInfoLog(options.enableInfoLog)
 		end
-		if options.enableVerboseLog then
+		if options.enableVerboseLog ~= nil and options.enableVerboseLog then
 			ga:setEnabledVerboseLog(options.enableVerboseLog)
 		end
-		if #options.availableCustomDimensions01 > 0 then
+		if options.availableCustomDimensions01 ~= nil and #options.availableCustomDimensions01 > 0 then
 			ga:configureAvailableCustomDimensions01(options.availableCustomDimensions01)
 		end
-		if #options.availableCustomDimensions02 > 0 then
+		if options.availableCustomDimensions02 ~= nil and #options.availableCustomDimensions02 > 0 then
 			ga:configureAvailableCustomDimensions02(options.availableCustomDimensions02)
 		end
-		if #options.availableCustomDimensions03 > 0 then
+		if options.availableCustomDimensions03 ~= nil and #options.availableCustomDimensions03 > 0 then
 			ga:configureAvailableCustomDimensions03(options.availableCustomDimensions03)
 		end
-		if #options.availableResourceCurrencies > 0 then
+		if options.availableResourceCurrencies ~= nil and #options.availableResourceCurrencies > 0 then
 			ga:configureAvailableResourceCurrencies(options.availableResourceCurrencies)
 		end
-		if #options.availableResourceItemTypes > 0 then
+		if options.availableResourceItemTypes ~= nil and #options.availableResourceItemTypes > 0 then
 			ga:configureAvailableResourceItemTypes(options.availableResourceItemTypes)
 		end
-		if #options.build > 0 then
+		if options.build ~= nil and #options.build > 0 then
 			ga:configureBuild(options.build)
 		end
-		if #options.availableGamepasses > 0 then
+		if options.availableGamepasses ~= nil and #options.availableGamepasses > 0 then
 			ga:configureAvailableGamepasses(options.availableGamepasses)
 		end
 		if options.enableDebugLog ~= nil then
 			ga:setEnabledDebugLog(options.enableDebugLog)
+		end
+
+		if options.automaticSendBusinessEvents ~= nil then
+			ga:setEnabledAutomaticSendBusinessEvents(options.automaticSendBusinessEvents)
+		end
+		if options.reportErrors ~= nil then
+			ga:setEnabledReportErrors(options.reportErrors)
 		end
 
 		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
@@ -1183,32 +1189,6 @@ return ga
 ]]></ProtectedString>
                 <BinaryString name="Tags"></BinaryString>
             </Properties>
-            <Item class="ModuleScript" referent="RBX34831ce54bf7450a8e97b4ff9458caa6">
-                <Properties>
-                    <Content name="LinkedSource"><null></null></Content>
-                    <string name="Name">Settings</string>
-                    <string name="ScriptGuid"></string>
-                    <ProtectedString name="Source"><![CDATA[local settings = {
-	EnableInfoLog = true,
-	EnableVerboseLog = false,
-	AutomaticSendBusinessEvents = true,
-	ReportErrors = true,
-	Build = "0.1",
-	AvailableCustomDimensions01 = {},
-	AvailableCustomDimensions02 = {},
-	AvailableCustomDimensions03 = {},
-	AvailableResourceCurrencies = {},
-	AvailableResourceItemTypes = {},
-	GameKey = "",
-	SecretKey = "",
-	AvailableGamepasses = {}, --Array of all game pass ids used to track Roblox.com purchases
-}
-
-return settings
-]]></ProtectedString>
-                    <BinaryString name="Tags"></BinaryString>
-                </Properties>
-            </Item>
             <Item class="ModuleScript" referent="RBXd615e5db16034cae976316f3d4fea9e0">
                 <Properties>
                     <Content name="LinkedSource"><null></null></Content>
@@ -3742,7 +3722,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.8"
+	SdkVersion = "2.1.9"
 }
 
 return version

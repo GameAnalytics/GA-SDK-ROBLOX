@@ -16,8 +16,6 @@ GAMEANALYTICSCLIENT_BODY = 'GameAnalyticsClient_BODY'
 GAMEANALYTICSCLIENT_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalyticsClient.client.lua")
 GAMEANALYTICS_BODY = 'GameAnalytics_BODY'
 GAMEANALYTICS_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalytics", "init.lua")
-SETTINGS_BODY = 'Settings_BODY'
-SETTINGS_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalytics", "Settings.lua")
 HTTPAPI_BODY = 'HttpApi_BODY'
 HTTPAPI_FILE = os.path.join(ROBLOX_GA_DIR, "GameAnalytics", "HttpApi", "init.lua")
 HASHLIB_BODY = 'HashLib_BODY'
@@ -78,11 +76,6 @@ def main():
     with open(GAMEANALYTICS_FILE, 'r') as file:
         file_contents = file.read()
     rbxmx_contents = rbxmx_contents.replace(GAMEANALYTICS_BODY, file_contents)
-
-    file_contents = ""
-    with open(SETTINGS_FILE, 'r') as file:
-        file_contents = file.read()
-    rbxmx_contents = rbxmx_contents.replace(SETTINGS_BODY, file_contents)
 
     file_contents = ""
     with open(HTTPAPI_FILE, 'r') as file:

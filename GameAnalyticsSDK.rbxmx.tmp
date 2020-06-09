@@ -59,15 +59,6 @@ return module
                 <ProtectedString name="Source"><![CDATA[GameAnalytics_BODY]]></ProtectedString>
                 <BinaryString name="Tags"></BinaryString>
             </Properties>
-            <Item class="ModuleScript" referent="RBX34831ce54bf7450a8e97b4ff9458caa6">
-                <Properties>
-                    <Content name="LinkedSource"><null></null></Content>
-                    <string name="Name">Settings</string>
-                    <string name="ScriptGuid"></string>
-                    <ProtectedString name="Source"><![CDATA[Settings_BODY]]></ProtectedString>
-                    <BinaryString name="Tags"></BinaryString>
-                </Properties>
-            </Item>
             <Item class="ModuleScript" referent="RBXd615e5db16034cae976316f3d4fea9e0">
                 <Properties>
                     <Content name="LinkedSource"><null></null></Content>

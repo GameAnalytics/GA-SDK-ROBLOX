@@ -646,46 +646,52 @@ function ga:GamepassPurchased(player, id, customGamepassInfo)
 	})
 end
 
-
-local initializationOptions = {"build", "gameKey", "secretKey", "enableInfoLog", "enableVerboseLog", "automaticSendBusinessEvents", "reportErrors", "availableCustomDimensions01", "availableCustomDimensions02", "availableCustomDimensions03", "availableResourceCurrencies", "availableResourceItemTypes", "availableGamepasses"}
+local requiredInitializationOptions = {"gameKey", "secretKey"}
 
 function ga:initialize(options)
 	threading:performTaskOnGAThread(function()
-		for _, option in ipairs(initializationOptions) do
+		for _, option in ipairs(requiredInitializationOptions) do
 			if options[option] == nil then
 				logger:e("Initialize '"..option.."' option missing")
 				return
 			end
 		end
-		if options.enableInfoLog then
+		if options.enableInfoLog ~= nil and options.enableInfoLog then
 			ga:setEnabledInfoLog(options.enableInfoLog)
 		end
-		if options.enableVerboseLog then
+		if options.enableVerboseLog ~= nil and options.enableVerboseLog then
 			ga:setEnabledVerboseLog(options.enableVerboseLog)
 		end
-		if #options.availableCustomDimensions01 > 0 then
+		if options.availableCustomDimensions01 ~= nil and #options.availableCustomDimensions01 > 0 then
 			ga:configureAvailableCustomDimensions01(options.availableCustomDimensions01)
 		end
-		if #options.availableCustomDimensions02 > 0 then
+		if options.availableCustomDimensions02 ~= nil and #options.availableCustomDimensions02 > 0 then
 			ga:configureAvailableCustomDimensions02(options.availableCustomDimensions02)
 		end
-		if #options.availableCustomDimensions03 > 0 then
+		if options.availableCustomDimensions03 ~= nil and #options.availableCustomDimensions03 > 0 then
 			ga:configureAvailableCustomDimensions03(options.availableCustomDimensions03)
 		end
-		if #options.availableResourceCurrencies > 0 then
+		if options.availableResourceCurrencies ~= nil and #options.availableResourceCurrencies > 0 then
 			ga:configureAvailableResourceCurrencies(options.availableResourceCurrencies)
 		end
-		if #options.availableResourceItemTypes > 0 then
+		if options.availableResourceItemTypes ~= nil and #options.availableResourceItemTypes > 0 then
 			ga:configureAvailableResourceItemTypes(options.availableResourceItemTypes)
 		end
-		if #options.build > 0 then
+		if options.build ~= nil and #options.build > 0 then
 			ga:configureBuild(options.build)
 		end
-		if #options.availableGamepasses > 0 then
+		if options.availableGamepasses ~= nil and #options.availableGamepasses > 0 then
 			ga:configureAvailableGamepasses(options.availableGamepasses)
 		end
 		if options.enableDebugLog ~= nil then
 			ga:setEnabledDebugLog(options.enableDebugLog)
+		end
+
+		if options.automaticSendBusinessEvents ~= nil then
+			ga:setEnabledAutomaticSendBusinessEvents(options.automaticSendBusinessEvents)
+		end
+		if options.reportErrors ~= nil then
+			ga:setEnabledReportErrors(options.reportErrors)
 		end
 
 		if isSdkReady({needsInitialized = true, shouldWarn = false}) then

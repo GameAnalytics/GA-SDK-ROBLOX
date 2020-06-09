@@ -8,24 +8,24 @@ local ServerStorage = game:GetService("ServerStorage")
 local GameAnalytics = require(ServerStorage.GameAnalytics)
 
 GameAnalytics:initialize({
-	build = "0.1";
+	build = "0.1",
 
-	gameKey = "";
-	secretKey = "";
+	gameKey = "",
+	secretKey = "",
 
-	enableInfoLog = true;
-	enableVerboseLog = false;
+	enableInfoLog = true,
+	enableVerboseLog = false,
 
 	--debug is by default enabled in studio only
-	enableDebugLog = nil;
+	enableDebugLog = nil,
 
-	automaticSendBusinessEvents = true;
-	reportErrors = true;
+	automaticSendBusinessEvents = true,
+	reportErrors = true,
 
-	availableCustomDimensions01 = {};
-	availableCustomDimensions02 = {};
-	availableCustomDimensions03 = {};
-	availableResourceCurrencies = {};
-	availableResourceItemTypes = {};
-	availableGamepasses = {};
+	availableCustomDimensions01 = {},
+	availableCustomDimensions02 = {},
+	availableCustomDimensions03 = {},
+	availableResourceCurrencies = {},
+	availableResourceItemTypes = {},
+	availableGamepasses = {}
 })
