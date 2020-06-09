@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.10**
+* fixed setAvailableGamepasses function
+
 **2.1.9**
 * correct install instructions and fixed GameAnalyticsServerInit script
 

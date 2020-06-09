@@ -128,10 +128,6 @@ function state:setAvailableCustomDimensions03(availableCustomDimensions)
 end
 
 function state:setAvailableGamepasses(availableGamepasses)
-	if not validation:validateCustomDimensions(availableGamepasses) then
-		return
-	end
-
 	self._availableGamepasses = availableGamepasses
 	logger:i("Set available game passes: (" .. table.concat(availableGamepasses, ", ") .. ")")
 end

@@ -3722,7 +3722,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.9"
+	SdkVersion = "2.1.10"
 }
 
 return version
@@ -3865,10 +3865,6 @@ function state:setAvailableCustomDimensions03(availableCustomDimensions)
 end
 
 function state:setAvailableGamepasses(availableGamepasses)
-	if not validation:validateCustomDimensions(availableGamepasses) then
-		return
-	end
-
 	self._availableGamepasses = availableGamepasses
 	logger:i("Set available game passes: (" .. table.concat(availableGamepasses, ", ") .. ")")
 end
