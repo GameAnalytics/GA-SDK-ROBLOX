@@ -19,7 +19,7 @@ local MKT = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalizationService = game:GetService("LocalizationService")
-local LS = game:GetService("LogService")
+local ScriptContext = game:GetService("ScriptContext")
 local Postie = require(ReplicatedStorage.Postie)
 local OnPlayerReadyEvent
 local ProductCache = {}
@@ -779,14 +779,14 @@ end)
 
 
 --Error Logging
-LS.MessageOut:Connect(function(message, messageType)
+ScriptContext.Error:Connect(function(message, trace, script)
 
 	--Validate
-	if not state.ReportErrors or messageType ~= Enum.MessageType.MessageError then
+	if not state.ReportErrors then
 		return
 	end
 
-	local m = message
+	local m = script:GetFullName() .. ": message=" .. message .. ", trace=" .. trace
 	if #m > 8192 then
 		m = string.sub(m, 1, 8192)
 	end

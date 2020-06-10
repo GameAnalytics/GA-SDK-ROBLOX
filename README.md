@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.11**
+* switched from using LogService to ScriptContext.Error for error reporting
+
 **2.1.10**
 * fixed setAvailableGamepasses function
 
