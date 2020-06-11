@@ -776,19 +776,31 @@ spawn(function()
 	end
 end)
 
-
-
---Error Logging
-ScriptContext.Error:Connect(function(message, trace, script)
-
+local function ErrorHandler(message, trace, Script, player)
 	--Validate
 	if not state.ReportErrors then
 		return
 	end
 
-	local m = script:GetFullName() .. ": message=" .. message .. ", trace=" .. trace
+	if not Script then -- don't remember if this check is necessary but must have added it for a reason
+		return
+	end
+
+	local scriptName = nil
+	local ok, _ = pcall(function()
+		scriptName = Script:GetFullName() -- CoreGui.RobloxGui.Modules.PlayerList error, can't get name because of security permission
+	end)
+	if not ok then
+		return
+	end
+
+	local m = scriptName .. ": message=" .. message .. ", trace=" .. trace
 	if #m > 8192 then
 		m = string.sub(m, 1, 8192)
+	end
+
+	if player then
+		m = m:gsub(player.Name, "[LocalPlayer]") -- so we don't flood the same errors with different player names
 	end
 
 	local key = m
@@ -816,6 +828,19 @@ ScriptContext.Error:Connect(function(message, trace, script)
 
 	-- increment error count
 	errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
+end
+
+--Error Logging
+ScriptContext.Error:Connect(ErrorHandler)
+if not ReplicatedStorage:FindFirstChild("GameAnalyticsError") then
+	--Create
+	local f = Instance.new("RemoteEvent")
+	f.Name = "GameAnalyticsError"
+	f.Parent = ReplicatedStorage
+end
+
+ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, message, trace, Script)
+	ErrorHandler(message, trace, Script, player)
 end)
 
 

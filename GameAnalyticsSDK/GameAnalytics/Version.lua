@@ -1,5 +1,5 @@
 local version = {
-	SdkVersion = "2.1.11"
+	SdkVersion = "2.1.12"
 }
 
 return version
