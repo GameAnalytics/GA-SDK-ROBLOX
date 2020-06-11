@@ -821,7 +821,7 @@ local function ErrorHandler(message, trace, Script, player)
 	end
 
 	--Report (use nil for playerId as real player id is not available)
-	ga:addErrorEvent(nil, {
+	ga:addErrorEvent(player.UserId, {
 		severity = ga.EGAErrorSeverity.error,
 		message = m,
 	})

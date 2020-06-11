@@ -1182,7 +1182,7 @@ local function ErrorHandler(message, trace, Script, player)
 	end
 
 	--Report (use nil for playerId as real player id is not available)
-	ga:addErrorEvent(nil, {
+	ga:addErrorEvent(player.UserId, {
 		severity = ga.EGAErrorSeverity.error,
 		message = m,
 	})
@@ -3753,7 +3753,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.12"
+	SdkVersion = "2.1.13"
 }
 
 return version

@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.13**
+* added player id to error events sent from error reporting
+
 **2.1.12**
 * fixed ScriptContext.Error error reporting
 
