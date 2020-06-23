@@ -799,7 +799,9 @@ local function ErrorHandler(message, trace, Script, player)
 		m = string.sub(m, 1, 8192)
 	end
 
+	local userId = nil
 	if player then
+		userId = player.UserId
 		m = m:gsub(player.Name, "[LocalPlayer]") -- so we don't flood the same errors with different player names
 	end
 
@@ -820,8 +822,7 @@ local function ErrorHandler(message, trace, Script, player)
 		return
 	end
 
-	--Report (use nil for playerId as real player id is not available)
-	ga:addErrorEvent(player.UserId, {
+	ga:addErrorEvent(userId, {
 		severity = ga.EGAErrorSeverity.error,
 		message = m,
 	})
