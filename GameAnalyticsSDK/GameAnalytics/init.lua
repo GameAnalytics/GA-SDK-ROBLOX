@@ -466,12 +466,14 @@ function ga:PlayerJoined(Player)
 	local joinData = Player:GetJoinData()
 	local teleportData = joinData.TeleportData
 	local gaData = nil
-	if teleportData then
-		gaData = teleportData.gameanalyticsData and teleportData.gameanalyticsData[tostring(Player.UserId)]
-	end
 
 	--Variables
 	local PlayerData = store:GetPlayerData(Player)
+
+	if teleportData then
+        PlayerData.PlayerTeleporting = false
+		gaData = teleportData.gameanalyticsData and teleportData.gameanalyticsData[tostring(Player.UserId)]
+	end
 
 	local PlayerPlatform = "unknown"
 	local isSuccessful, platform = Postie.InvokeClient("getPlatform", Player, 5)

@@ -294,6 +294,7 @@ function events:addSessionEndEvent(playerId)
 
 	-- Add to store
 	addEventToStore(playerId, eventDict)
+	PlayerData.SessionStart = 0
 
 	logger:i("Add SESSION END event.")
 
