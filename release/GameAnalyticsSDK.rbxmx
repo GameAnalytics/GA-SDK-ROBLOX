@@ -789,7 +789,7 @@ end
 function ga:addGameAnalyticsTeleportData(playerIds, teleportData)
 	local gameAnalyticsTeleportData = {}
 	for _, playerId in ipairs(playerIds) do
-		local PlayerData = store.PlayerCache[playerId]
+		local PlayerData = store:GetPlayerDataFromCache(playerId)
 		PlayerData.PlayerTeleporting = true
 		local data = {
 			["SessionID"] = PlayerData.SessionID,
@@ -956,7 +956,7 @@ function ga:PlayerRemoved(Player)
 	--Save
 	store:SavePlayerData(Player)
 
-	local PlayerData = store.PlayerCache[Player.UserId]
+	local PlayerData = store:GetPlayerDataFromCache(Player.UserId)
 	if PlayerData and not PlayerData.PlayerTeleporting then
 		ga:endSession(Player.UserId)
 	end
@@ -3153,6 +3153,15 @@ function store:GetPlayerData(Player)
 	return PlayerData
 end
 
+function store:GetPlayerDataFromCache(userId)
+    local playerData = store.PlayerCache[userId]
+    if playerData then
+        return playerData
+    end
+    playerData = store.PlayerDataCache[tostring(userId)]
+    return playerData
+end
+
 function store:GetErrorDataStore(scope)
 	local ErrorDS
 	local success = pcall(function()
@@ -3169,7 +3178,7 @@ end
 function store:SavePlayerData(Player)
 
 	--Variables
-	local PlayerData = store.PlayerCache[Player.UserId]
+	local PlayerData = store:GetPlayerDataFromCache(Player.UserId)
 	local SavePlayerData = {}
 
 	if not PlayerData then
@@ -3251,7 +3260,7 @@ local function addDimensionsToEvent(playerId, eventData)
 		return
 	end
 
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 
 	-- add to dict (if not nil)
 	if PlayerData and PlayerData.CurrentCustomDimension01 and #PlayerData.CurrentCustomDimension01 > 0 then
@@ -3272,7 +3281,7 @@ local function getClientTsAdjusted(playerId)
 		return os.time()
 	end
 
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	local clientTs = os.time()
 	local clientTsAdjustedInteger = clientTs + PlayerData.ClientServerTimeOffset
 	if validation:validateClientTs(clientTsAdjustedInteger) then
@@ -3290,7 +3299,7 @@ local function getEventAnnotations(playerId)
 
 	if playerId then
 		id = playerId
-		PlayerData = store.PlayerCache[playerId]
+		PlayerData = store:GetPlayerDataFromCache(playerId)
 	else
 		id = "DummyId"
 		PlayerData = {
@@ -3463,7 +3472,7 @@ function events:setAvailableResourceItemTypes(availableResourceItemTypes)
 end
 
 function events:addSessionStartEvent(playerId, teleportData)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 
 	if teleportData then
 		PlayerData.Sessions = teleportData.Sessions
@@ -3489,7 +3498,7 @@ function events:addSessionStartEvent(playerId, teleportData)
 end
 
 function events:addSessionEndEvent(playerId)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	local session_start_ts = PlayerData.SessionStart
 	local client_ts_adjusted = getClientTsAdjusted(playerId)
 	local sessionLength = client_ts_adjusted - session_start_ts
@@ -3529,7 +3538,7 @@ function events:addBusinessEvent(playerId, currency, amount, itemType, itemId, c
 	local eventDict = {}
 
 	-- Increment transaction number and persist
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	PlayerData.Transactions = PlayerData.Transactions + 1
 
 	-- Required
@@ -3617,7 +3626,7 @@ function events:addProgressionEvent(playerId, progressionStatus, progression01, 
 		eventDict["score"] = score
 	end
 
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 
 	-- Count attempts on each progression fail and persist
 	if progressionStatus == GAProgressionStatus.Fail then
@@ -3757,7 +3766,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.15"
+	SdkVersion = "2.1.16"
 }
 
 return version
@@ -3792,7 +3801,7 @@ local state = {
 local GameAnalyticsRemoteConfigs
 
 local function getClientTsAdjusted(playerId)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	if not PlayerData then
 		return os.time()
 	end
@@ -3807,7 +3816,7 @@ local function getClientTsAdjusted(playerId)
 end
 
 local function populateConfigurations(player)
-	local PlayerData = store.PlayerCache[player.UserId]
+	local PlayerData = store:GetPlayerDataFromCache(player.UserId)
 	local sdkConfig = PlayerData.SdkConfig
 
 	if sdkConfig["configs"] then
@@ -3834,7 +3843,7 @@ local function populateConfigurations(player)
 end
 
 function state:sessionIsStarted(playerId)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	if not PlayerData then
 		return false
 	end
@@ -3843,7 +3852,7 @@ function state:sessionIsStarted(playerId)
 end
 
 function state:isEnabled(playerId)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	if not PlayerData then
 		return false
 	elseif not PlayerData.InitAuthorized then
@@ -3854,7 +3863,7 @@ function state:isEnabled(playerId)
 end
 
 function state:validateAndFixCurrentDimensions(playerId)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 
 	-- validate that there are no current dimension01 not in list
 	if not validation:validateDimension(self._availableCustomDimensions01, PlayerData.CurrentCustomDimension01) then
@@ -3913,17 +3922,17 @@ function state:isEventSubmissionEnabled()
 end
 
 function state:setCustomDimension01(playerId, dimension)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	PlayerData.CurrentCustomDimension01 = dimension
 end
 
 function state:setCustomDimension02(playerId, dimension)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	PlayerData.CurrentCustomDimension02 = dimension
 end
 
 function state:setCustomDimension03(playerId, dimension)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	PlayerData.CurrentCustomDimension03 = dimension
 end
 
@@ -3932,7 +3941,7 @@ function state:startNewSession(player, teleportData)
 		logger:i("Starting a new session.")
 	end
 
-	local PlayerData = store.PlayerCache[player.UserId]
+	local PlayerData = store:GetPlayerDataFromCache(player.UserId)
 
 	-- make sure the current custom dimensions are valid
 	state:validateAndFixCurrentDimensions(player.UserId)
@@ -4024,17 +4033,17 @@ function state:endSession(playerId)
 end
 
 function state:getRemoteConfigsStringValue(playerId, key, defaultValue)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	return PlayerData.Configurations[key] or defaultValue
 end
 
 function state:isRemoteConfigsReady(playerId)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	return PlayerData.RemoteConfigsIsReady
 end
 
 function state:getRemoteConfigsContentAsString(playerId)
-	local PlayerData = store.PlayerCache[playerId]
+	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	return HTTP:JSONEncode(PlayerData.Configurations)
 end
 

@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.16**
+* player data cache now accepts both userId of string or number type
+
 **2.1.15**
 * fixed not clearing session start ts because teleport flag was not cleared
 

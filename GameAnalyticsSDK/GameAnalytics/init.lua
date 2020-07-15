@@ -428,7 +428,7 @@ end
 function ga:addGameAnalyticsTeleportData(playerIds, teleportData)
 	local gameAnalyticsTeleportData = {}
 	for _, playerId in ipairs(playerIds) do
-		local PlayerData = store.PlayerCache[playerId]
+		local PlayerData = store:GetPlayerDataFromCache(playerId)
 		PlayerData.PlayerTeleporting = true
 		local data = {
 			["SessionID"] = PlayerData.SessionID,
@@ -595,7 +595,7 @@ function ga:PlayerRemoved(Player)
 	--Save
 	store:SavePlayerData(Player)
 
-	local PlayerData = store.PlayerCache[Player.UserId]
+	local PlayerData = store:GetPlayerDataFromCache(Player.UserId)
 	if PlayerData and not PlayerData.PlayerTeleporting then
 		ga:endSession(Player.UserId)
 	end
