@@ -57,7 +57,7 @@ function store:GetPlayerDataFromCache(userId)
     if playerData then
         return playerData
     end
-    playerData = store.PlayerDataCache[tostring(userId)]
+    playerData = store.PlayerCache[tostring(userId)]
     return playerData
 end
 

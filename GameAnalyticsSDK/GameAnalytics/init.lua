@@ -459,7 +459,7 @@ function ga:getRemoteConfigsContentAsString(playerId)
 end
 
 function ga:PlayerJoined(Player)
-	if store.PlayerCache[Player.UserId] then
+	if store:GetPlayerDataFromCache(Player.UserId) then
 		return
 	end
 
@@ -602,7 +602,7 @@ function ga:PlayerRemoved(Player)
 end
 
 function ga:isPlayerReady(playerId)
-	if store.PlayerCache[playerId] then
+	if store:GetPlayerDataFromCache(playerId) then
 		return true
 	else
 		return false

@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.17**
+* corrected variable name inside GetPlayerDataFromCache function
+
 **2.1.16**
 * player data cache now accepts both userId of string or number type
 
