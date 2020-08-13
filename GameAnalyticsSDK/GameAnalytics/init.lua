@@ -217,7 +217,7 @@ function ga:addBusinessEvent(playerId, options)
 
 		events:addBusinessEvent(playerId, "USD", USDSpent, itemType, itemId, cartType)
 
-		if itemType == "Gamepass" then
+		if itemType == "Gamepass" and cartType ~= "Website" then
 			local player = Players:GetPlayerByUserId(playerId)
 			local playerData = store:GetPlayerData(player)
 			table.insert(playerData.OwnedGamepasses, gamepassId)
