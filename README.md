@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.18**
+* fixed sesion start and end issues which caused problems with metrics
+
 **2.1.17**
 * corrected variable name inside GetPlayerDataFromCache function
 

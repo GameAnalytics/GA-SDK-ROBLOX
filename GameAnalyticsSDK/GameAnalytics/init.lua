@@ -459,10 +459,6 @@ function ga:getRemoteConfigsContentAsString(playerId)
 end
 
 function ga:PlayerJoined(Player)
-	if store:GetPlayerDataFromCache(Player.UserId) then
-		return
-	end
-
 	local joinData = Player:GetJoinData()
 	local teleportData = joinData.TeleportData
 	local gaData = nil
@@ -471,8 +467,17 @@ function ga:PlayerJoined(Player)
 	local PlayerData = store:GetPlayerData(Player)
 
 	if teleportData then
-        PlayerData.PlayerTeleporting = false
 		gaData = teleportData.gameanalyticsData and teleportData.gameanalyticsData[tostring(Player.UserId)]
+	end
+
+	local pd = store:GetPlayerDataFromCache(Player.UserId)
+	if pd then
+		if gaData then
+			pd.SessionID = gaData.SessionID
+			pd.SessionStart = gaData.SessionStart
+		end
+		pd.PlayerTeleporting = false
+		return
 	end
 
 	local PlayerPlatform = "unknown"
@@ -570,25 +575,6 @@ function ga:PlayerJoined(Player)
 
 		logger:i("Player initialization queue called #" .. #playerEventQueue .. " events")
 	end
-
-	--Autosave
-	spawn(function()
-
-		--Loop
-		while true do
-
-			--Delay
-			wait(store.AutoSaveData)
-
-			--Validate
-			if not Player or Player.Parent ~= Players then
-				return
-			end
-
-			--Save
-			store:SavePlayerData(Player)
-		end
-	end)
 end
 
 function ga:PlayerRemoved(Player)
@@ -596,8 +582,12 @@ function ga:PlayerRemoved(Player)
 	store:SavePlayerData(Player)
 
 	local PlayerData = store:GetPlayerDataFromCache(Player.UserId)
-	if PlayerData and not PlayerData.PlayerTeleporting then
-		ga:endSession(Player.UserId)
+	if PlayerData then
+		if not PlayerData.PlayerTeleporting then
+			ga:endSession(Player.UserId)
+		else
+			store.PlayerCache[Player.UserId] = nil
+		end
 	end
 end
 
