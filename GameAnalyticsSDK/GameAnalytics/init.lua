@@ -220,6 +220,9 @@ function ga:addBusinessEvent(playerId, options)
 		if itemType == "Gamepass" and cartType ~= "Website" then
 			local player = Players:GetPlayerByUserId(playerId)
 			local playerData = store:GetPlayerData(player)
+			if not playerData.OwnedGamepasses then
+				playerData.OwnedGamepasses = {}
+			end
 			table.insert(playerData.OwnedGamepasses, gamepassId)
 			store.PlayerCache[playerId] = playerData
 			store:SavePlayerData(player)
@@ -630,10 +633,20 @@ function ga:GamepassPurchased(player, id, customGamepassInfo)
 		ProductCache[id] = gamepassInfo
 	end
 
+	local amount = 0
+	local itemId = "GamePass"
+	if customGamepassInfo then
+		amount = customGamepassInfo.PriceInRobux
+		itemId = customGamepassInfo.Name
+	elseif gamepassInfo then
+		amount = gamepassInfo.PriceInRobux
+		itemId = gamepassInfo.Name
+	end
+
 	ga:addBusinessEvent(player.UserId, {
-		amount = customGamepassInfo.PriceInRobux or gamepassInfo.PriceInRobux,
+		amount = amount or 0,
 		itemType = "Gamepass",
-		itemId = ga:filterForBusinessEvent(customGamepassInfo.Name or gamepassInfo.Name),
+		itemId = ga:filterForBusinessEvent(itemId),
 		gamepassId = id,
 	})
 end
