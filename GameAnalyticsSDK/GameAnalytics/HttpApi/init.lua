@@ -138,7 +138,7 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
 
 	--Response
 	local responseBody
-	success = ypcall(function()
+	success = pcall(function()
 		responseBody = HTTP:JSONDecode(res.Body)
 	end)
 
@@ -229,7 +229,7 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
 	end
 
 	local responseBody
-	ypcall(function()
+	pcall(function()
 		responseBody = HTTP:JSONDecode(res.Body)
 	end)
 
