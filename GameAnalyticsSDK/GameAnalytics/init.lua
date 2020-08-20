@@ -603,22 +603,25 @@ function ga:isPlayerReady(playerId)
 end
 
 function ga:ProcessReceiptCallback(Info)
-
 	--Variables
 	local ProductInfo = ProductCache[Info.ProductId]
 
 	--Cache
 	if not ProductInfo then
 		--Get
-		ProductInfo = MKT:GetProductInfo(Info.ProductId, Enum.InfoType.Product)
-		ProductCache[Info.ProductId] = ProductInfo
+		pcall(function()
+			ProductInfo = MKT:GetProductInfo(Info.ProductId, Enum.InfoType.Product)
+			ProductCache[Info.ProductId] = ProductInfo
+		end)
 	end
 
-	ga:addBusinessEvent(Info.PlayerId, {
-		amount = Info.CurrencySpent,
-		itemType = "DeveloperProduct",
-		itemId = ga:filterForBusinessEvent(ProductInfo.Name),
-	})
+	if ProductInfo then
+		ga:addBusinessEvent(Info.PlayerId, {
+			amount = Info.CurrencySpent,
+			itemType = "DeveloperProduct",
+			itemId = ga:filterForBusinessEvent(ProductInfo.Name),
+		})
+	end
 end
 
 --customGamepassInfo argument to optinaly provide our own name or price
