@@ -53,7 +53,7 @@ function store:GetPlayerData(Player)
 end
 
 function store:GetPlayerDataFromCache(userId)
-    local playerData = store.PlayerCache[userId]
+    local playerData = store.PlayerCache[tonumber(userId)]
     if playerData then
         return playerData
     end
