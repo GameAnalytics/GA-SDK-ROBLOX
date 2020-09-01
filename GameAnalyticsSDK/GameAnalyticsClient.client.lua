@@ -26,8 +26,3 @@ end
 
 --Filtering
 Postie.SetCallback("getPlatform", getPlatform)
-
--- debug stuff
---GameAnalyticsSendMessage.OnClientEvent:Connect(function(chatProperties)
---    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", chatProperties)
---end)

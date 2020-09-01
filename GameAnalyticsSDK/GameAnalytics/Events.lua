@@ -67,6 +67,33 @@ end
 
 local DUMMY_SESSION_ID = HTTP:GenerateGUID(false):lower()
 
+local function recursiveToString(object)
+	if typeof(object) == "table" then
+		local str = "{\n"
+		for i,v in pairs(object) do
+			if typeof(i) == "string" then
+				str = str .. i .. " = "
+			else
+				str = str .. "[" .. tostring(i) .. "] = "
+			end
+
+			str = str .. tostring(v) .. ",\n"
+		end
+		str = str .. "}"
+		return str
+	else
+		return tostring(object)
+	end
+end
+
+local function Length(Table)
+	local counter = 0
+	for _, v in pairs(Table) do
+		counter =counter + 1
+	end
+	return counter
+end
+
 local function getEventAnnotations(playerId)
 	local PlayerData
 	local id
@@ -83,8 +110,6 @@ local function getEventAnnotations(playerId)
 			Sessions = 1,
 		}
 	end
-
-
 
 	local annotations = {
 		-- ---- REQUIRED ----
@@ -116,6 +141,18 @@ local function getEventAnnotations(playerId)
 
 	if validation:validateBuild(events._build) then
 		annotations["build"] = events._build
+	end
+
+	if PlayerData.Configurations and Length(PlayerData.Configurations) > 0 then
+		annotations["configurations"] = PlayerData.Configurations
+	end
+
+	if not utilities:isStringNullOrEmpty(PlayerData.AbId) then
+		annotations["ab_id"] = PlayerData.AbId
+	end
+
+	if not utilities:isStringNullOrEmpty(PlayerData.AbVariantId) then
+		annotations["ab_variant_id"] = PlayerData.AbVariantId
 	end
 
 	return annotations

@@ -345,11 +345,6 @@ end
 
 --Filtering
 Postie.SetCallback("getPlatform", getPlatform)
-
--- debug stuff
---GameAnalyticsSendMessage.OnClientEvent:Connect(function(chatProperties)
---    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", chatProperties)
---end)
 ]]></ProtectedString>
                 <BinaryString name="Tags"></BinaryString>
             </Properties>
@@ -964,22 +959,25 @@ function ga:isPlayerReady(playerId)
 end
 
 function ga:ProcessReceiptCallback(Info)
-
 	--Variables
 	local ProductInfo = ProductCache[Info.ProductId]
 
 	--Cache
 	if not ProductInfo then
 		--Get
-		ProductInfo = MKT:GetProductInfo(Info.ProductId, Enum.InfoType.Product)
-		ProductCache[Info.ProductId] = ProductInfo
+		pcall(function()
+			ProductInfo = MKT:GetProductInfo(Info.ProductId, Enum.InfoType.Product)
+			ProductCache[Info.ProductId] = ProductInfo
+		end)
 	end
 
-	ga:addBusinessEvent(Info.PlayerId, {
-		amount = Info.CurrencySpent,
-		itemType = "DeveloperProduct",
-		itemId = ga:filterForBusinessEvent(ProductInfo.Name),
-	})
+	if ProductInfo then
+		ga:addBusinessEvent(Info.PlayerId, {
+			amount = Info.CurrencySpent,
+			itemType = "DeveloperProduct",
+			itemId = ga:filterForBusinessEvent(ProductInfo.Name),
+		})
+	end
 end
 
 --customGamepassInfo argument to optinaly provide our own name or price
@@ -3296,6 +3294,33 @@ end
 
 local DUMMY_SESSION_ID = HTTP:GenerateGUID(false):lower()
 
+local function recursiveToString(object)
+	if typeof(object) == "table" then
+		local str = "{\n"
+		for i,v in pairs(object) do
+			if typeof(i) == "string" then
+				str = str .. i .. " = "
+			else
+				str = str .. "[" .. tostring(i) .. "] = "
+			end
+
+			str = str .. tostring(v) .. ",\n"
+		end
+		str = str .. "}"
+		return str
+	else
+		return tostring(object)
+	end
+end
+
+local function Length(Table)
+	local counter = 0
+	for _, v in pairs(Table) do
+		counter =counter + 1
+	end
+	return counter
+end
+
 local function getEventAnnotations(playerId)
 	local PlayerData
 	local id
@@ -3312,8 +3337,6 @@ local function getEventAnnotations(playerId)
 			Sessions = 1,
 		}
 	end
-
-
 
 	local annotations = {
 		-- ---- REQUIRED ----
@@ -3345,6 +3368,18 @@ local function getEventAnnotations(playerId)
 
 	if validation:validateBuild(events._build) then
 		annotations["build"] = events._build
+	end
+
+	if PlayerData.Configurations and Length(PlayerData.Configurations) > 0 then
+		annotations["configurations"] = PlayerData.Configurations
+	end
+
+	if not utilities:isStringNullOrEmpty(PlayerData.AbId) then
+		annotations["ab_id"] = PlayerData.AbId
+	end
+
+	if not utilities:isStringNullOrEmpty(PlayerData.AbVariantId) then
+		annotations["ab_variant_id"] = PlayerData.AbVariantId
 	end
 
 	return annotations
@@ -3769,7 +3804,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.21"
+	SdkVersion = "2.1.22"
 }
 
 return version
@@ -3839,6 +3874,8 @@ local function populateConfigurations(player)
 			end
 		end
 	end
+
+	logger:i("Remote configs populated")
 
 	PlayerData.RemoteConfigsIsReady = true
 	GameAnalyticsRemoteConfigs = GameAnalyticsRemoteConfigs or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsRemoteConfigs")
