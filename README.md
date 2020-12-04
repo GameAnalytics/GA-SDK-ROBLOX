@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.23**
+* fixed ab testing
+
 **2.1.22**
 * fixed bug with remote configs and ab testing ids not being added to events
 

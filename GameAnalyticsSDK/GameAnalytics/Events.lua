@@ -2,7 +2,7 @@ local events = {
 	ProcessEventsInterval = 8,
 	GameKey = "",
 	SecretKey = "",
-	_build = "",
+	Build = "",
 	_availableResourceCurrencies = {},
 	_availableResourceItemTypes = {},
 }
@@ -116,7 +116,7 @@ local function getEventAnnotations(playerId)
 		-- collector event API version
 		["v"] = 2,
 		-- User identifier
-		["user_id"] = tostring(id),
+		["user_id"] = tostring(id) .. PlayerData.CustomUserId,
 		-- Client Timestamp (the adjusted timestamp)
 		["client_ts"] = getClientTsAdjusted(playerId),
 		-- SDK version
@@ -139,8 +139,8 @@ local function getEventAnnotations(playerId)
 		annotations["country_code"] = PlayerData.CountryCode
 	end
 
-	if validation:validateBuild(events._build) then
-		annotations["build"] = events._build
+	if validation:validateBuild(events.Build) then
+		annotations["build"] = events.Build
 	end
 
 	if PlayerData.Configurations and Length(PlayerData.Configurations) > 0 then
@@ -260,7 +260,7 @@ function events:setBuild(build)
 		return
 	end
 
-	self._build = build
+	self.Build = build
 	logger:i("Set build version: " .. build)
 end
 

@@ -370,6 +370,7 @@ local state = require(script.State)
 local validation = require(script.Validation)
 local store = require(script.Store)
 local events = require(script.Events)
+local utilities = require(script.Utilities)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
@@ -778,6 +779,12 @@ function ga:setEnabledReportErrors(flag)
 	end)
 end
 
+function ga:setEnabledCustomUserId(flag)
+	threading:performTaskOnGAThread(function()
+		state.UseCustomUserId = flag
+	end)
+end
+
 function ga:setEnabledAutomaticSendBusinessEvents(flag)
 	threading:performTaskOnGAThread(function()
 		state.AutomaticSendBusinessEvents = flag
@@ -862,6 +869,19 @@ function ga:PlayerJoined(Player)
 
 	PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or "uwp_desktop"
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
+
+	local PlayerCustomUserId = ""
+	if state.UseCustomUserId then
+		local isSuccessful, customUserId = Postie.InvokeClient("getCustomUserId", Player, 5)
+		if isSuccessful then
+			PlayerCustomUserId = customUserId
+		end
+	end
+
+	if not utilities:isStringNullOrEmpty(PlayerCustomUserId) then
+		logger:i("Using custom id: " .. PlayerCustomUserId)
+		PlayerData.CustomUserId = PlayerCustomUserId
+	end
 
 	ga:startNewSession(Player, gaData)
 
@@ -1056,6 +1076,10 @@ function ga:initialize(options)
 		end
 		if options.reportErrors ~= nil then
 			ga:setEnabledReportErrors(options.reportErrors)
+		end
+
+		if options.useCustomUserId ~= nil then
+			ga:setEnabledCustomUserId(options.useCustomUserId)
 		end
 
 		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
@@ -1264,13 +1288,13 @@ local remoteConfigsBaseUrl = (RunService:IsStudio() and "http" or http_api.proto
 
 local Encoding = {}
 
-local function getInitAnnotations(playerData, playerId)
+local function getInitAnnotations(build, playerData, playerId)
 	local initAnnotations = {
-		["user_id"] = tostring(playerId),
+		["user_id"] = tostring(playerId) .. playerData.CustomUserId,
 		["sdk_version"] = "roblox " .. version.SdkVersion,
 		["os_version"] = playerData.OS,
 		["platform"] = playerData.Platform,
-		["build"] = nil,
+		["build"] = build,
 		["session_num"] = playerData.Sessions,
 		["random_salt"] = playerData.Sessions,
 	}
@@ -1323,7 +1347,7 @@ local function processRequestResponse(response, requestId)
 	end
 end
 
-function http_api:initRequest(gameKey, secretKey, playerData, playerId)
+function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 	local url = remoteConfigsBaseUrl .. "/" .. http_api.initializeUrlPath .. "?game_key=" .. gameKey .. "&interval_seconds=0&configs_hash=" .. (playerData.ConfigsHash or "")
 	if RunService:IsStudio() then
 		url = baseUrl .. "/5c6bcb5402204249437fb5a7a80a4959/" .. self.initializeUrlPath
@@ -1331,8 +1355,10 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
 
 	logger:d("Sending 'init' URL: " .. url)
 
-	local payload = HTTP:JSONEncode(getInitAnnotations(playerData, playerId))
+	local payload = HTTP:JSONEncode(getInitAnnotations(build, playerData, playerId))
 	local authorization = encode(payload, secretKey)
+
+	logger:d("init payload: " .. payload)
 
 	local res
 	local success, err = pcall(function()
@@ -3123,7 +3149,8 @@ local store = {
 		RemoteConfigsIsReady = false,
 		PlayerTeleporting = false,
 		OwnedGamepasses = nil, --nil means a completely new player. {} means player with no game passes
-		CountryCode = ""
+		CountryCode = "",
+		CustomUserId = ""
 	},
 
 	DataToSave = {
@@ -3229,7 +3256,7 @@ return store
 	ProcessEventsInterval = 8,
 	GameKey = "",
 	SecretKey = "",
-	_build = "",
+	Build = "",
 	_availableResourceCurrencies = {},
 	_availableResourceItemTypes = {},
 }
@@ -3343,7 +3370,7 @@ local function getEventAnnotations(playerId)
 		-- collector event API version
 		["v"] = 2,
 		-- User identifier
-		["user_id"] = tostring(id),
+		["user_id"] = tostring(id) .. PlayerData.CustomUserId,
 		-- Client Timestamp (the adjusted timestamp)
 		["client_ts"] = getClientTsAdjusted(playerId),
 		-- SDK version
@@ -3366,8 +3393,8 @@ local function getEventAnnotations(playerId)
 		annotations["country_code"] = PlayerData.CountryCode
 	end
 
-	if validation:validateBuild(events._build) then
-		annotations["build"] = events._build
+	if validation:validateBuild(events.Build) then
+		annotations["build"] = events.Build
 	end
 
 	if PlayerData.Configurations and Length(PlayerData.Configurations) > 0 then
@@ -3487,7 +3514,7 @@ function events:setBuild(build)
 		return
 	end
 
-	self._build = build
+	self.Build = build
 	logger:i("Set build version: " .. build)
 end
 
@@ -3804,7 +3831,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.22"
+	SdkVersion = "2.1.23"
 }
 
 return version
@@ -3832,6 +3859,7 @@ local state = {
 	_enableEventSubmission = true,
 	Initialized = false,
 	ReportErrors = true,
+	UseCustomUserId = false,
 	AutomaticSendBusinessEvents = true,
 	ConfigsHash = "",
 }
@@ -3986,7 +4014,7 @@ function state:startNewSession(player, teleportData)
 	-- make sure the current custom dimensions are valid
 	state:validateAndFixCurrentDimensions(player.UserId)
 
-	local initResult = http_api:initRequest(events.GameKey, events.SecretKey, PlayerData, player.UserId)
+	local initResult = http_api:initRequest(events.GameKey, events.SecretKey, events.Build, PlayerData, player.UserId)
 	local statusCode = initResult.statusCode
 	local responseBody = initResult.body
 

@@ -13,6 +13,7 @@ local state = {
 	_enableEventSubmission = true,
 	Initialized = false,
 	ReportErrors = true,
+	UseCustomUserId = false,
 	AutomaticSendBusinessEvents = true,
 	ConfigsHash = "",
 }
@@ -167,7 +168,7 @@ function state:startNewSession(player, teleportData)
 	-- make sure the current custom dimensions are valid
 	state:validateAndFixCurrentDimensions(player.UserId)
 
-	local initResult = http_api:initRequest(events.GameKey, events.SecretKey, PlayerData, player.UserId)
+	local initResult = http_api:initRequest(events.GameKey, events.SecretKey, events.Build, PlayerData, player.UserId)
 	local statusCode = initResult.statusCode
 	local responseBody = initResult.body
 

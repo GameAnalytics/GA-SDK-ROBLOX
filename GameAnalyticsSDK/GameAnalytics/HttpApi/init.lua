@@ -33,13 +33,13 @@ local remoteConfigsBaseUrl = (RunService:IsStudio() and "http" or http_api.proto
 
 local Encoding = {}
 
-local function getInitAnnotations(playerData, playerId)
+local function getInitAnnotations(build, playerData, playerId)
 	local initAnnotations = {
-		["user_id"] = tostring(playerId),
+		["user_id"] = tostring(playerId) .. playerData.CustomUserId,
 		["sdk_version"] = "roblox " .. version.SdkVersion,
 		["os_version"] = playerData.OS,
 		["platform"] = playerData.Platform,
-		["build"] = nil,
+		["build"] = build,
 		["session_num"] = playerData.Sessions,
 		["random_salt"] = playerData.Sessions,
 	}
@@ -92,7 +92,7 @@ local function processRequestResponse(response, requestId)
 	end
 end
 
-function http_api:initRequest(gameKey, secretKey, playerData, playerId)
+function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 	local url = remoteConfigsBaseUrl .. "/" .. http_api.initializeUrlPath .. "?game_key=" .. gameKey .. "&interval_seconds=0&configs_hash=" .. (playerData.ConfigsHash or "")
 	if RunService:IsStudio() then
 		url = baseUrl .. "/5c6bcb5402204249437fb5a7a80a4959/" .. self.initializeUrlPath
@@ -100,8 +100,10 @@ function http_api:initRequest(gameKey, secretKey, playerData, playerId)
 
 	logger:d("Sending 'init' URL: " .. url)
 
-	local payload = HTTP:JSONEncode(getInitAnnotations(playerData, playerId))
+	local payload = HTTP:JSONEncode(getInitAnnotations(build, playerData, playerId))
 	local authorization = encode(payload, secretKey)
+
+	logger:d("init payload: " .. payload)
 
 	local res
 	local success, err = pcall(function()

@@ -14,6 +14,7 @@ local state = require(script.State)
 local validation = require(script.Validation)
 local store = require(script.Store)
 local events = require(script.Events)
+local utilities = require(script.Utilities)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
@@ -422,6 +423,12 @@ function ga:setEnabledReportErrors(flag)
 	end)
 end
 
+function ga:setEnabledCustomUserId(flag)
+	threading:performTaskOnGAThread(function()
+		state.UseCustomUserId = flag
+	end)
+end
+
 function ga:setEnabledAutomaticSendBusinessEvents(flag)
 	threading:performTaskOnGAThread(function()
 		state.AutomaticSendBusinessEvents = flag
@@ -506,6 +513,19 @@ function ga:PlayerJoined(Player)
 
 	PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or "uwp_desktop"
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
+
+	local PlayerCustomUserId = ""
+	if state.UseCustomUserId then
+		local isSuccessful, customUserId = Postie.InvokeClient("getCustomUserId", Player, 5)
+		if isSuccessful then
+			PlayerCustomUserId = customUserId
+		end
+	end
+
+	if not utilities:isStringNullOrEmpty(PlayerCustomUserId) then
+		logger:i("Using custom id: " .. PlayerCustomUserId)
+		PlayerData.CustomUserId = PlayerCustomUserId
+	end
 
 	ga:startNewSession(Player, gaData)
 
@@ -700,6 +720,10 @@ function ga:initialize(options)
 		end
 		if options.reportErrors ~= nil then
 			ga:setEnabledReportErrors(options.reportErrors)
+		end
+
+		if options.useCustomUserId ~= nil then
+			ga:setEnabledCustomUserId(options.useCustomUserId)
 		end
 
 		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
