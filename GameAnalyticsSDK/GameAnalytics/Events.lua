@@ -108,6 +108,7 @@ local function getEventAnnotations(playerId)
 			Platform = "uwp_desktop",
 			SessionID = DUMMY_SESSION_ID,
 			Sessions = 1,
+			CustomUserId = "Server"
 		}
 	end
 
