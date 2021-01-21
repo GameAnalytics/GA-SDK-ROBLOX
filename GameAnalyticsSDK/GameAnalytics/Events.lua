@@ -26,6 +26,7 @@ local CategoryResource = "resource"
 local CategoryProgression = "progression"
 local CategoryDesign = "design"
 local CategoryError = "error"
+local CategorySdkError = "sdk_error"
 local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
 local MAX_AGGREGATED_EVENTS = 2000
 
@@ -532,6 +533,31 @@ function events:addErrorEvent(playerId, severity, message)
 	end
 
 	logger:i("Add ERROR event: {severity:" .. severityString .. ", message:" .. messageString .. "}")
+
+	-- Send to store
+	addEventToStore(playerId, eventData)
+end
+
+function events:addSdkErrorEvent(playerId, category, area, action, parameter, reason)
+	-- Create empty eventData
+	local eventData = {}
+
+	local severityString = GAErrorSeverity[severity]
+
+	eventData["category"] = CategorySdkError
+	eventData["error_category"] = category
+	eventData["error_area"] = area
+	eventData["error_action"] = action
+
+	if not utilities:isStringNullOrEmpty(parameter) then
+		eventData["error_parameter"] = parameter
+	end
+
+	if not utilities:isStringNullOrEmpty(reason) then
+		eventData["reason"] = reason
+	end
+
+	logger:i("Add SDK ERROR event: {error_category:" .. category .. ", error_area:" .. area .. ", error_action:" .. action .. "}")
 
 	-- Send to store
 	addEventToStore(playerId, eventData)

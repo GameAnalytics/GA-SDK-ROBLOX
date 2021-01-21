@@ -870,6 +870,10 @@ function ga:PlayerJoined(Player)
 	PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or "uwp_desktop"
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
+	if not countryCodeResult then
+		events:addSdkErrorEvent(playerId, "event_validation", "player_joined", "string_empty_or_null", "country_code", "")
+	end
+
 	local PlayerCustomUserId = ""
 	if state.UseCustomUserId then
 		local isSuccessful, customUserId = Postie.InvokeClient("getCustomUserId", Player, 5)
@@ -3280,6 +3284,7 @@ local CategoryResource = "resource"
 local CategoryProgression = "progression"
 local CategoryDesign = "design"
 local CategoryError = "error"
+local CategorySdkError = "sdk_error"
 local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
 local MAX_AGGREGATED_EVENTS = 2000
 
@@ -3362,6 +3367,7 @@ local function getEventAnnotations(playerId)
 			Platform = "uwp_desktop",
 			SessionID = DUMMY_SESSION_ID,
 			Sessions = 1,
+			CustomUserId = "Server"
 		}
 	end
 
@@ -3790,6 +3796,31 @@ function events:addErrorEvent(playerId, severity, message)
 	addEventToStore(playerId, eventData)
 end
 
+function events:addSdkErrorEvent(playerId, category, area, action, parameter, reason)
+	-- Create empty eventData
+	local eventData = {}
+
+	local severityString = GAErrorSeverity[severity]
+
+	eventData["category"] = CategorySdkError
+	eventData["error_category"] = category
+	eventData["error_area"] = area
+	eventData["error_action"] = action
+
+	if not utilities:isStringNullOrEmpty(parameter) then
+		eventData["error_parameter"] = parameter
+	end
+
+	if not utilities:isStringNullOrEmpty(reason) then
+		eventData["reason"] = reason
+	end
+
+	logger:i("Add SDK ERROR event: {error_category:" .. category .. ", error_area:" .. area .. ", error_action:" .. action .. "}")
+
+	-- Send to store
+	addEventToStore(playerId, eventData)
+end
+
 return events
 ]]></ProtectedString>
                     <BinaryString name="Tags"></BinaryString>
@@ -3831,7 +3862,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.23"
+	SdkVersion = "2.1.24"
 }
 
 return version

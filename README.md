@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.24**
+* added error tracking if country code fails to get retrieved
+
 **2.1.23**
 * fixed ab testing
 

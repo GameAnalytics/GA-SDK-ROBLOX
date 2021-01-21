@@ -514,6 +514,10 @@ function ga:PlayerJoined(Player)
 	PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or "uwp_desktop"
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
+	if not countryCodeResult then
+		events:addSdkErrorEvent(playerId, "event_validation", "player_joined", "string_empty_or_null", "country_code", "")
+	end
+
 	local PlayerCustomUserId = ""
 	if state.UseCustomUserId then
 		local isSuccessful, customUserId = Postie.InvokeClient("getCustomUserId", Player, 5)
