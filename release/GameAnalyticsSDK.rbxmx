@@ -3572,7 +3572,11 @@ function events:addSessionEndEvent(playerId)
 	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	local session_start_ts = PlayerData.SessionStart
 	local client_ts_adjusted = getClientTsAdjusted(playerId)
-	local sessionLength = client_ts_adjusted - session_start_ts
+	local sessionLength = 0
+
+	if client_ts_adjusted ~= nil and session_start_ts ~= nil then
+		sessionLength = client_ts_adjusted - session_start_ts
+	end
 
 	if sessionLength < 0 then
 		-- Should never happen.
@@ -3862,7 +3866,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.24"
+	SdkVersion = "2.1.25"
 }
 
 return version

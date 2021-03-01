@@ -314,7 +314,11 @@ function events:addSessionEndEvent(playerId)
 	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	local session_start_ts = PlayerData.SessionStart
 	local client_ts_adjusted = getClientTsAdjusted(playerId)
-	local sessionLength = client_ts_adjusted - session_start_ts
+	local sessionLength = 0
+
+	if client_ts_adjusted ~= nil and session_start_ts ~= nil then
+		sessionLength = client_ts_adjusted - session_start_ts
+	end
 
 	if sessionLength < 0 then
 		-- Should never happen.
