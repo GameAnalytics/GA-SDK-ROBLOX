@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.26**
+* fixed undefined variable errors
+
 **2.1.25**
 * fixed potential error in session end event code
 

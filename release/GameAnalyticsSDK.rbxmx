@@ -871,7 +871,7 @@ function ga:PlayerJoined(Player)
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
 	if not countryCodeResult then
-		events:addSdkErrorEvent(playerId, "event_validation", "player_joined", "string_empty_or_null", "country_code", "")
+		events:addSdkErrorEvent(Player.UserId, "event_validation", "player_joined", "string_empty_or_null", "country_code", "")
 	end
 
 	local PlayerCustomUserId = ""
@@ -3804,8 +3804,6 @@ function events:addSdkErrorEvent(playerId, category, area, action, parameter, re
 	-- Create empty eventData
 	local eventData = {}
 
-	local severityString = GAErrorSeverity[severity]
-
 	eventData["category"] = CategorySdkError
 	eventData["error_category"] = category
 	eventData["error_area"] = area
@@ -3866,7 +3864,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.25"
+	SdkVersion = "2.1.26"
 }
 
 return version

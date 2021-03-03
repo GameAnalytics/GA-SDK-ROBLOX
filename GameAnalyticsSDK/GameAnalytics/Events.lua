@@ -546,8 +546,6 @@ function events:addSdkErrorEvent(playerId, category, area, action, parameter, re
 	-- Create empty eventData
 	local eventData = {}
 
-	local severityString = GAErrorSeverity[severity]
-
 	eventData["category"] = CategorySdkError
 	eventData["error_category"] = category
 	eventData["error_area"] = area

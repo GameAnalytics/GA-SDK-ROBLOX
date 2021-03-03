@@ -515,7 +515,7 @@ function ga:PlayerJoined(Player)
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
 	if not countryCodeResult then
-		events:addSdkErrorEvent(playerId, "event_validation", "player_joined", "string_empty_or_null", "country_code", "")
+		events:addSdkErrorEvent(Player.UserId, "event_validation", "player_joined", "string_empty_or_null", "country_code", "")
 	end
 
 	local PlayerCustomUserId = ""
