@@ -852,7 +852,7 @@ local function ErrorHandler(message, trace, scriptName, player)
 	errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
 end
 
-local function ErrorHandlerFromServer(message, trace, Script, player)
+local function ErrorHandlerFromServer(message, trace, Script)
 	--Validate
 	if not state.ReportErrors then
 		return
@@ -870,7 +870,7 @@ local function ErrorHandlerFromServer(message, trace, Script, player)
 		return
 	end
 
-	return ErrorHandler(message, trace, scriptName, player)
+	return ErrorHandler(message, trace, scriptName)
 end
 
 local function ErrorHandlerFromClient(message, trace, scriptName, player)
