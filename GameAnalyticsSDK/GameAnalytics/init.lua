@@ -812,23 +812,8 @@ spawn(function()
 	end
 end)
 
-local function ErrorHandler(message, trace, Script, player)
-	--Validate
-	if not state.ReportErrors then
-		return
-	end
+local function ErrorHandler(message, trace, scriptName, player)
 
-	if not Script then -- don't remember if this check is necessary but must have added it for a reason
-		return
-	end
-
-	local scriptName = nil
-	local ok, _ = pcall(function()
-		scriptName = Script:GetFullName() -- CoreGui.RobloxGui.Modules.PlayerList error, can't get name because of security permission
-	end)
-	if not ok then
-		return
-	end
 
 	local m = scriptName .. ": message=" .. message .. ", trace=" .. trace
 	if #m > 8192 then
@@ -867,8 +852,38 @@ local function ErrorHandler(message, trace, Script, player)
 	errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
 end
 
+local function ErrorHandlerFromServer(message, trace, Script, player)
+	--Validate
+	if not state.ReportErrors then
+		return
+	end
+
+	if not Script then -- don't remember if this check is necessary but must have added it for a reason
+		return
+	end
+
+	local scriptName = nil
+	local ok, _ = pcall(function()
+		scriptName = Script:GetFullName() -- CoreGui.RobloxGui.Modules.PlayerList error, can't get name because of security permission
+	end)
+	if not ok then
+		return
+	end
+
+	return ErrorHandler(message, trace, scriptName, player)
+end
+
+local function ErrorHandlerFromClient(message, trace, scriptName, player)
+	--Validate
+	if not state.ReportErrors then
+		return
+	end
+
+	return ErrorHandler(message, trace, scriptName, player)
+end
+
 --Error Logging
-ScriptContext.Error:Connect(ErrorHandler)
+ScriptContext.Error:Connect(ErrorHandlerFromServer)
 if not ReplicatedStorage:FindFirstChild("GameAnalyticsError") then
 	--Create
 	local f = Instance.new("RemoteEvent")
@@ -877,7 +892,7 @@ if not ReplicatedStorage:FindFirstChild("GameAnalyticsError") then
 end
 
 ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, message, trace, Script)
-	ErrorHandler(message, trace, Script, player)
+	ErrorHandlerFromClient(message, trace, scriptName, player)
 end)
 
 
