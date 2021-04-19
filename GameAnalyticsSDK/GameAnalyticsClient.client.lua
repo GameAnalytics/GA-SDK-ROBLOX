@@ -8,8 +8,20 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Postie = require(ReplicatedStorage.Postie)
 local ScriptContext = game:GetService("ScriptContext")
 
-ScriptContext.Error:Connect(function(...)
-	ReplicatedStorage.GameAnalyticsError:FireServer(...)
+ScriptContext.Error:Connect(function(message, stackTrace, scriptInst)
+	if not scriptInst then
+		return
+	end
+
+	local scriptName = nil
+	local ok, _ = pcall(function()
+		scriptName = scriptInst:GetFullName()  -- Can't get name of some scripts because of security permission
+	end)
+	if not ok then
+		return
+	end
+
+	ReplicatedStorage.GameAnalyticsError:FireServer(message, stackTrace, scriptName)
 end)
 
 --Functions
