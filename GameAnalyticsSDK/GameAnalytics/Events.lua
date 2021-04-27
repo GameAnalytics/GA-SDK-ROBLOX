@@ -139,6 +139,8 @@ local function getEventAnnotations(playerId)
 
 	if not utilities:isStringNullOrEmpty(PlayerData.CountryCode) then
 		annotations["country_code"] = PlayerData.CountryCode
+	else
+		annotations["country_code"] = "unknown"
 	end
 
 	if validation:validateBuild(events.Build) then

@@ -327,8 +327,20 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Postie = require(ReplicatedStorage.Postie)
 local ScriptContext = game:GetService("ScriptContext")
 
-ScriptContext.Error:Connect(function(...)
-	ReplicatedStorage.GameAnalyticsError:FireServer(...)
+ScriptContext.Error:Connect(function(message, stackTrace, scriptInst)
+	if not scriptInst then
+		return
+	end
+
+	local scriptName = nil
+	local ok, _ = pcall(function()
+		scriptName = scriptInst:GetFullName()  -- Can't get name of some scripts because of security permission
+	end)
+	if not ok then
+		return
+	end
+
+	ReplicatedStorage.GameAnalyticsError:FireServer(message, stackTrace, scriptName)
 end)
 
 --Functions
@@ -1168,23 +1180,8 @@ spawn(function()
 	end
 end)
 
-local function ErrorHandler(message, trace, Script, player)
-	--Validate
-	if not state.ReportErrors then
-		return
-	end
+local function ErrorHandler(message, trace, scriptName, player)
 
-	if not Script then -- don't remember if this check is necessary but must have added it for a reason
-		return
-	end
-
-	local scriptName = nil
-	local ok, _ = pcall(function()
-		scriptName = Script:GetFullName() -- CoreGui.RobloxGui.Modules.PlayerList error, can't get name because of security permission
-	end)
-	if not ok then
-		return
-	end
 
 	local m = scriptName .. ": message=" .. message .. ", trace=" .. trace
 	if #m > 8192 then
@@ -1223,8 +1220,38 @@ local function ErrorHandler(message, trace, Script, player)
 	errorCountCache[key].currentCount = errorCountCache[key].currentCount + 1
 end
 
+local function ErrorHandlerFromServer(message, trace, Script)
+	--Validate
+	if not state.ReportErrors then
+		return
+	end
+
+	if not Script then -- don't remember if this check is necessary but must have added it for a reason
+		return
+	end
+
+	local scriptName = nil
+	local ok, _ = pcall(function()
+		scriptName = Script:GetFullName() -- CoreGui.RobloxGui.Modules.PlayerList error, can't get name because of security permission
+	end)
+	if not ok then
+		return
+	end
+
+	return ErrorHandler(message, trace, scriptName)
+end
+
+local function ErrorHandlerFromClient(message, trace, scriptName, player)
+	--Validate
+	if not state.ReportErrors then
+		return
+	end
+
+	return ErrorHandler(message, trace, scriptName, player)
+end
+
 --Error Logging
-ScriptContext.Error:Connect(ErrorHandler)
+ScriptContext.Error:Connect(ErrorHandlerFromServer)
 if not ReplicatedStorage:FindFirstChild("GameAnalyticsError") then
 	--Create
 	local f = Instance.new("RemoteEvent")
@@ -1233,7 +1260,7 @@ if not ReplicatedStorage:FindFirstChild("GameAnalyticsError") then
 end
 
 ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, message, trace, Script)
-	ErrorHandler(message, trace, Script, player)
+	ErrorHandlerFromClient(message, trace, scriptName, player)
 end)
 
 
@@ -1360,6 +1387,7 @@ function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 	logger:d("Sending 'init' URL: " .. url)
 
 	local payload = HTTP:JSONEncode(getInitAnnotations(build, playerData, playerId))
+	payload = payload:gsub("\"country_code\":\"unknown\"", "\"country_code\":null")
 	local authorization = encode(payload, secretKey)
 
 	logger:d("init payload: " .. payload)
@@ -1453,6 +1481,7 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
 
 	-- make JSON string from data
 	local payload = HTTP:JSONEncode(eventArray)
+	payload = payload:gsub("\"country_code\":\"unknown\"", "\"country_code\":null")
 	local authorization = encode(payload, secretKey)
 
 	local res
@@ -3397,6 +3426,8 @@ local function getEventAnnotations(playerId)
 
 	if not utilities:isStringNullOrEmpty(PlayerData.CountryCode) then
 		annotations["country_code"] = PlayerData.CountryCode
+	else
+		annotations["country_code"] = "unknown"
 	end
 
 	if validation:validateBuild(events.Build) then
@@ -3864,7 +3895,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.26"
+	SdkVersion = "2.1.27"
 }
 
 return version

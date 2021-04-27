@@ -101,6 +101,7 @@ function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 	logger:d("Sending 'init' URL: " .. url)
 
 	local payload = HTTP:JSONEncode(getInitAnnotations(build, playerData, playerId))
+	payload = payload:gsub("\"country_code\":\"unknown\"", "\"country_code\":null")
 	local authorization = encode(payload, secretKey)
 
 	logger:d("init payload: " .. payload)
@@ -194,6 +195,7 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
 
 	-- make JSON string from data
 	local payload = HTTP:JSONEncode(eventArray)
+	payload = payload:gsub("\"country_code\":\"unknown\"", "\"country_code\":null")
 	local authorization = encode(payload, secretKey)
 
 	local res

@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.27**
+* country code field always sent with events now (sent as 'null' if country code couldn't be fetched)
+
 **2.1.26**
 * fixed undefined variable errors
 
