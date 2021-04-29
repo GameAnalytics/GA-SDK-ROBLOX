@@ -891,7 +891,7 @@ if not ReplicatedStorage:FindFirstChild("GameAnalyticsError") then
 	f.Parent = ReplicatedStorage
 end
 
-ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, message, trace, Script)
+ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, message, trace, scriptName)
 	ErrorHandlerFromClient(message, trace, scriptName, player)
 end)
 
