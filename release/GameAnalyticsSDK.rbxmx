@@ -1182,8 +1182,19 @@ end)
 
 local function ErrorHandler(message, trace, scriptName, player)
 
-
-	local m = scriptName .. ": message=" .. message .. ", trace=" .. trace
+	local scriptNameTmp = "(null)"
+	if scriptName ~= nil then
+		scriptNameTmp = scriptName
+	end
+	local messageTmp = "(null)"
+	if message ~= nil then
+		messageTmp = message
+	end
+	local traceTmp = "(null)"
+	if trace ~= nil then
+		traceTmp = trace
+	end
+	local m = scriptNameTmp .. ": message=" .. messageTmp .. ", trace=" .. traceTmp
 	if #m > 8192 then
 		m = string.sub(m, 1, 8192)
 	end
@@ -1259,7 +1270,7 @@ if not ReplicatedStorage:FindFirstChild("GameAnalyticsError") then
 	f.Parent = ReplicatedStorage
 end
 
-ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, message, trace, Script)
+ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, message, trace, scriptName)
 	ErrorHandlerFromClient(message, trace, scriptName, player)
 end)
 
@@ -3895,7 +3906,7 @@ return utilities
                     <string name="Name">Version</string>
                     <string name="ScriptGuid">{08f3dc9a-fca3-4b1b-8436-e07880f9095e}</string>
                     <ProtectedString name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.27"
+	SdkVersion = "1.2.28"
 }
 
 return version

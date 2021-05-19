@@ -814,8 +814,19 @@ end)
 
 local function ErrorHandler(message, trace, scriptName, player)
 
-
-	local m = scriptName .. ": message=" .. message .. ", trace=" .. trace
+	local scriptNameTmp = "(null)"
+	if scriptName ~= nil then
+		scriptNameTmp = scriptName
+	end
+	local messageTmp = "(null)"
+	if message ~= nil then
+		messageTmp = message
+	end
+	local traceTmp = "(null)"
+	if trace ~= nil then
+		traceTmp = trace
+	end
+	local m = scriptNameTmp .. ": message=" .. messageTmp .. ", trace=" .. traceTmp
 	if #m > 8192 then
 		m = string.sub(m, 1, 8192)
 	end
