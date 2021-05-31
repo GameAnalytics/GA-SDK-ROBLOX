@@ -159,7 +159,7 @@ function state:setCustomDimension03(playerId, dimension)
 end
 
 function state:startNewSession(player, teleportData)
-	if state:isEventSubmissionEnabled() then
+	if state:isEventSubmissionEnabled() and teleportData == nil then
 		logger:i("Starting a new session.")
 	end
 
