@@ -5,7 +5,7 @@
 local GS = game:GetService("GuiService")
 local UIS = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Postie = require(ReplicatedStorage.Postie)
+local Postie = require(script.Postie)
 local ScriptContext = game:GetService("ScriptContext")
 
 ScriptContext.Error:Connect(function(message, stackTrace, scriptInst)

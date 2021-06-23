@@ -21,7 +21,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalizationService = game:GetService("LocalizationService")
 local ScriptContext = game:GetService("ScriptContext")
-local Postie = require(ReplicatedStorage.Postie)
+local Postie = require(script.Postie)
 local OnPlayerReadyEvent
 local ProductCache = {}
 local ONE_HOUR_IN_SECONDS = 3600
