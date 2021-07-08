@@ -13,14 +13,8 @@
             "StarterPlayerScripts": {
                 "$className": "StarterPlayerScripts",
                 "GameAnalyticsClient": {
-                    "$path": "GameAnalyticsSDK/GameAnalyticsClient.client.lua"
+                    "$path": "GameAnalyticsSDK/GameAnalyticsClient"
                 }
-            }
-        },
-        "ReplicatedStorage": {
-            "$className": "ReplicatedStorage",
-            "Postie": {
-                "$path": "GameAnalyticsSDK/Postie.lua"
             }
         }
     }
