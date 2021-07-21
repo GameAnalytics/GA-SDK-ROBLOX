@@ -19,9 +19,6 @@ Changelog
 **2.1.29**
 * moved postie script inside GameAnalytics scripts
 
-**2.1.29**
-* moved postie script inside GameAnalytics scripts
-
 **2.1.28**
 * fixed error message in errorhandler
 
