@@ -71,23 +71,23 @@ local httpService = game:GetService("HttpService")
 local runService = game:GetService("RunService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 
-if not script:FindFirstChild("Sent") then
+if not replicatedStorage:FindFirstChild("PostieSent") then
 	--Create
 	local f = Instance.new("RemoteEvent")
-	f.Name = "Sent"
-	f.Parent = script
+	f.Name = "PostieSent"
+	f.Parent = replicatedStorage
 end
 
-if not script:FindFirstChild("Received") then
+if not replicatedStorage:FindFirstChild("PostieReceived") then
 	--Create
 	local f = Instance.new("RemoteEvent")
-	f.Name = "Received"
-	f.Parent = script
+	f.Name = "PostieReceived"
+	f.Parent = replicatedStorage
 end
 
 -- data:
-local sent = script.Sent
-local received = script.Received
+local sent = replicatedStorage.PostieSent
+local received = replicatedStorage.PostieReceived
 local isServer = runService:IsServer()
 local idToCallbackMap = {}
 local listeners = {}

@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.31**
+* fixed postie bug after moving the script under gameanalytics script
+
 **2.1.30**
 * replaced rbxmx generator script with rojo build command (requires min. rojo 6)
 
