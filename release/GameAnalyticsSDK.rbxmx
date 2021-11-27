@@ -772,7 +772,7 @@ function ga:initialize(options)
 		end
 
 		for _, queuedFunction in ipairs(InitializationQueue) do
-			spawn(queuedFunction.Func, unpack(queuedFunction.Args))
+			task.spawn(queuedFunction.Func, unpack(queuedFunction.Args))
 		end
 		logger:i("Server initialization queue called #" .. #InitializationQueue .. " events")
 		InitializationQueue = nil
@@ -797,11 +797,11 @@ if not ReplicatedStorage:FindFirstChild("OnPlayerReadyEvent") then
 end
 
 
-spawn(function()
+task.spawn(function()
 	local currentHour = math.floor(os.time() / 3600)
 	ErrorDS = store:GetErrorDataStore(currentHour)
 
-	while wait(ONE_HOUR_IN_SECONDS) do
+	while task.wait(ONE_HOUR_IN_SECONDS) do
 		currentHour = math.floor(os.time() / 3600)
 		ErrorDS = store:GetErrorDataStore(currentHour)
 		errorCountCache = {}
@@ -809,8 +809,8 @@ spawn(function()
 	end
 end)
 
-spawn(function()
-	while wait(store.AutoSaveData) do
+task.spawn(function()
+	while task.wait(store.AutoSaveData) do
 		for _, key in pairs(errorCountCacheKeys) do
 			local errorCount = errorCountCache[key]
 			local step = errorCount.currentCount - errorCount.countInDS
@@ -3383,7 +3383,7 @@ function logger:w(format)
 end
 
 function logger:e(format)
-	spawn(function()
+	task.spawn(function()
 		local m = "Error/GameAnalytics: " .. format
 		error(m, 0)
 --        GameAnalyticsSendMessage = GameAnalyticsSendMessage or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")
@@ -3529,18 +3529,6 @@ local isServer = runService:IsServer()
 local idToCallbackMap = {}
 local listeners = {}
 
--- functions:
--- SpawnNow(callback: (...args: any), ...args: any)
-local function spawnNow(callback, ...)
-	local bindable = Instance.new("BindableEvent")
-	local arguments = table.pack(...)
-	bindable.Event:Connect(function()
-		callback(table.unpack(arguments, 1, arguments.n))
-	end)
-	bindable:Fire()
-	bindable:Destroy()
-end
-
 
 -- Postie:
 local postie = {}
@@ -3565,8 +3553,8 @@ function postie.InvokeClient(id, player, timeout, ...)
 		return true
 	end
 	-- await timeout
-	spawnNow(function()
-		wait(timeout)
+	task.spawn(function()
+		task.wait(timeout)
 		if isResumed then return end
 		table.remove(listeners, pos)
 		bindable:Fire(false)
@@ -3595,8 +3583,8 @@ function postie.InvokeServer(id, timeout, ...)
 		return true
 	end
 	-- await timeout
-	spawnNow(function()
-		wait(timeout)
+	task.spawn(function()
+		task.wait(timeout)
 		if isResumed then return end
 		table.remove(listeners, pos)
 		bindable:Fire(false)
@@ -4080,7 +4068,7 @@ end
 
 local function run()
 
-	spawn(function()
+	task.spawn(function()
 		logger:d("Starting GA thread")
 
 		while not threading._endThread do
@@ -4106,7 +4094,7 @@ local function run()
 			end
 
 			threading._canSafelyClose = true
-			wait(1)
+			task.wait(1)
 		end
 
 		logger:d("GA thread stopped")
@@ -4121,16 +4109,16 @@ local function run()
 		end
 
 		--Give game.Players.PlayerRemoving time to to its thang
-		wait(1)
+		task.wait(1)
 
 		--Delay
 		if not threading._canSafelyClose then
 			repeat
-				wait()
+				task.wait()
 			until threading._canSafelyClose
 		end
 
-		wait(3)
+		task.wait(3)
 	end)
 end
 
@@ -4798,18 +4786,6 @@ local isServer = runService:IsServer()
 local idToCallbackMap = {}
 local listeners = {}
 
--- functions:
--- SpawnNow(callback: (...args: any), ...args: any)
-local function spawnNow(callback, ...)
-	local bindable = Instance.new("BindableEvent")
-	local arguments = table.pack(...)
-	bindable.Event:Connect(function()
-		callback(table.unpack(arguments, 1, arguments.n))
-	end)
-	bindable:Fire()
-	bindable:Destroy()
-end
-
 
 -- Postie:
 local postie = {}
@@ -4834,8 +4810,8 @@ function postie.InvokeClient(id, player, timeout, ...)
 		return true
 	end
 	-- await timeout
-	spawnNow(function()
-		wait(timeout)
+	task.spawn(function()
+		task.wait(timeout)
 		if isResumed then return end
 		table.remove(listeners, pos)
 		bindable:Fire(false)
@@ -4864,8 +4840,8 @@ function postie.InvokeServer(id, timeout, ...)
 		return true
 	end
 	-- await timeout
-	spawnNow(function()
-		wait(timeout)
+	task.spawn(function()
+		task.wait(timeout)
 		if isResumed then return end
 		table.remove(listeners, pos)
 		bindable:Fire(false)

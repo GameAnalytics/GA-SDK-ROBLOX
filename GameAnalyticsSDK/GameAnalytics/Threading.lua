@@ -23,7 +23,7 @@ end
 
 local function run()
 
-	spawn(function()
+	task.spawn(function()
 		logger:d("Starting GA thread")
 
 		while not threading._endThread do
@@ -49,7 +49,7 @@ local function run()
 			end
 
 			threading._canSafelyClose = true
-			wait(1)
+			task.wait(1)
 		end
 
 		logger:d("GA thread stopped")
@@ -64,16 +64,16 @@ local function run()
 		end
 
 		--Give game.Players.PlayerRemoving time to to its thang
-		wait(1)
+		task.wait(1)
 
 		--Delay
 		if not threading._canSafelyClose then
 			repeat
-				wait()
+				task.wait()
 			until threading._canSafelyClose
 		end
 
-		wait(3)
+		task.wait(3)
 	end)
 end
 

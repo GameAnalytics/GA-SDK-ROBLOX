@@ -764,7 +764,7 @@ function ga:initialize(options)
 		end
 
 		for _, queuedFunction in ipairs(InitializationQueue) do
-			spawn(queuedFunction.Func, unpack(queuedFunction.Args))
+			task.spawn(queuedFunction.Func, unpack(queuedFunction.Args))
 		end
 		logger:i("Server initialization queue called #" .. #InitializationQueue .. " events")
 		InitializationQueue = nil
@@ -789,11 +789,11 @@ if not ReplicatedStorage:FindFirstChild("OnPlayerReadyEvent") then
 end
 
 
-spawn(function()
+task.spawn(function()
 	local currentHour = math.floor(os.time() / 3600)
 	ErrorDS = store:GetErrorDataStore(currentHour)
 
-	while wait(ONE_HOUR_IN_SECONDS) do
+	while task.wait(ONE_HOUR_IN_SECONDS) do
 		currentHour = math.floor(os.time() / 3600)
 		ErrorDS = store:GetErrorDataStore(currentHour)
 		errorCountCache = {}
@@ -801,8 +801,8 @@ spawn(function()
 	end
 end)
 
-spawn(function()
-	while wait(store.AutoSaveData) do
+task.spawn(function()
+	while task.wait(store.AutoSaveData) do
 		for _, key in pairs(errorCountCacheKeys) do
 			local errorCount = errorCountCache[key]
 			local step = errorCount.currentCount - errorCount.countInDS
