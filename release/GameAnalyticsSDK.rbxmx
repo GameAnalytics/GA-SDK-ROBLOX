@@ -4636,7 +4636,7 @@ return validation
         <Properties>
           <string name="Name">Version</string>
           <string name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.31"
+	SdkVersion = "2.1.32"
 }
 
 return version

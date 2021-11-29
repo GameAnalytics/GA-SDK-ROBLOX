@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.32**
+* replace global spawn and wait with task library
+
 **2.1.31**
 * fixed postie bug after moving the script under gameanalytics script
 
