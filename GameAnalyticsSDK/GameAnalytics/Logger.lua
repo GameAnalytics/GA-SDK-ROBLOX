@@ -48,7 +48,7 @@ function logger:w(format)
 end
 
 function logger:e(format)
-	spawn(function()
+	task.spawn(function()
 		local m = "Error/GameAnalytics: " .. format
 		error(m, 0)
 --        GameAnalyticsSendMessage = GameAnalyticsSendMessage or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsSendMessage")

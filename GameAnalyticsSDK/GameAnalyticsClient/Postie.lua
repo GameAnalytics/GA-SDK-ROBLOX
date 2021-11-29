@@ -92,18 +92,6 @@ local isServer = runService:IsServer()
 local idToCallbackMap = {}
 local listeners = {}
 
--- functions:
--- SpawnNow(callback: (...args: any), ...args: any)
-local function spawnNow(callback, ...)
-	local bindable = Instance.new("BindableEvent")
-	local arguments = table.pack(...)
-	bindable.Event:Connect(function()
-		callback(table.unpack(arguments, 1, arguments.n))
-	end)
-	bindable:Fire()
-	bindable:Destroy()
-end
-
 
 -- Postie:
 local postie = {}
@@ -128,8 +116,8 @@ function postie.InvokeClient(id, player, timeout, ...)
 		return true
 	end
 	-- await timeout
-	spawnNow(function()
-		wait(timeout)
+	task.spawn(function()
+		task.wait(timeout)
 		if isResumed then return end
 		table.remove(listeners, pos)
 		bindable:Fire(false)
@@ -158,8 +146,8 @@ function postie.InvokeServer(id, timeout, ...)
 		return true
 	end
 	-- await timeout
-	spawnNow(function()
-		wait(timeout)
+	task.spawn(function()
+		task.wait(timeout)
 		if isResumed then return end
 		table.remove(listeners, pos)
 		bindable:Fire(false)
