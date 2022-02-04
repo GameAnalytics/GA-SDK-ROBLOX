@@ -499,7 +499,7 @@ function ga:PlayerJoined(Player)
 	end
 
 	local PlayerPlatform = "unknown"
-	local isSuccessful, platform = Postie.InvokeClient("getPlatform", Player, 5)
+	local isSuccessful, platform = Postie.invokeClient("getPlatform", Player, 5)
 	if isSuccessful then
 		PlayerPlatform = platform
 	end
@@ -528,7 +528,7 @@ function ga:PlayerJoined(Player)
 
 	local PlayerCustomUserId = ""
 	if state.UseCustomUserId then
-		local isSuccessful, customUserId = Postie.InvokeClient("getCustomUserId", Player, 5)
+		local isSuccessful, customUserId = Postie.invokeClient("getCustomUserId", Player, 5)
 		if isSuccessful then
 			PlayerCustomUserId = customUserId
 		end
@@ -4634,7 +4634,7 @@ return validation
         <Properties>
           <string name="Name">Version</string>
           <string name="Source"><![CDATA[local version = {
-	SdkVersion = "2.1.33"
+	SdkVersion = "2.1.34"
 }
 
 return version
@@ -4684,7 +4684,7 @@ local function getPlatform()
 end
 
 --Filtering
-Postie.SetCallback("getPlatform", getPlatform)
+Postie.setCallback("getPlatform", getPlatform)
 ]]></string>
       </Properties>
       <Item class="ModuleScript" referent="18">

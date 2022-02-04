@@ -37,4 +37,4 @@ local function getPlatform()
 end
 
 --Filtering
-Postie.SetCallback("getPlatform", getPlatform)
+Postie.setCallback("getPlatform", getPlatform)

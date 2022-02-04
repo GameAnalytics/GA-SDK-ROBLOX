@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.1.34**
+* corrected to use new postie api where referenced
+
 **2.1.33**
 * postie script updated
 
