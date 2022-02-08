@@ -78,7 +78,7 @@ local listenerByUuid = {}
 
 local Postie = {}
 
-function Postie.invokeClient(player: Player, id: string, timeOut: number, ...: any): (boolean, ...any)
+function Postie.invokeClient(id: string, player: Player, timeOut: number, ...: any): (boolean, ...any)
 	assert(isServer, "Postie.invokeClient can only be called from the server")
 
 	local thread = coroutine.running()
