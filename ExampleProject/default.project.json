@@ -1,0 +1,29 @@
+{
+	"name": "GameAnalyticsSDK test project",
+	"tree": {
+		"$className": "DataModel",
+
+		"ReplicatedStorage": {
+			"Common": {
+				"$path": "src/shared"
+			},
+			"GameAnalyticsSDK": {
+				"$path": "../default.project.json"
+			}
+		},
+
+		"ServerScriptService": {
+			"Server": {
+				"$path": "src/server"
+			}
+		},
+
+		"StarterPlayer": {
+			"StarterPlayerScripts": {
+				"Client": {
+					"$path": "src/client"
+				}
+			}
+		}
+	}
+}
