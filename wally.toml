@@ -1,9 +1,9 @@
 [package]
-name = "GameAnalytics/GameAnalyticsSDK"
-description = ""
+name = "gameanalytics/gameanalytics-sdk"
+description = "Official Roblox SDK for GameAnalytics. GameAnalytics is a free analytics platform that helps game developers understand their players' behaviour by delivering relevant insights."
 version = "2.1.35"
 license = "MIT"
-authors = []
+authors = ["GameAnalytics <sdk@gameanalytics.com>"]
 realm = "shared"
 registry = "https://github.com/UpliftGames/wally-index"
 exclude = ["ExampleProject"]
