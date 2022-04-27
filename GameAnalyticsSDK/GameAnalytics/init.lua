@@ -491,8 +491,8 @@ function ga:PlayerJoined(Player)
 	end
 
 	local PlayerPlatform = "unknown"
-	local isSuccessful, platform = Postie.invokeClient("getPlatform", Player, 5)
-	if isSuccessful then
+	local isGetPlatformSuccessful, platform = Postie.invokeClient("getPlatform", Player, 5)
+	if isGetPlatformSuccessful then
 		PlayerPlatform = platform
 	end
 
@@ -520,8 +520,8 @@ function ga:PlayerJoined(Player)
 
 	local PlayerCustomUserId = ""
 	if state.UseCustomUserId then
-		local isSuccessful, customUserId = Postie.invokeClient("getCustomUserId", Player, 5)
-		if isSuccessful then
+		local isGetCustomUserIdSuccessful, customUserId = Postie.invokeClient("getCustomUserId", Player, 5)
+		if isGetCustomUserIdSuccessful then
 			PlayerCustomUserId = customUserId
 		end
 	end

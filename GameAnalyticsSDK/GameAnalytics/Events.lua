@@ -68,28 +68,9 @@ end
 
 local DUMMY_SESSION_ID = HTTP:GenerateGUID(false):lower()
 
-local function recursiveToString(object)
-	if typeof(object) == "table" then
-		local str = "{\n"
-		for i,v in pairs(object) do
-			if typeof(i) == "string" then
-				str = str .. i .. " = "
-			else
-				str = str .. "[" .. tostring(i) .. "] = "
-			end
-
-			str = str .. tostring(v) .. ",\n"
-		end
-		str = str .. "}"
-		return str
-	else
-		return tostring(object)
-	end
-end
-
 local function Length(Table)
 	local counter = 0
-	for _, v in pairs(Table) do
+	for _, _ in pairs(Table) do
 		counter =counter + 1
 	end
 	return counter
