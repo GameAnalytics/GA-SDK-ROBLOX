@@ -31,8 +31,6 @@ local logger = require(script.Parent.Logger)
 local baseUrl = (RunService:IsStudio() and "http" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/" .. http_api.version
 local remoteConfigsBaseUrl = (RunService:IsStudio() and "http" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/remote_configs/" .. http_api.remoteConfigsVersion
 
-local Encoding = {}
-
 local function getInitAnnotations(build, playerData, playerId)
 	local initAnnotations = {
 		["user_id"] = tostring(playerId) .. playerData.CustomUserId,
