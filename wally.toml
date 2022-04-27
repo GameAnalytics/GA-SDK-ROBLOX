@@ -1,0 +1,11 @@
+[package]
+name = "GameAnalytics/GameAnalyticsSDK"
+description = ""
+version = "2.1.35"
+license = "MIT"
+authors = []
+realm = "shared"
+registry = "https://github.com/UpliftGames/wally-index"
+exclude = ["ExampleProject"]
+
+[dependencies]

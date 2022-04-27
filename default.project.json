@@ -1,21 +1,6 @@
 {
-    "name": "GameAnalyticsSDK",
-    "tree": {
-        "$className": "DataModel",
-        "ServerStorage": {
-            "$className": "ServerStorage",
-            "GameAnalytics": {
-                "$path": "GameAnalyticsSDK/GameAnalytics"
-            }
-        },
-        "StarterPlayer": {
-            "$className": "StarterPlayer",
-            "StarterPlayerScripts": {
-                "$className": "StarterPlayerScripts",
-                "GameAnalyticsClient": {
-                    "$path": "GameAnalyticsSDK/GameAnalyticsClient"
-                }
-            }
-        }
-    }
+	"name": "GameAnalyticsSDK",
+	"tree": {
+		"$path": "GameAnalyticsSDK"
+	}
 }
