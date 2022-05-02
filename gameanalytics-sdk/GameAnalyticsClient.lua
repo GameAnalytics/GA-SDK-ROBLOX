@@ -46,31 +46,4 @@ function module.initClient()
 	Postie.setCallback("getPlatform", getPlatform)
 end
 
-function module.initServer(gameKey: string, secretKey: string)
-	local GameAnalytics = require(script.Parent.GameAnalytics)
-
-	GameAnalytics:initialize({
-		build = "0.1",
-
-		gameKey = gameKey,
-		secretKey = secretKey,
-
-		enableInfoLog = true,
-		enableVerboseLog = false,
-
-		--debug is by default enabled in studio only
-		enableDebugLog = nil,
-
-		automaticSendBusinessEvents = true,
-		reportErrors = true,
-
-		availableCustomDimensions01 = {},
-		availableCustomDimensions02 = {},
-		availableCustomDimensions03 = {},
-		availableResourceCurrencies = {},
-		availableResourceItemTypes = {},
-		availableGamepasses = {},
-	})
-end
-
 return module

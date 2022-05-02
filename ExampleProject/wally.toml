@@ -1,0 +1,8 @@
+[package]
+name = "gameanalytics/exampleproject"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+GameAnalytics = "gameanalytics/gameanalytics-sdk@2.1.39"

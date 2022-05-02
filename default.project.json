@@ -1,6 +1,6 @@
 {
-	"name": "GameAnalyticsSDK",
+	"name": "gameanalytics-sdk",
 	"tree": {
-		"$path": "GameAnalyticsSDK"
+		"$path": "gameanalytics-sdk"
 	}
 }

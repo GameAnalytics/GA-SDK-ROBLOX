@@ -1,5 +1,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local GameAnalytics = require(ReplicatedStorage.GameAnalyticsSDK)
-local GameAnalyticsInit = require(ReplicatedStorage.GameAnalyticsSDK.Initialize)
+-- using wally package
+--local GameAnalytics = require(ReplicatedStorage.Packages.GameAnalytics)
+-- using rojo or manually copied in
+local GameAnalytics = require(ReplicatedStorage.GameAnalytics)
 
-GameAnalyticsInit.initServer("MY_GAME_KEY", "MY_SECRET_KEY")
+GameAnalytics:setEnabledInfoLog(true)
+GameAnalytics:setEnabledVerboseLog(true)
+
+GameAnalytics:initServer("MY_GAME_KEY", "MY_SECRET_KEY")

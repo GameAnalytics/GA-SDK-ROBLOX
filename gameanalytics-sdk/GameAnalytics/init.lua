@@ -680,6 +680,13 @@ end
 
 local requiredInitializationOptions = {"gameKey", "secretKey"}
 
+function ga:initServer(gameKey: string, secretKey: string)
+	ga:initialize({
+		gameKey = gameKey,
+		secretKey = secretKey
+	})
+end
+
 function ga:initialize(options)
 	threading:performTaskOnGAThread(function()
 		for _, option in ipairs(requiredInitializationOptions) do

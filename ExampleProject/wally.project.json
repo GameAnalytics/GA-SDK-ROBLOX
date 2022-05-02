@@ -8,8 +8,8 @@
 			"Common": {
 				"$path": "src/shared"
 			},
-			"GameAnalytics": {
-				"$path": "../default.project.json"
+			"Packages": {
+				"$path": "Packages"
 			}
 		},
 

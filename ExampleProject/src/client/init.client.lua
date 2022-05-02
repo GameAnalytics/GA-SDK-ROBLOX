@@ -1,4 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local GameAnalyticsInit = require(ReplicatedStorage.GameAnalyticsSDK.Initialize)
+-- using wally package
+--local GameAnalytics = require(ReplicatedStorage.Packages.GameAnalytics)
+-- using rojo or manually copied in
+local GameAnalytics = require(ReplicatedStorage.GameAnalytics)
 
-GameAnalyticsInit.initClient()
+GameAnalytics:initClient()
