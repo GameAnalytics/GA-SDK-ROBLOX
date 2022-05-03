@@ -13,8 +13,11 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.2.1**
+* fixed bug related to game passes purchases
+
 **2.2.0**
-* added support for wally
+* added support for wally (OBS: breaking changes)
 
 **2.1.35**
 * fixed argument order

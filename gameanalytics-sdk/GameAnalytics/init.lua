@@ -220,7 +220,7 @@ function ga:addBusinessEvent(playerId, options)
 
 		if itemType == "Gamepass" and cartType ~= "Website" then
 			local player = Players:GetPlayerByUserId(playerId)
-			local playerData = store:GetPlayerData(player)
+			local playerData = store:GetPlayerDataFromCache(playerId)
 			if not playerData.OwnedGamepasses then
 				playerData.OwnedGamepasses = {}
 			end
