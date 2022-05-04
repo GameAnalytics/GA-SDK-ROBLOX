@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.2.2**
+* fix to wally support
+
 **2.2.1**
 * fixed bug related to game passes purchases
 
