@@ -6,3 +6,5 @@
 
 # Other
 roblox.toml
+
+*.DS_Store
