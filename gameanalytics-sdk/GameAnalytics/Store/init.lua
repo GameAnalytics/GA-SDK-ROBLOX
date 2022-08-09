@@ -39,6 +39,7 @@ local store = {
 	--Cache
 	PlayerCache = {},
 	EventsQueue = {},
+	DataStoreQueue = DSQ,
 }
 
 	function store:GetPlayerData(Player)
