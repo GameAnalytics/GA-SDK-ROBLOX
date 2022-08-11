@@ -94,7 +94,7 @@ local store = {
 		local key = Player.UserId
 		if not RunService:IsStudio() then
 			DSQ.AddRequest(key, function()
-				store.PlayerDS:SetAsync(key, SavePlayerData)
+				return store.PlayerDS:SetAsync(key, SavePlayerData)
 			end, 7)
 		end
 	end
