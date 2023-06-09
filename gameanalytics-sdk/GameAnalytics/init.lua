@@ -622,6 +622,7 @@ function ga:PlayerRemoved(Player)
 			ga:endSession(Player.UserId)
 		else
 			store.PlayerCache[Player.UserId] = nil
+			store.DataStoreQueue.RemoveKey(Player.UserId)
 		end
 	end
 end
