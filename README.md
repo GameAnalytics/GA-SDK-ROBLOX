@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.2.3**
+* added datastore queue
+
 **2.2.2**
 * fix to wally support
 
