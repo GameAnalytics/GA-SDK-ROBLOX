@@ -498,7 +498,15 @@ function ga:PlayerJoined(Player)
 
 	--Fill Data
 	for key, value in pairs(store.BasePlayerData) do
-		PlayerData[key] = PlayerData[key] or value
+		if PlayerData[key] then
+			continue
+		end
+
+		if typeof(value) == "table" then
+			PlayerData[key] = utilities:copyTable(value)
+		else
+			PlayerData[key] = value
+		end
 	end
 
 	local countryCodeResult, countryCode = pcall(function()
