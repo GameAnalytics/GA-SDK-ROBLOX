@@ -17,6 +17,10 @@ Changelog
 * fixed bug where PlayerData would reference BasePlayerData tables instead of making copies
 * added datastore queue
 
+**2.2.3**
+* fixed bug where PlayerData would reference BasePlayerData tables instead of making copies
+* added datastore queue
+
 **2.2.2**
 * fix to wally support
 
