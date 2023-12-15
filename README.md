@@ -13,6 +13,9 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.2.4**
+* removed LocalScript that was added in 2.2.3, causing errors on requiring GameAnalyticsClient module
+
 **2.2.3**
 * fixed bug where PlayerData would reference BasePlayerData tables instead of making copies
 * added datastore queue

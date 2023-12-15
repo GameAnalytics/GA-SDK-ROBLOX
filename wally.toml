@@ -1,7 +1,7 @@
 [package]
 name = "gameanalytics/gameanalytics-sdk"
 description = "Official Roblox SDK for GameAnalytics. GameAnalytics is a free analytics platform that helps game developers understand their players' behaviour by delivering relevant insights."
-version = "2.2.3"
+version = "2.2.4"
 license = "MIT"
 authors = ["GameAnalytics <sdk@gameanalytics.com>"]
 realm = "shared"
