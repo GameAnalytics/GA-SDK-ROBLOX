@@ -33,6 +33,18 @@ local errorCountCacheKeys = {}
 local InitializationQueue = {}
 local InitializationQueueByUserId = {}
 
+type BusinessEventOptions = types.BusinessEventOptions
+type ResourceEventOptions = types.ResourceEventOptions
+type ProgressionEventOptions = types.ProgressionEventOptions
+type DesignEventOptions = types.DesignEventOptions
+type ErrorEventOptions = types.ErrorEventOptions
+type CustomDimension = types.CustomDimension
+type ProductInfo = types.ProductInfo
+type ProcessReceiptInfo = types.ProcessReceiptInfo
+type TeleportData = types.TeleportData
+type RemoteConfigs = types.RemoteConfigs
+type GameAnalyticsOptions = types.GameAnalyticsOptions
+
 local function addToInitializationQueue(func, ...)
 	if InitializationQueue ~= nil then
 		table.insert(InitializationQueue, {
@@ -103,7 +115,7 @@ local function isSdkReady(options)
 	return true
 end
 
-function ga:configureAvailableCustomDimensions01(customDimensions)
+function ga:configureAvailableCustomDimensions01(customDimensions: { string })
 	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
 		logger:w("Available custom dimensions must be set before SDK is initialized")
 		return
@@ -112,7 +124,7 @@ function ga:configureAvailableCustomDimensions01(customDimensions)
 	state:setAvailableCustomDimensions01(customDimensions)
 end
 
-function ga:configureAvailableCustomDimensions02(customDimensions)
+function ga:configureAvailableCustomDimensions02(customDimensions: { string })
 	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
 		logger:w("Available custom dimensions must be set before SDK is initialized")
 		return
@@ -121,7 +133,7 @@ function ga:configureAvailableCustomDimensions02(customDimensions)
 	state:setAvailableCustomDimensions02(customDimensions)
 end
 
-function ga:configureAvailableCustomDimensions03(customDimensions)
+function ga:configureAvailableCustomDimensions03(customDimensions: { string })
 	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
 		logger:w("Available custom dimensions must be set before SDK is initialized")
 		return
@@ -130,7 +142,7 @@ function ga:configureAvailableCustomDimensions03(customDimensions)
 	state:setAvailableCustomDimensions03(customDimensions)
 end
 
-function ga:configureAvailableResourceCurrencies(resourceCurrencies)
+function ga:configureAvailableResourceCurrencies(resourceCurrencies: { string })
 	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
 		logger:w("Available resource currencies must be set before SDK is initialized")
 		return
@@ -139,7 +151,7 @@ function ga:configureAvailableResourceCurrencies(resourceCurrencies)
 	events:setAvailableResourceCurrencies(resourceCurrencies)
 end
 
-function ga:configureAvailableResourceItemTypes(resourceItemTypes)
+function ga:configureAvailableResourceItemTypes(resourceItemTypes: { string })
 	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
 		logger:w("Available resource item types must be set before SDK is initialized")
 		return
@@ -148,7 +160,7 @@ function ga:configureAvailableResourceItemTypes(resourceItemTypes)
 	events:setAvailableResourceItemTypes(resourceItemTypes)
 end
 
-function ga:configureBuild(build)
+function ga:configureBuild(build: string)
 	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
 		logger:w("Build version must be set before SDK is initialized.")
 		return
@@ -157,7 +169,7 @@ function ga:configureBuild(build)
 	events:setBuild(build)
 end
 
-function ga:configureAvailableGamepasses(availableGamepasses)
+function ga:configureAvailableGamepasses(availableGamepasses: { string })
 	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
 		logger:w("Available gamepasses must be set before SDK is initialized.")
 		return
@@ -166,7 +178,7 @@ function ga:configureAvailableGamepasses(availableGamepasses)
 	state:setAvailableGamepasses(availableGamepasses)
 end
 
-function ga:startNewSession(player, gaData)
+function ga:startNewSession(player: Player, gaData)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -181,7 +193,7 @@ function ga:startNewSession(player, gaData)
 	end)
 end
 
-function ga:endSession(playerId)
+function ga:endSession(playerId: number)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -190,11 +202,11 @@ function ga:endSession(playerId)
 	end)
 end
 
-function ga:filterForBusinessEvent(text)
+function ga:filterForBusinessEvent(text: string)
 	return string.gsub(text, "[^A-Za-z0-9%s%-_%.%(%)!%?]", "")
 end
 
-function ga:addBusinessEvent(playerId, options)
+function ga:addBusinessEvent(playerId: number | BusinessEventOptions, options: BusinessEventOptions?)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -205,6 +217,10 @@ function ga:addBusinessEvent(playerId, options)
 			else
 				addToInitializationQueue(ga.addBusinessEvent, ga, playerId, options)
 			end
+			return
+		end
+
+		if not options then
 			return
 		end
 
@@ -232,7 +248,7 @@ function ga:addBusinessEvent(playerId, options)
 	end)
 end
 
-function ga:addResourceEvent(playerId, options)
+function ga:addResourceEvent(playerId: number | ResourceEventOptions, options: ResourceEventOptions?)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -243,6 +259,10 @@ function ga:addResourceEvent(playerId, options)
 			else
 				addToInitializationQueue(ga.addResourceEvent, ga, playerId, options)
 			end
+			return
+		end
+
+		if not options then
 			return
 		end
 
@@ -258,7 +278,7 @@ function ga:addResourceEvent(playerId, options)
 	end)
 end
 
-function ga:addProgressionEvent(playerId, options)
+function ga:addProgressionEvent(playerId: number | ProgressionEventOptions, options: ProgressionEventOptions?)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -269,6 +289,10 @@ function ga:addProgressionEvent(playerId, options)
 			else
 				addToInitializationQueue(ga.addProgressionEvent, ga, playerId, options)
 			end
+			return
+		end
+
+		if not options then
 			return
 		end
 
@@ -292,7 +316,7 @@ function ga:addProgressionEvent(playerId, options)
 	end)
 end
 
-function ga:addDesignEvent(playerId, options)
+function ga:addDesignEvent(playerId: number | DesignEventOptions, options: DesignEventOptions?)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -319,7 +343,7 @@ function ga:addDesignEvent(playerId, options)
 	end)
 end
 
-function ga:addErrorEvent(playerId, options)
+function ga:addErrorEvent(playerId: number | ErrorEventOptions, options: ErrorEventOptions?)
 	threading:performTaskOnGAThread(function()
 		if not state:isEventSubmissionEnabled() then
 			return
@@ -346,7 +370,7 @@ function ga:addErrorEvent(playerId, options)
 	end)
 end
 
-function ga:setEnabledDebugLog(flag)
+function ga:setEnabledDebugLog(flag: boolean)
 	if RunService:IsStudio() then
 		if flag then
 			logger:setDebugLog(flag)
@@ -360,7 +384,7 @@ function ga:setEnabledDebugLog(flag)
 	end
 end
 
-function ga:setEnabledInfoLog(flag)
+function ga:setEnabledInfoLog(flag: boolean)
 	if flag then
 		logger:setInfoLog(flag)
 		logger:i("Info logging enabled")
@@ -370,7 +394,7 @@ function ga:setEnabledInfoLog(flag)
 	end
 end
 
-function ga:setEnabledVerboseLog(flag)
+function ga:setEnabledVerboseLog(flag: boolean)
 	if flag then
 		logger:setVerboseLog(flag)
 		logger:ii("Verbose logging enabled")
@@ -380,8 +404,7 @@ function ga:setEnabledVerboseLog(flag)
 	end
 end
 
-
-function ga:setEnabledEventSubmission(flag)
+function ga:setEnabledEventSubmission(flag: boolean)
 	threading:performTaskOnGAThread(function()
 		if flag then
 			state:setEventSubmission(flag)
@@ -393,7 +416,7 @@ function ga:setEnabledEventSubmission(flag)
 	end)
 end
 
-function ga:setCustomDimension01(playerId, dimension)
+function ga:setCustomDimension01(playerId: number | CustomDimension, dimension: CustomDimension?)
 	threading:performTaskOnGAThread(function()
 		if not validation:validateDimension(state._availableCustomDimensions01, dimension) then
 			logger:w("Could not set custom01 dimension value to '" .. dimension .. "'. Value not found in available custom01 dimension values")
@@ -408,7 +431,7 @@ function ga:setCustomDimension01(playerId, dimension)
 	end)
 end
 
-function ga:setCustomDimension02(playerId, dimension)
+function ga:setCustomDimension02(playerId: number | CustomDimension, dimension: CustomDimension?)
 	threading:performTaskOnGAThread(function()
 		if not validation:validateDimension(state._availableCustomDimensions02, dimension) then
 			logger:w("Could not set custom02 dimension value to '" .. dimension .. "'. Value not found in available custom02 dimension values")
@@ -423,7 +446,7 @@ function ga:setCustomDimension02(playerId, dimension)
 	end)
 end
 
-function ga:setCustomDimension03(playerId, dimension)
+function ga:setCustomDimension03(playerId: number | CustomDimension, dimension: CustomDimension?)
 	threading:performTaskOnGAThread(function()
 		if not validation:validateDimension(state._availableCustomDimensions03, dimension) then
 			logger:w("Could not set custom03 dimension value to '" .. dimension .. "'. Value not found in available custom03 dimension values")
@@ -438,25 +461,25 @@ function ga:setCustomDimension03(playerId, dimension)
 	end)
 end
 
-function ga:setEnabledReportErrors(flag)
+function ga:setEnabledReportErrors(flag: boolean)
 	threading:performTaskOnGAThread(function()
 		state.ReportErrors = flag
 	end)
 end
 
-function ga:setEnabledCustomUserId(flag)
+function ga:setEnabledCustomUserId(flag: boolean)
 	threading:performTaskOnGAThread(function()
 		state.UseCustomUserId = flag
 	end)
 end
 
-function ga:setEnabledAutomaticSendBusinessEvents(flag)
+function ga:setEnabledAutomaticSendBusinessEvents(flag: boolean)
 	threading:performTaskOnGAThread(function()
 		state.AutomaticSendBusinessEvents = flag
 	end)
 end
 
-function ga:addGameAnalyticsTeleportData(playerIds, teleportData)
+function ga:addGameAnalyticsTeleportData(playerIds: { number }, teleportData: TeleportData)
 	local gameAnalyticsTeleportData = {}
 	for _, playerId in ipairs(playerIds) do
 		local PlayerData = store:GetPlayerDataFromCache(playerId)
@@ -475,21 +498,21 @@ function ga:addGameAnalyticsTeleportData(playerIds, teleportData)
 	return teleportData
 end
 
-function ga:getRemoteConfigsValueAsString(playerId, options)
+function ga:getRemoteConfigsValueAsString(playerId: number | RemoteConfigs, options: RemoteConfigs)
 	local key = options["key"] or ""
 	local defaultValue = options["defaultValue"] or nil
 	return state:getRemoteConfigsStringValue(playerId, key, defaultValue)
 end
 
-function ga:isRemoteConfigsReady(playerId)
+function ga:isRemoteConfigsReady(playerId: number)
 	return state:isRemoteConfigsReady(playerId)
 end
 
-function ga:getRemoteConfigsContentAsString(playerId)
+function ga:getRemoteConfigsContentAsString(playerId: number)
 	return state:getRemoteConfigsContentAsString(playerId)
 end
 
-function ga:PlayerJoined(Player)
+function ga:PlayerJoined(Player: Player)
 	local joinData = Player:GetJoinData()
 	local teleportData = joinData.TeleportData
 	local gaData = nil
@@ -633,7 +656,7 @@ function ga:PlayerJoined(Player)
 	end
 end
 
-function ga:PlayerRemoved(Player)
+function ga:PlayerRemoved(Player: Player)
 	--Save
 	store:SavePlayerData(Player)
 
@@ -648,7 +671,7 @@ function ga:PlayerRemoved(Player)
 	end
 end
 
-function ga:isPlayerReady(playerId)
+function ga:isPlayerReady(playerId: number)
 	if store:GetPlayerDataFromCache(playerId) then
 		return true
 	else
@@ -656,9 +679,9 @@ function ga:isPlayerReady(playerId)
 	end
 end
 
-function ga:ProcessReceiptCallback(Info)
+function ga:ProcessReceiptCallback(Info: ProcessReceiptInfo)
 	--Variables
-	local ProductInfo = ProductCache[Info.ProductId]
+	local ProductInfo = ProductCache[Info.ProductId] :: ProductInfo?
 
 	--Cache
 	if not ProductInfo then
@@ -679,12 +702,11 @@ function ga:ProcessReceiptCallback(Info)
 end
 
 --customGamepassInfo argument to optinaly provide our own name or price
-function ga:GamepassPurchased(player, id, customGamepassInfo)
+function ga:GamepassPurchased(player: Player, id: number, customGamepassInfo: ProductInfo?)
 	local gamepassInfo = ProductCache[id]
 
 	--Cache
 	if not gamepassInfo then
-
 		--Get
 		gamepassInfo = MKT:GetProductInfo(id, Enum.InfoType.GamePass)
 		ProductCache[id] = gamepassInfo
@@ -717,7 +739,7 @@ function ga:initServer(gameKey: string, secretKey: string)
 	})
 end
 
-function ga:initialize(options)
+function ga:initialize(options: GameAnalyticsOptions)
 	threading:performTaskOnGAThread(function()
 		for _, option in ipairs(requiredInitializationOptions) do
 			if options[option] == nil then
