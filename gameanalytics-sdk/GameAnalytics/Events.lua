@@ -30,6 +30,27 @@ local CategorySdkError = "sdk_error"
 local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
 local MAX_AGGREGATED_EVENTS = 2000
 
+local function addCustomFieldsToEvent(eventData, customFields)
+	if not (eventData and customFields) then
+		return
+	end
+
+	local fields = {}
+
+	for key, value in pairs(customFields) do
+		if #value > 256 then
+			logger:w("Custom field value is too long. Max length is 256 characters. Field: " .. key)
+			value = string.sub(value, 1, 256)
+		end
+
+		fields[key] = value
+	end
+
+	if fields and next(fields) then
+		eventData["custom_fields"] = fields
+	end
+end
+
 local function addDimensionsToEvent(playerId, eventData)
 	if not eventData or not playerId then
 		return
@@ -267,7 +288,7 @@ function events:setAvailableResourceItemTypes(availableResourceItemTypes)
 	logger:i("Set available resource item types: (" .. table.concat(availableResourceItemTypes, ", ") .. ")")
 end
 
-function events:addSessionStartEvent(playerId, teleportData)
+function events:addSessionStartEvent(playerId, teleportData, customFields)
 	local PlayerData = store:GetPlayerDataFromCache(playerId)
 
 	if teleportData then
@@ -286,6 +307,7 @@ function events:addSessionStartEvent(playerId, teleportData)
 
 		-- Add to store
 		addEventToStore(playerId, eventDict)
+		addCustomFieldsToEvent(eventDict, customFields)
 
 		logger:i("Add SESSION START event")
 
@@ -293,7 +315,7 @@ function events:addSessionStartEvent(playerId, teleportData)
 	end
 end
 
-function events:addSessionEndEvent(playerId)
+function events:addSessionEndEvent(playerId, customFields)
 	local PlayerData = store:GetPlayerDataFromCache(playerId)
 	local session_start_ts = PlayerData.SessionStart
 	local client_ts_adjusted = getClientTsAdjusted(playerId)
@@ -317,6 +339,7 @@ function events:addSessionEndEvent(playerId)
 
 	-- Add custom dimensions
 	addDimensionsToEvent(playerId, eventDict)
+	addCustomFieldsToEvent(eventDict, customFields)
 
 	-- Add to store
 	addEventToStore(playerId, eventDict)
@@ -327,7 +350,7 @@ function events:addSessionEndEvent(playerId)
 	processEvents()
 end
 
-function events:addBusinessEvent(playerId, currency, amount, itemType, itemId, cartType)
+function events:addBusinessEvent(playerId, currency, amount, itemType, itemId, cartType, customFields)
 	-- Validate event params
 	if not validation:validateBusinessEvent(currency, amount, cartType, itemType, itemId) then
 		-- TODO: add sdk error event
@@ -355,6 +378,7 @@ function events:addBusinessEvent(playerId, currency, amount, itemType, itemId, c
 
 	-- Add custom dimensions
 	addDimensionsToEvent(playerId, eventDict)
+	addCustomFieldsToEvent(eventDict, customFields)
 
 	logger:i("Add BUSINESS event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. ", cartType:" .. cartType .. "}")
 
@@ -362,7 +386,7 @@ function events:addBusinessEvent(playerId, currency, amount, itemType, itemId, c
 	addEventToStore(playerId, eventDict)
 end
 
-function events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId)
+function events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId, customFields)
 	-- Validate event params
 	if not validation:validateResourceEvent(GAResourceFlowType, flowType, currency, amount, itemType, itemId, self._availableResourceCurrencies, self._availableResourceItemTypes) then
 		-- TODO: add sdk error event
@@ -385,6 +409,7 @@ function events:addResourceEvent(playerId, flowType, currency, amount, itemType,
 
 	-- Add custom dimensions
 	addDimensionsToEvent(playerId, eventDict)
+	addCustomFieldsToEvent(eventDict, customFields)
 
 	logger:i("Add RESOURCE event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. "}")
 
@@ -392,7 +417,15 @@ function events:addResourceEvent(playerId, flowType, currency, amount, itemType,
 	addEventToStore(playerId, eventDict)
 end
 
-function events:addProgressionEvent(playerId, progressionStatus, progression01, progression02, progression03, score)
+function events:addProgressionEvent(
+	playerId,
+	progressionStatus,
+	progression01,
+	progression02,
+	progression03,
+	score,
+	customFields
+)
 	-- Validate event params
 	if not validation:validateProgressionEvent(GAProgressionStatus, progressionStatus, progression01, progression02, progression03) then
 		-- TODO: add sdk error event
@@ -451,6 +484,7 @@ function events:addProgressionEvent(playerId, progressionStatus, progression01, 
 
 	-- Add custom dimensions
 	addDimensionsToEvent(playerId, eventDict)
+	addCustomFieldsToEvent(eventDict, customFields)
 
 	local progression02String = ""
 	if not utilities:isStringNullOrEmpty(progression02) then
@@ -468,7 +502,7 @@ function events:addProgressionEvent(playerId, progressionStatus, progression01, 
 	addEventToStore(playerId, eventDict)
 end
 
-function events:addDesignEvent(playerId, eventId, value)
+function events:addDesignEvent(playerId, eventId, value, customFields)
 	-- Validate
 	if not validation:validateDesignEvent(eventId) then
 		-- TODO: add sdk error event
@@ -488,6 +522,7 @@ function events:addDesignEvent(playerId, eventId, value)
 
 	-- Add custom dimensions
 	addDimensionsToEvent(playerId, eventData)
+	addCustomFieldsToEvent(eventData, customFields)
 
 	logger:i("Add DESIGN event: {eventId:" .. eventId .. ", value:" .. tostring(value) .. "}")
 
@@ -495,7 +530,7 @@ function events:addDesignEvent(playerId, eventId, value)
 	addEventToStore(playerId, eventData)
 end
 
-function events:addErrorEvent(playerId, severity, message)
+function events:addErrorEvent(playerId, severity, message, customFields)
 	-- Validate
 	if not validation:validateErrorEvent(GAErrorSeverity, severity, message) then
 		-- TODO: add sdk error event
@@ -513,6 +548,7 @@ function events:addErrorEvent(playerId, severity, message)
 
 	-- Add custom dimensions
 	addDimensionsToEvent(playerId, eventData)
+	addCustomFieldsToEvent(eventData, customFields)
 
 	local messageString = ""
 	if not utilities:isStringNullOrEmpty(message) then

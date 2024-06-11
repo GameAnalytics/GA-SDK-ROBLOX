@@ -158,7 +158,7 @@ function state:setCustomDimension03(playerId, dimension)
 	PlayerData.CurrentCustomDimension03 = dimension
 end
 
-function state:startNewSession(player, teleportData)
+function state:startNewSession(player, teleportData, customFields)
 	if state:isEventSubmissionEnabled() and teleportData == nil then
 		logger:i("Starting a new session.")
 	end
@@ -240,15 +240,15 @@ function state:startNewSession(player, teleportData)
 	end
 
 	if state:isEventSubmissionEnabled() then
-		events:addSessionStartEvent(player.UserId, teleportData)
+		events:addSessionStartEvent(player.UserId, teleportData, customFields)
 	end
 end
 
-function state:endSession(playerId)
+function state:endSession(playerId, customFields)
 	if state.Initialized and state:isEventSubmissionEnabled() then
 		logger:i("Ending session.")
 		if state:isEnabled(playerId) and state:sessionIsStarted(playerId) then
-			events:addSessionEndEvent(playerId)
+			events:addSessionEndEvent(playerId, customFields)
 			store.PlayerCache[playerId] = nil
 		end
 	end

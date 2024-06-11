@@ -215,8 +215,9 @@ function ga:addBusinessEvent(playerId, options)
 		local cartType = options["cartType"] or ""
 		local USDSpent = math.floor((amount * 0.7) * 0.35)
 		local gamepassId = options["gamepassId"] or nil
+		local customFields = options["customFields"]
 
-		events:addBusinessEvent(playerId, "USD", USDSpent, itemType, itemId, cartType)
+		events:addBusinessEvent(playerId, "USD", USDSpent, itemType, itemId, cartType, customFields)
 
 		if itemType == "Gamepass" and cartType ~= "Website" then
 			local player = Players:GetPlayerByUserId(playerId)
@@ -251,8 +252,9 @@ function ga:addResourceEvent(playerId, options)
 		local amount = options["amount"] or 0
 		local itemType = options["itemType"] or ""
 		local itemId = options["itemId"] or ""
+		local customFields = options["customFields"]
 
-		events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId)
+		events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId, customFields)
 	end)
 end
 
@@ -276,8 +278,17 @@ function ga:addProgressionEvent(playerId, options)
 		local progression02 = options["progression02"] or nil
 		local progression03 = options["progression03"] or nil
 		local score = options["score"] or nil
+		local customFields = options["customFields"]
 
-		events:addProgressionEvent(playerId, progressionStatus, progression01, progression02, progression03, score)
+		events:addProgressionEvent(
+			playerId,
+			progressionStatus,
+			progression01,
+			progression02,
+			progression03,
+			score,
+			customFields
+		)
 	end)
 end
 
@@ -295,11 +306,16 @@ function ga:addDesignEvent(playerId, options)
 			return
 		end
 
+		if not options then
+			return
+		end
+
 		-- Send to events
 		local eventId = options["eventId"] or ""
 		local value = options["value"] or nil
+		local customFields = options["customFields"]
 
-		events:addDesignEvent(playerId, eventId, value)
+		events:addDesignEvent(playerId, eventId, value, customFields)
 	end)
 end
 
@@ -317,11 +333,16 @@ function ga:addErrorEvent(playerId, options)
 			return
 		end
 
+		if not options then
+			return
+		end
+
 		-- Send to events
 		local severity = options["severity"] or 0
 		local message = options["message"] or ""
+		local customFields = options["customFields"]
 
-		events:addErrorEvent(playerId, severity, message)
+		events:addErrorEvent(playerId, severity, message, customFields)
 	end)
 end
 
