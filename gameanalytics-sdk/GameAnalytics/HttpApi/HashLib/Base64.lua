@@ -68,11 +68,8 @@ function Base64.Encode(Input)
 		NewLength = NewLength + 1
 		IndexAdd4096Sub1 = Index + 4096 - 1
 
-		NewOutput[NewLength] = string.char(table.unpack(
-			Output,
-			Index,
-			IndexAdd4096Sub1 > Length and Length or IndexAdd4096Sub1
-		))
+		NewOutput[NewLength] =
+			string.char(table.unpack(Output, Index, IndexAdd4096Sub1 > Length and Length or IndexAdd4096Sub1))
 	end
 
 	return table.concat(NewOutput)
@@ -121,11 +118,8 @@ function Base64.Decode(Input)
 		NewLength = NewLength + 1
 		IndexAdd4096Sub1 = Index + 4096 - 1
 
-		NewOutput[NewLength] = string.char(table.unpack(
-			Output,
-			Index,
-			IndexAdd4096Sub1 > Length and Length or IndexAdd4096Sub1
-		))
+		NewOutput[NewLength] =
+			string.char(table.unpack(Output, Index, IndexAdd4096Sub1 > Length and Length or IndexAdd4096Sub1))
 	end
 
 	return table.concat(NewOutput)

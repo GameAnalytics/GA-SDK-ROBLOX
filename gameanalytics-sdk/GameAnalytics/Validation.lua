@@ -28,7 +28,10 @@ function validation:validateResourceCurrencies(resourceCurrencies)
 	-- validate each string for regex
 	for _, resourceCurrency in pairs(resourceCurrencies) do
 		if not string.find(resourceCurrency, "^[A-Za-z]+$") then
-			logger:w("resource currencies validation failed: a resource currency can only be A-Z, a-z. String was: " .. resourceCurrency)
+			logger:w(
+				"resource currencies validation failed: a resource currency can only be A-Z, a-z. String was: "
+					.. resourceCurrency
+			)
 			return false
 		end
 	end
@@ -44,7 +47,10 @@ function validation:validateResourceItemTypes(resourceItemTypes)
 	-- validate each string for regex
 	for _, resourceItemType in pairs(resourceItemTypes) do
 		if not validation:validateEventPartCharacters(resourceItemType) then
-			logger:w("resource item types validation failed: a resource item type cannot contain other characters than A-z, 0-9, -_., ()!?. String was: " .. resourceItemType)
+			logger:w(
+				"resource item types validation failed: a resource item type cannot contain other characters than A-z, 0-9, -_., ()!?. String was: "
+					.. resourceItemType
+			)
 			return false
 		end
 	end
@@ -81,7 +87,14 @@ function validation:validateArrayOfStrings(maxCount, maxStringLength, allowNoVal
 
 	-- check if exceeding max count
 	if maxCount > 0 and #arrayOfStrings > maxCount then
-		logger:w(arrayTag .. " validation failed: array cannot exceed " .. tostring(maxCount) .. " values. It has " .. #arrayOfStrings .. " values.")
+		logger:w(
+			arrayTag
+				.. " validation failed: array cannot exceed "
+				.. tostring(maxCount)
+				.. " values. It has "
+				.. #arrayOfStrings
+				.. " values."
+		)
 		return false
 	end
 
@@ -100,7 +113,13 @@ function validation:validateArrayOfStrings(maxCount, maxStringLength, allowNoVal
 
 		-- check if exceeding max length
 		if maxStringLength > 0 and stringLength > maxStringLength then
-			logger:w(arrayTag .. " validation failed: a string exceeded max allowed length (which is: " .. tostring(maxStringLength) .. "). String was: " .. arrayString)
+			logger:w(
+				arrayTag
+					.. " validation failed: a string exceeded max allowed length (which is: "
+					.. tostring(maxStringLength)
+					.. "). String was: "
+					.. arrayString
+			)
 			return false
 		end
 	end
@@ -201,7 +220,10 @@ end
 function validation:validateBusinessEvent(currency, amount, cartType, itemType, itemId)
 	-- validate currency
 	if not validation:validateCurrency(currency) then
-		logger:w("Validation fail - business event - currency: Cannot be (null) and need to be A-Z, 3 characters and in the standard at openexchangerates.org. Failed currency: " .. currency)
+		logger:w(
+			"Validation fail - business event - currency: Cannot be (null) and need to be A-Z, 3 characters and in the standard at openexchangerates.org. Failed currency: "
+				.. currency
+		)
 		return false
 	end
 
@@ -218,31 +240,52 @@ function validation:validateBusinessEvent(currency, amount, cartType, itemType, 
 
 	-- validate itemType length
 	if not validation:validateEventPartLength(itemType, false) then
-		logger:w("Validation fail - business event - itemType: Cannot be (null), empty or above 64 characters. String: " .. itemType)
+		logger:w(
+			"Validation fail - business event - itemType: Cannot be (null), empty or above 64 characters. String: "
+				.. itemType
+		)
 		return false
 	end
 
 	-- validate itemType chars
 	if not validation:validateEventPartCharacters(itemType) then
-		logger:w("Validation fail - business event - itemType: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: " .. itemType)
+		logger:w(
+			"Validation fail - business event - itemType: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: "
+				.. itemType
+		)
 		return false
 	end
 
 	-- validate itemId
 	if not validation:validateEventPartLength(itemId, false) then
-		logger:w("Validation fail - business event - itemId. Cannot be (null), empty or above 64 characters. String: " .. itemId)
+		logger:w(
+			"Validation fail - business event - itemId. Cannot be (null), empty or above 64 characters. String: "
+				.. itemId
+		)
 		return false
 	end
 
 	if not validation:validateEventPartCharacters(itemId) then
-		logger:w("Validation fail - business event - itemId: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: " .. itemId)
+		logger:w(
+			"Validation fail - business event - itemId: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: "
+				.. itemId
+		)
 		return false
 	end
 
 	return true
 end
 
-function validation:validateResourceEvent(flowTypeValues, flowType, currency, amount, itemType, itemId, currencies, itemTypes)
+function validation:validateResourceEvent(
+	flowTypeValues,
+	flowType,
+	currency,
+	amount,
+	itemType,
+	itemId,
+	currencies,
+	itemTypes
+)
 	if flowType ~= flowTypeValues.Source and flowType ~= flowTypeValues.Sink then
 		logger:w("Validation fail - resource event - flowType: Invalid flow type " .. tostring(flowType))
 		return false
@@ -254,12 +297,18 @@ function validation:validateResourceEvent(flowTypeValues, flowType, currency, am
 	end
 
 	if not utilities:stringArrayContainsString(currencies, currency) then
-		logger:w("Validation fail - resource event - currency: Not found in list of pre-defined available resource currencies. String: " .. currency)
+		logger:w(
+			"Validation fail - resource event - currency: Not found in list of pre-defined available resource currencies. String: "
+				.. currency
+		)
 		return false
 	end
 
 	if not (amount > 0) then
-		logger:w("Validation fail - resource event - amount: Float amount cannot be 0 or negative. Value: " .. tostring(amount))
+		logger:w(
+			"Validation fail - resource event - amount: Float amount cannot be 0 or negative. Value: "
+				.. tostring(amount)
+		)
 		return false
 	end
 
@@ -269,71 +318,117 @@ function validation:validateResourceEvent(flowTypeValues, flowType, currency, am
 	end
 
 	if not validation:validateEventPartLength(itemType, false) then
-		logger:w("Validation fail - resource event - itemType: Cannot be (null), empty or above 64 characters. String: " .. itemType)
+		logger:w(
+			"Validation fail - resource event - itemType: Cannot be (null), empty or above 64 characters. String: "
+				.. itemType
+		)
 		return false
 	end
 
 	if not validation:validateEventPartCharacters(itemType) then
-		logger:w("Validation fail - resource event - itemType: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: " .. itemType)
+		logger:w(
+			"Validation fail - resource event - itemType: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: "
+				.. itemType
+		)
 		return false
 	end
 
 	if not utilities:stringArrayContainsString(itemTypes, itemType) then
-		logger:w("Validation fail - resource event - itemType: Not found in list of pre-defined available resource itemTypes. String: " .. itemType)
+		logger:w(
+			"Validation fail - resource event - itemType: Not found in list of pre-defined available resource itemTypes. String: "
+				.. itemType
+		)
 		return false
 	end
 
 	if not validation:validateEventPartLength(itemId, false) then
-		logger:w("Validation fail - resource event - itemId: Cannot be (null), empty or above 64 characters. String: " .. itemId)
+		logger:w(
+			"Validation fail - resource event - itemId: Cannot be (null), empty or above 64 characters. String: "
+				.. itemId
+		)
 		return false
 	end
 
 	if not validation:validateEventPartCharacters(itemId) then
-		logger:w("Validation fail - resource event - itemId: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: " .. itemId)
+		logger:w(
+			"Validation fail - resource event - itemId: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: "
+				.. itemId
+		)
 		return false
 	end
 
 	return true
 end
 
-function validation:validateProgressionEvent(progressionStatusValues, progressionStatus, progression01, progression02, progression03)
-	if progressionStatus ~= progressionStatusValues.Start and progressionStatus ~= progressionStatusValues.Complete and progressionStatus ~= progressionStatusValues.Fail then
+function validation:validateProgressionEvent(
+	progressionStatusValues,
+	progressionStatus,
+	progression01,
+	progression02,
+	progression03
+)
+	if
+		progressionStatus ~= progressionStatusValues.Start
+		and progressionStatus ~= progressionStatusValues.Complete
+		and progressionStatus ~= progressionStatusValues.Fail
+	then
 		logger:w("Validation fail - progression event: Invalid progression status " .. tostring(progressionStatus))
 		return false
 	end
 
 	-- Make sure progressions are defined as either 01, 01+02 or 01+02+03
-	if not utilities:isStringNullOrEmpty(progression03) and not (not utilities:isStringNullOrEmpty(progression02) or utilities:isStringNullOrEmpty(progression01)) then
-		logger:w("Validation fail - progression event: 03 found but 01+02 are invalid. Progression must be set as either 01, 01+02 or 01+02+03.")
+	if
+		not utilities:isStringNullOrEmpty(progression03)
+		and not (not utilities:isStringNullOrEmpty(progression02) or utilities:isStringNullOrEmpty(progression01))
+	then
+		logger:w(
+			"Validation fail - progression event: 03 found but 01+02 are invalid. Progression must be set as either 01, 01+02 or 01+02+03."
+		)
 		return false
 	elseif not utilities:isStringNullOrEmpty(progression02) and utilities:isStringNullOrEmpty(progression01) then
-		logger:w("Validation fail - progression event: 02 found but not 01. Progression must be set as either 01, 01+02 or 01+02+03")
+		logger:w(
+			"Validation fail - progression event: 02 found but not 01. Progression must be set as either 01, 01+02 or 01+02+03"
+		)
 		return false
 	elseif utilities:isStringNullOrEmpty(progression01) then
-		logger:w("Validation fail - progression event: progression01 not valid. Progressions must be set as either 01, 01+02 or 01+02+03")
+		logger:w(
+			"Validation fail - progression event: progression01 not valid. Progressions must be set as either 01, 01+02 or 01+02+03"
+		)
 		return false
 	end
 
 	-- progression01 (required)
 	if not validation:validateEventPartLength(progression01, false) then
-		logger:w("Validation fail - progression event - progression01: Cannot be (null), empty or above 64 characters. String: " .. progression01)
+		logger:w(
+			"Validation fail - progression event - progression01: Cannot be (null), empty or above 64 characters. String: "
+				.. progression01
+		)
 		return false
 	end
 
 	if not validation:validateEventPartCharacters(progression01) then
-		logger:w("Validation fail - progression event - progression01: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: " .. progression01)
+		logger:w(
+			"Validation fail - progression event - progression01: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: "
+				.. progression01
+		)
 		return false
 	end
 
 	-- progression02
 	if not utilities:isStringNullOrEmpty(progression02) then
 		if not validation:validateEventPartLength(progression02, false) then
-			logger:w("Validation fail - progression event - progression02: Cannot be empty or above 64 characters. String: " .. progression02)
+			logger:w(
+				"Validation fail - progression event - progression02: Cannot be empty or above 64 characters. String: "
+					.. progression02
+			)
 			return false
 		end
 
 		if not validation:validateEventPartCharacters(progression02) then
-			logger:w("Validation fail - progression event - progression02: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: " .. progression02)
+			logger:w(
+				"Validation fail - progression event - progression02: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: "
+					.. progression02
+			)
 			return false
 		end
 	end
@@ -341,12 +436,18 @@ function validation:validateProgressionEvent(progressionStatusValues, progressio
 	-- progression03
 	if not utilities:isStringNullOrEmpty(progression03) then
 		if not validation:validateEventPartLength(progression03, false) then
-			logger:w("Validation fail - progression event - progression03: Cannot be empty or above 64 characters. String: " .. progression03)
+			logger:w(
+				"Validation fail - progression event - progression03: Cannot be empty or above 64 characters. String: "
+					.. progression03
+			)
 			return false
 		end
 
 		if not validation:validateEventPartCharacters(progression03) then
-			logger:w("Validation fail - progression event - progression03: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: " .. progression03)
+			logger:w(
+				"Validation fail - progression event - progression03: Cannot contain other characters than A-z, 0-9, -_., ()!?. String: "
+					.. progression03
+			)
 			return false
 		end
 	end
@@ -388,12 +489,18 @@ end
 
 function validation:validateDesignEvent(eventId)
 	if not validation:validateEventIdLength(eventId) then
-		logger:w("Validation fail - design event - eventId: Cannot be (null) or empty. Only 5 event parts allowed seperated by :. Each part need to be 32 characters or less. String: " .. eventId)
+		logger:w(
+			"Validation fail - design event - eventId: Cannot be (null) or empty. Only 5 event parts allowed seperated by :. Each part need to be 32 characters or less. String: "
+				.. eventId
+		)
 		return false
 	end
 
 	if not validation:validateEventIdCharacters(eventId) then
-		logger:w("Validation fail - design event - eventId: Non valid characters. Only allowed A-z, 0-9, -_., ()!?. String: " .. eventId)
+		logger:w(
+			"Validation fail - design event - eventId: Non valid characters. Only allowed A-z, 0-9, -_., ()!?. String: "
+				.. eventId
+		)
 		return false
 	end
 
@@ -415,7 +522,13 @@ function validation:validateLongString(longString, canBeEmpty)
 end
 
 function validation:validateErrorEvent(severityValues, severity, message)
-	if severity ~= severityValues.debug and severity ~= severityValues.info and severity ~= severityValues.warning and severity ~= severityValues.error and severity ~= severityValues.critical then
+	if
+		severity ~= severityValues.debug
+		and severity ~= severityValues.info
+		and severity ~= severityValues.warning
+		and severity ~= severityValues.error
+		and severity ~= severityValues.critical
+	then
 		logger:w("Validation fail - error event - severity: Severity was unsupported value " .. tostring(severity))
 		return false
 	end

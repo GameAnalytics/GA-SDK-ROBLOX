@@ -13,7 +13,11 @@ local RunService = game:GetService("RunService")
 local function getScheduledBlock()
 	local now = tick()
 
-	if not threading._hasScheduledBlockRun and threading._scheduledBlock ~= nil and threading._scheduledBlock.deadline <= now then
+	if
+		not threading._hasScheduledBlockRun
+		and threading._scheduledBlock ~= nil
+		and threading._scheduledBlock.deadline <= now
+	then
 		threading._hasScheduledBlockRun = true
 		return threading._scheduledBlock
 	else
@@ -22,7 +26,6 @@ local function getScheduledBlock()
 end
 
 local function run()
-
 	task.spawn(function()
 		logger:d("Starting GA thread")
 
@@ -57,7 +60,6 @@ local function run()
 
 	--Safely Close
 	game:BindToClose(function()
-
 		-- waiting bug fix to work inside studio
 		if RunService:IsStudio() then
 			return

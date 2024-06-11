@@ -8,6 +8,7 @@ local ga = {
 	EGAErrorSeverity = GAErrorSeverity,
 }
 
+local types = require(script.Types)
 local logger = require(script.Logger)
 local threading = require(script.Threading)
 local state = require(script.State)
@@ -48,8 +49,8 @@ type GameAnalyticsOptions = types.GameAnalyticsOptions
 local function addToInitializationQueue(func, ...)
 	if InitializationQueue ~= nil then
 		table.insert(InitializationQueue, {
-			Func = func;
-			Args = {...};
+			Func = func,
+			Args = { ... },
 		})
 
 		logger:i("Added event to initialization queue")
@@ -66,8 +67,8 @@ local function addToInitializationQueueByUserId(userId, func, ...)
 		end
 
 		table.insert(InitializationQueueByUserId[userId], {
-			Func = func;
-			Args = {...};
+			Func = func,
+			Args = { ... },
 		})
 
 		logger:i("Added event to player initialization queue")
@@ -76,7 +77,6 @@ local function addToInitializationQueueByUserId(userId, func, ...)
 		logger:w("Player initialization queue already cleared.")
 	end
 end
-
 
 -- local functions
 local function isSdkReady(options)
@@ -116,7 +116,7 @@ local function isSdkReady(options)
 end
 
 function ga:configureAvailableCustomDimensions01(customDimensions: { string })
-	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+	if isSdkReady({ needsInitialized = true, shouldWarn = false }) then
 		logger:w("Available custom dimensions must be set before SDK is initialized")
 		return
 	end
@@ -125,7 +125,7 @@ function ga:configureAvailableCustomDimensions01(customDimensions: { string })
 end
 
 function ga:configureAvailableCustomDimensions02(customDimensions: { string })
-	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+	if isSdkReady({ needsInitialized = true, shouldWarn = false }) then
 		logger:w("Available custom dimensions must be set before SDK is initialized")
 		return
 	end
@@ -134,7 +134,7 @@ function ga:configureAvailableCustomDimensions02(customDimensions: { string })
 end
 
 function ga:configureAvailableCustomDimensions03(customDimensions: { string })
-	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+	if isSdkReady({ needsInitialized = true, shouldWarn = false }) then
 		logger:w("Available custom dimensions must be set before SDK is initialized")
 		return
 	end
@@ -143,7 +143,7 @@ function ga:configureAvailableCustomDimensions03(customDimensions: { string })
 end
 
 function ga:configureAvailableResourceCurrencies(resourceCurrencies: { string })
-	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+	if isSdkReady({ needsInitialized = true, shouldWarn = false }) then
 		logger:w("Available resource currencies must be set before SDK is initialized")
 		return
 	end
@@ -152,7 +152,7 @@ function ga:configureAvailableResourceCurrencies(resourceCurrencies: { string })
 end
 
 function ga:configureAvailableResourceItemTypes(resourceItemTypes: { string })
-	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+	if isSdkReady({ needsInitialized = true, shouldWarn = false }) then
 		logger:w("Available resource item types must be set before SDK is initialized")
 		return
 	end
@@ -161,7 +161,7 @@ function ga:configureAvailableResourceItemTypes(resourceItemTypes: { string })
 end
 
 function ga:configureBuild(build: string)
-	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+	if isSdkReady({ needsInitialized = true, shouldWarn = false }) then
 		logger:w("Build version must be set before SDK is initialized.")
 		return
 	end
@@ -170,7 +170,7 @@ function ga:configureBuild(build: string)
 end
 
 function ga:configureAvailableGamepasses(availableGamepasses: { string })
-	if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+	if isSdkReady({ needsInitialized = true, shouldWarn = false }) then
 		logger:w("Available gamepasses must be set before SDK is initialized.")
 		return
 	end
@@ -211,7 +211,14 @@ function ga:addBusinessEvent(playerId: number | BusinessEventOptions, options: B
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add business event"}) then
+		if
+			not isSdkReady({
+				playerId = playerId,
+				needsInitialized = true,
+				shouldWarn = false,
+				message = "Could not add business event",
+			})
+		then
 			if playerId then
 				addToInitializationQueueByUserId(playerId, ga.addBusinessEvent, ga, playerId, options)
 			else
@@ -253,7 +260,14 @@ function ga:addResourceEvent(playerId: number | ResourceEventOptions, options: R
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add resource event"}) then
+		if
+			not isSdkReady({
+				playerId = playerId,
+				needsInitialized = true,
+				shouldWarn = false,
+				message = "Could not add resource event",
+			})
+		then
 			if playerId then
 				addToInitializationQueueByUserId(playerId, ga.addResourceEvent, ga, playerId, options)
 			else
@@ -283,7 +297,14 @@ function ga:addProgressionEvent(playerId: number | ProgressionEventOptions, opti
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add progression event"}) then
+		if
+			not isSdkReady({
+				playerId = playerId,
+				needsInitialized = true,
+				shouldWarn = false,
+				message = "Could not add progression event",
+			})
+		then
 			if playerId then
 				addToInitializationQueueByUserId(playerId, ga.addProgressionEvent, ga, playerId, options)
 			else
@@ -321,7 +342,14 @@ function ga:addDesignEvent(playerId: number | DesignEventOptions, options: Desig
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add design event"}) then
+		if
+			not isSdkReady({
+				playerId = playerId,
+				needsInitialized = true,
+				shouldWarn = false,
+				message = "Could not add design event",
+			})
+		then
 			if playerId then
 				addToInitializationQueueByUserId(playerId, ga.addDesignEvent, ga, playerId, options)
 			else
@@ -348,7 +376,14 @@ function ga:addErrorEvent(playerId: number | ErrorEventOptions, options: ErrorEv
 		if not state:isEventSubmissionEnabled() then
 			return
 		end
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = false, message = "Could not add error event"}) then
+		if
+			not isSdkReady({
+				playerId = playerId,
+				needsInitialized = true,
+				shouldWarn = false,
+				message = "Could not add error event",
+			})
+		then
 			if playerId then
 				addToInitializationQueueByUserId(playerId, ga.addErrorEvent, ga, playerId, options)
 			else
@@ -419,11 +454,22 @@ end
 function ga:setCustomDimension01(playerId: number | CustomDimension, dimension: CustomDimension?)
 	threading:performTaskOnGAThread(function()
 		if not validation:validateDimension(state._availableCustomDimensions01, dimension) then
-			logger:w("Could not set custom01 dimension value to '" .. dimension .. "'. Value not found in available custom01 dimension values")
+			logger:w(
+				"Could not set custom01 dimension value to '"
+					.. (dimension or "")
+					.. "'. Value not found in available custom01 dimension values"
+			)
 			return
 		end
 
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = true, message = "Could not set custom01 dimension"}) then
+		if
+			not isSdkReady({
+				playerId = playerId,
+				needsInitialized = true,
+				shouldWarn = true,
+				message = "Could not set custom01 dimension",
+			})
+		then
 			return
 		end
 
@@ -434,11 +480,22 @@ end
 function ga:setCustomDimension02(playerId: number | CustomDimension, dimension: CustomDimension?)
 	threading:performTaskOnGAThread(function()
 		if not validation:validateDimension(state._availableCustomDimensions02, dimension) then
-			logger:w("Could not set custom02 dimension value to '" .. dimension .. "'. Value not found in available custom02 dimension values")
+			logger:w(
+				"Could not set custom02 dimension value to '"
+					.. (dimension or "")
+					.. "'. Value not found in available custom02 dimension values"
+			)
 			return
 		end
 
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = true, message = "Could not set custom02 dimension"}) then
+		if
+			not isSdkReady({
+				playerId = playerId,
+				needsInitialized = true,
+				shouldWarn = true,
+				message = "Could not set custom02 dimension",
+			})
+		then
 			return
 		end
 
@@ -449,11 +506,22 @@ end
 function ga:setCustomDimension03(playerId: number | CustomDimension, dimension: CustomDimension?)
 	threading:performTaskOnGAThread(function()
 		if not validation:validateDimension(state._availableCustomDimensions03, dimension) then
-			logger:w("Could not set custom03 dimension value to '" .. dimension .. "'. Value not found in available custom03 dimension values")
+			logger:w(
+				"Could not set custom03 dimension value to '"
+					.. (dimension or "")
+					.. "'. Value not found in available custom03 dimension values"
+			)
 			return
 		end
 
-		if not isSdkReady({playerId = playerId, needsInitialized = true, shouldWarn = true, message = "Could not set custom03 dimension"}) then
+		if
+			not isSdkReady({
+				playerId = playerId,
+				needsInitialized = true,
+				shouldWarn = true,
+				message = "Could not set custom03 dimension",
+			})
+		then
 			return
 		end
 
@@ -563,11 +631,21 @@ function ga:PlayerJoined(Player: Player)
 
 	store.PlayerCache[Player.UserId] = PlayerData
 
-	PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console") or (PlayerPlatform == "Mobile" and "uwp_mobile") or (PlayerPlatform == "Desktop" and "uwp_desktop") or "uwp_desktop"
+	PlayerData.Platform = (PlayerPlatform == "Console" and "uwp_console")
+		or (PlayerPlatform == "Mobile" and "uwp_mobile")
+		or (PlayerPlatform == "Desktop" and "uwp_desktop")
+		or "uwp_desktop"
 	PlayerData.OS = PlayerData.Platform .. " 0.0.0"
 
 	if not countryCodeResult then
-		events:addSdkErrorEvent(Player.UserId, "event_validation", "player_joined", "string_empty_or_null", "country_code", "")
+		events:addSdkErrorEvent(
+			Player.UserId,
+			"event_validation",
+			"player_joined",
+			"string_empty_or_null",
+			"country_code",
+			""
+		)
 	end
 
 	local PlayerCustomUserId = ""
@@ -730,12 +808,12 @@ function ga:GamepassPurchased(player: Player, id: number, customGamepassInfo: Pr
 	})
 end
 
-local requiredInitializationOptions = {"gameKey", "secretKey"}
+local requiredInitializationOptions = { "gameKey", "secretKey" }
 
 function ga:initServer(gameKey: string, secretKey: string)
 	ga:initialize({
 		gameKey = gameKey,
-		secretKey = secretKey
+		secretKey = secretKey,
 	})
 end
 
@@ -743,7 +821,7 @@ function ga:initialize(options: GameAnalyticsOptions)
 	threading:performTaskOnGAThread(function()
 		for _, option in ipairs(requiredInitializationOptions) do
 			if options[option] == nil then
-				logger:e("Initialize '"..option.."' option missing")
+				logger:e("Initialize '" .. option .. "' option missing")
 				return
 			end
 		end
@@ -789,7 +867,7 @@ function ga:initialize(options: GameAnalyticsOptions)
 			ga:setEnabledCustomUserId(options.useCustomUserId)
 		end
 
-		if isSdkReady({needsInitialized = true, shouldWarn = false}) then
+		if isSdkReady({ needsInitialized = true, shouldWarn = false }) then
 			logger:w("SDK already initialized. Can only be called once.")
 			return
 		end
@@ -798,7 +876,12 @@ function ga:initialize(options: GameAnalyticsOptions)
 		local secretKey = options["secretKey"]
 
 		if not validation:validateKeys(gameKey, secretKey) then
-			logger:w("SDK failed initialize. Game key or secret key is invalid. Can only contain characters A-z 0-9, gameKey is 32 length, secretKey is 40 length. Failed keys - gameKey: " .. gameKey .. ", secretKey: " .. secretKey)
+			logger:w(
+				"SDK failed initialize. Game key or secret key is invalid. Can only contain characters A-z 0-9, gameKey is 32 length, secretKey is 40 length. Failed keys - gameKey: "
+					.. gameKey
+					.. ", secretKey: "
+					.. secretKey
+			)
 			return
 		end
 
@@ -826,12 +909,11 @@ function ga:initialize(options: GameAnalyticsOptions)
 			task.spawn(queuedFunction.Func, unpack(queuedFunction.Args))
 		end
 		logger:i("Server initialization queue called #" .. #InitializationQueue .. " events")
-		InitializationQueue = nil
+		InitializationQueue = {}
 
 		events:processEventQueue()
 	end)
 end
-
 
 if not ReplicatedStorage:FindFirstChild("GameAnalyticsRemoteConfigs") then
 	--Create
@@ -846,7 +928,6 @@ if not ReplicatedStorage:FindFirstChild("OnPlayerReadyEvent") then
 	f.Name = "OnPlayerReadyEvent"
 	f.Parent = ReplicatedStorage
 end
-
 
 task.spawn(function()
 	local currentHour = math.floor(os.time() / 3600)
@@ -872,7 +953,6 @@ task.spawn(function()
 end)
 
 local function ErrorHandler(message, trace, scriptName, player)
-
 	local scriptNameTmp = "(null)"
 	if scriptName ~= nil then
 		scriptNameTmp = scriptName
@@ -965,10 +1045,8 @@ ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, mess
 	ErrorHandlerFromClient(message, trace, scriptName, player)
 end)
 
-
 --Record Gamepasses.
 MKT.PromptGamePassPurchaseFinished:Connect(function(Player, ID, Purchased)
-
 	--Validate
 	if not state.AutomaticSendBusinessEvents or not Purchased then
 		return

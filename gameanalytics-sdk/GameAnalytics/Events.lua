@@ -92,7 +92,7 @@ local DUMMY_SESSION_ID = HTTP:GenerateGUID(false):lower()
 local function Length(Table)
 	local counter = 0
 	for _, _ in pairs(Table) do
-		counter =counter + 1
+		counter += 1
 	end
 	return counter
 end
@@ -111,7 +111,7 @@ local function getEventAnnotations(playerId)
 			Platform = "uwp_desktop",
 			SessionID = DUMMY_SESSION_ID,
 			Sessions = 1,
-			CustomUserId = "Server"
+			CustomUserId = "Server",
 		}
 	end
 
@@ -136,7 +136,7 @@ local function getEventAnnotations(playerId)
 		-- Session identifier
 		["session_id"] = PlayerData.SessionID,
 		-- Session number
-		["session_num"] = PlayerData.Sessions
+		["session_num"] = PlayerData.Sessions,
 	}
 
 	if not utilities:isStringNullOrEmpty(PlayerData.CountryCode) then
@@ -189,7 +189,12 @@ local function dequeueMaxEvents()
 		store.EventsQueue = {}
 		return eventsQueue
 	else
-		logger:w(("More than %d events queued! Sending %d."):format(MAX_EVENTS_TO_SEND_IN_ONE_BATCH, MAX_EVENTS_TO_SEND_IN_ONE_BATCH))
+		logger:w(
+			("More than %d events queued! Sending %d."):format(
+				MAX_EVENTS_TO_SEND_IN_ONE_BATCH,
+				MAX_EVENTS_TO_SEND_IN_ONE_BATCH
+			)
+		)
 
 		if #store.EventsQueue > MAX_AGGREGATED_EVENTS then
 			logger:w(("DROPPING EVENTS: More than %d events queued!"):format(MAX_AGGREGATED_EVENTS))
@@ -245,7 +250,13 @@ local function processEvents()
 			end
 		else
 			if statusCode == http_api.EGAHTTPApiResponse.BadRequest and responseBody then
-				logger:w("Event queue: " .. tostring(#queue) .. " events sent. " .. tostring(#responseBody) .. " events failed GA server validation.")
+				logger:w(
+					"Event queue: "
+						.. tostring(#queue)
+						.. " events sent. "
+						.. tostring(#responseBody)
+						.. " events failed GA server validation."
+				)
 			else
 				logger:w("Event queue: Failed to send events.")
 			end
@@ -380,7 +391,19 @@ function events:addBusinessEvent(playerId, currency, amount, itemType, itemId, c
 	addDimensionsToEvent(playerId, eventDict)
 	addCustomFieldsToEvent(eventDict, customFields)
 
-	logger:i("Add BUSINESS event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. ", cartType:" .. cartType .. "}")
+	logger:i(
+		"Add BUSINESS event: {currency:"
+			.. currency
+			.. ", amount:"
+			.. tostring(amount)
+			.. ", itemType:"
+			.. itemType
+			.. ", itemId:"
+			.. itemId
+			.. ", cartType:"
+			.. cartType
+			.. "}"
+	)
 
 	-- Send to store
 	addEventToStore(playerId, eventDict)
@@ -388,7 +411,18 @@ end
 
 function events:addResourceEvent(playerId, flowType, currency, amount, itemType, itemId, customFields)
 	-- Validate event params
-	if not validation:validateResourceEvent(GAResourceFlowType, flowType, currency, amount, itemType, itemId, self._availableResourceCurrencies, self._availableResourceItemTypes) then
+	if
+		not validation:validateResourceEvent(
+			GAResourceFlowType,
+			flowType,
+			currency,
+			amount,
+			itemType,
+			itemId,
+			self._availableResourceCurrencies,
+			self._availableResourceItemTypes
+		)
+	then
 		-- TODO: add sdk error event
 		return
 	end
@@ -411,7 +445,17 @@ function events:addResourceEvent(playerId, flowType, currency, amount, itemType,
 	addDimensionsToEvent(playerId, eventDict)
 	addCustomFieldsToEvent(eventDict, customFields)
 
-	logger:i("Add RESOURCE event: {currency:" .. currency .. ", amount:" .. tostring(amount) .. ", itemType:" .. itemType .. ", itemId:" .. itemId .. "}")
+	logger:i(
+		"Add RESOURCE event: {currency:"
+			.. currency
+			.. ", amount:"
+			.. tostring(amount)
+			.. ", itemType:"
+			.. itemType
+			.. ", itemId:"
+			.. itemId
+			.. "}"
+	)
 
 	-- Send to store
 	addEventToStore(playerId, eventDict)
@@ -427,7 +471,15 @@ function events:addProgressionEvent(
 	customFields
 )
 	-- Validate event params
-	if not validation:validateProgressionEvent(GAProgressionStatus, progressionStatus, progression01, progression02, progression03) then
+	if
+		not validation:validateProgressionEvent(
+			GAProgressionStatus,
+			progressionStatus,
+			progression01,
+			progression02,
+			progression03
+		)
+	then
 		-- TODO: add sdk error event
 		return
 	end
@@ -496,7 +548,21 @@ function events:addProgressionEvent(
 		progression03String = progression03
 	end
 
-	logger:i("Add PROGRESSION event: {status:" .. statusString .. ", progression01:" .. progression01 .. ", progression02:" .. progression02String .. ", progression03:" .. progression03String .. ", score:" .. tostring(score) .. ", attempt:" .. tostring(attempt_num) .. "}")
+	logger:i(
+		"Add PROGRESSION event: {status:"
+			.. statusString
+			.. ", progression01:"
+			.. progression01
+			.. ", progression02:"
+			.. progression02String
+			.. ", progression03:"
+			.. progression03String
+			.. ", score:"
+			.. tostring(score)
+			.. ", attempt:"
+			.. tostring(attempt_num)
+			.. "}"
+	)
 
 	-- Send to store
 	addEventToStore(playerId, eventDict)
@@ -578,7 +644,15 @@ function events:addSdkErrorEvent(playerId, category, area, action, parameter, re
 		eventData["reason"] = reason
 	end
 
-	logger:i("Add SDK ERROR event: {error_category:" .. category .. ", error_area:" .. area .. ", error_action:" .. action .. "}")
+	logger:i(
+		"Add SDK ERROR event: {error_category:"
+			.. category
+			.. ", error_area:"
+			.. area
+			.. ", error_action:"
+			.. action
+			.. "}"
+	)
 
 	-- Send to store
 	addEventToStore(playerId, eventData)
