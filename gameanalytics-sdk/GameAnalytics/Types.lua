@@ -1,15 +1,15 @@
 type EventOptions = {
-	customFields: { [string]: string },
+	customFields: { [string]: string }?,
 }
 
-export type BusinessEventOptions = {
+export type BusinessEventOptions = EventOptions & {
 	amount: number,
 	itemType: string,
 	itemId: string,
 	cartType: string?,
 }
 
-export type ResourceEventOptions = {
+export type ResourceEventOptions = EventOptions & {
 	flowType: number,
 	currency: string,
 	amount: number,
@@ -17,7 +17,7 @@ export type ResourceEventOptions = {
 	itemId: string,
 }
 
-export type ProgressionEventOptions = {
+export type ProgressionEventOptions = EventOptions & {
 	progressionStatus: number,
 	progression01: string,
 	progression02: string?,
@@ -25,12 +25,12 @@ export type ProgressionEventOptions = {
 	score: number?,
 }
 
-export type DesignEventOptions = {
+export type DesignEventOptions = EventOptions & {
 	eventId: string,
 	value: number?,
 }
 
-export type ErrorEventOptions = {
+export type ErrorEventOptions = EventOptions & {
 	message: string,
 	severity: number,
 }
