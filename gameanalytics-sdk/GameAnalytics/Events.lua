@@ -38,12 +38,13 @@ local function addCustomFieldsToEvent(eventData, customFields)
 	local fields = {}
 
 	for key, value in pairs(customFields) do
-		if #value > 256 then
+		local v = tostring(value)
+		if #v > 256 then
 			logger:w("Custom field value is too long. Max length is 256 characters. Field: " .. key)
-			value = string.sub(value, 1, 256)
+			v = string.sub(v, 1, 256)
 		end
 
-		fields[key] = value
+		fields[key] = v
 	end
 
 	if fields and next(fields) then
