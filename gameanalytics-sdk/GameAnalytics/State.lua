@@ -49,9 +49,16 @@ local function populateConfigurations(player)
 				local end_ts = configuration["end_ts"] or math.huge
 				local client_ts_adjusted = getClientTsAdjusted(player.UserId)
 
-				if #key > 0 and configuration["value"] and client_ts_adjusted > start_ts and client_ts_adjusted < end_ts then
+				if
+					#key > 0
+					and configuration["value"]
+					and client_ts_adjusted > start_ts
+					and client_ts_adjusted < end_ts
+				then
 					PlayerData.Configurations[key] = configuration["value"]
-					logger:d("configuration added: key=" .. configuration["key"] .. ", value=" .. configuration["value"])
+					logger:d(
+						"configuration added: key=" .. configuration["key"] .. ", value=" .. configuration["value"]
+					)
 				end
 			end
 		end
@@ -60,7 +67,8 @@ local function populateConfigurations(player)
 	logger:i("Remote configs populated")
 
 	PlayerData.RemoteConfigsIsReady = true
-	GameAnalyticsRemoteConfigs = GameAnalyticsRemoteConfigs or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsRemoteConfigs")
+	GameAnalyticsRemoteConfigs = GameAnalyticsRemoteConfigs
+		or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsRemoteConfigs")
 	GameAnalyticsRemoteConfigs:FireClient(player, PlayerData.Configurations)
 end
 
@@ -89,17 +97,26 @@ function state:validateAndFixCurrentDimensions(playerId)
 
 	-- validate that there are no current dimension01 not in list
 	if not validation:validateDimension(self._availableCustomDimensions01, PlayerData.CurrentCustomDimension01) then
-		logger:d("Invalid dimension01 found in variable. Setting to nil. Invalid dimension: " .. PlayerData.CurrentCustomDimension01)
+		logger:d(
+			"Invalid dimension01 found in variable. Setting to nil. Invalid dimension: "
+				.. PlayerData.CurrentCustomDimension01
+		)
 	end
 
 	-- validate that there are no current dimension02 not in list
 	if not validation:validateDimension(self._availableCustomDimensions02, PlayerData.CurrentCustomDimension02) then
-		logger:d("Invalid dimension02 found in variable. Setting to nil. Invalid dimension: " .. PlayerData.CurrentCustomDimension02)
+		logger:d(
+			"Invalid dimension02 found in variable. Setting to nil. Invalid dimension: "
+				.. PlayerData.CurrentCustomDimension02
+		)
 	end
 
 	-- validate that there are no current dimension03 not in list
 	if not validation:validateDimension(self._availableCustomDimensions03, PlayerData.CurrentCustomDimension03) then
-		logger:d("Invalid dimension03 found in variable. Setting to nil. Invalid dimension: " .. PlayerData.CurrentCustomDimension03)
+		logger:d(
+			"Invalid dimension03 found in variable. Setting to nil. Invalid dimension: "
+				.. PlayerData.CurrentCustomDimension03
+		)
 	end
 end
 
@@ -158,7 +175,7 @@ function state:setCustomDimension03(playerId, dimension)
 	PlayerData.CurrentCustomDimension03 = dimension
 end
 
-function state:startNewSession(player, teleportData)
+function state:startNewSession(player, teleportData, customFields)
 	if state:isEventSubmissionEnabled() and teleportData == nil then
 		logger:i("Starting a new session.")
 	end
@@ -172,7 +189,10 @@ function state:startNewSession(player, teleportData)
 	local statusCode = initResult.statusCode
 	local responseBody = initResult.body
 
-	if (statusCode == http_api.EGAHTTPApiResponse.Ok or statusCode == http_api.EGAHTTPApiResponse.Created) and responseBody then
+	if
+		(statusCode == http_api.EGAHTTPApiResponse.Ok or statusCode == http_api.EGAHTTPApiResponse.Created)
+		and responseBody
+	then
 		-- set the time offset - how many seconds the local time is different from servertime
 		local timeOffsetSeconds = 0
 		local serverTs = responseBody["server_ts"] or -1
@@ -206,11 +226,21 @@ function state:startNewSession(player, teleportData)
 		PlayerData.InitAuthorized = false
 	else
 		-- log the status if no connection
-		if statusCode == http_api.EGAHTTPApiResponse.NoResponse or statusCode == http_api.EGAHTTPApiResponse.RequestTimeout then
+		if
+			statusCode == http_api.EGAHTTPApiResponse.NoResponse
+			or statusCode == http_api.EGAHTTPApiResponse.RequestTimeout
+		then
 			logger:i("Init call (session start) failed - no response. Could be offline or timeout.")
-		elseif statusCode == http_api.EGAHTTPApiResponse.BadResponse or statusCode == http_api.EGAHTTPApiResponse.JsonEncodeFailed or statusCode == http_api.EGAHTTPApiResponse.JsonDecodeFailed then
+		elseif
+			statusCode == http_api.EGAHTTPApiResponse.BadResponse
+			or statusCode == http_api.EGAHTTPApiResponse.JsonEncodeFailed
+			or statusCode == http_api.EGAHTTPApiResponse.JsonDecodeFailed
+		then
 			logger:i("Init call (session start) failed - bad response. Could be bad response from proxy or GA servers.")
-		elseif statusCode == http_api.EGAHTTPApiResponse.BadRequest or statusCode == http_api.EGAHTTPApiResponse.UnknownResponseCode then
+		elseif
+			statusCode == http_api.EGAHTTPApiResponse.BadRequest
+			or statusCode == http_api.EGAHTTPApiResponse.UnknownResponseCode
+		then
 			logger:i("Init call (session start) failed - bad request or unknown response.")
 		end
 
@@ -240,15 +270,15 @@ function state:startNewSession(player, teleportData)
 	end
 
 	if state:isEventSubmissionEnabled() then
-		events:addSessionStartEvent(player.UserId, teleportData)
+		events:addSessionStartEvent(player.UserId, teleportData, customFields)
 	end
 end
 
-function state:endSession(playerId)
+function state:endSession(playerId, customFields)
 	if state.Initialized and state:isEventSubmissionEnabled() then
 		logger:i("Ending session.")
 		if state:isEnabled(playerId) and state:sessionIsStarted(playerId) then
-			events:addSessionEndEvent(playerId)
+			events:addSessionEndEvent(playerId, customFields)
 			store.PlayerCache[playerId] = nil
 		end
 	end

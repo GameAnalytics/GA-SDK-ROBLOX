@@ -60,7 +60,8 @@ API:
 		HashLib.base64_to_bin
 		HashLib.bin_to_base64
 
---]=]---------------------------------------------------------------------------
+--]=]
+---------------------------------------------------------------------------
 
 local Base64 = require(script.Base64)
 
@@ -103,8 +104,9 @@ local sha2_H_ext512_lo, sha2_H_ext512_hi = {
 	[512] = sha2_H_hi,
 }
 
-local md5_K, md5_sha1_H = {}, {0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0}
-local md5_next_shift = {0, 0, 0, 0, 0, 0, 0, 0, 28, 25, 26, 27, 0, 0, 10, 9, 11, 12, 0, 15, 16, 17, 18, 0, 20, 22, 23, 21}
+local md5_K, md5_sha1_H = {}, { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0 }
+local md5_next_shift =
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 28, 25, 26, 27, 0, 0, 10, 9, 11, 12, 0, 15, 16, 17, 18, 0, 20, 22, 23, 21 }
 local HEX64, XOR64A5, lanes_index_base -- defined only for branches that internally use 64-bit integers: "INT64" and "FFI"
 local common_W = {} -- temporary table shared between all calculations (to avoid creating new temporary table every time)
 local K_lo_modulo, hi_factor, hi_factor_keccak = 4294967296, 0, 0
@@ -161,12 +163,20 @@ local function sha256_feed_64(H, str, offs, size)
 
 		for j = 17, 64 do
 			local a, b = W[j - 15], W[j - 2]
-			W[j] = bit32_bxor(bit32_rrotate(a, 7), bit32_lrotate(a, 14), bit32_rshift(a, 3)) + bit32_bxor(bit32_lrotate(b, 15), bit32_lrotate(b, 13), bit32_rshift(b, 10)) + W[j - 7] + W[j - 16]
+			W[j] = bit32_bxor(bit32_rrotate(a, 7), bit32_lrotate(a, 14), bit32_rshift(a, 3))
+				+ bit32_bxor(bit32_lrotate(b, 15), bit32_lrotate(b, 13), bit32_rshift(b, 10))
+				+ W[j - 7]
+				+ W[j - 16]
 		end
 
 		local a, b, c, d, e, f, g, h = h1, h2, h3, h4, h5, h6, h7, h8
 		for j = 1, 64 do
-			local z = bit32_bxor(bit32_rrotate(e, 6), bit32_rrotate(e, 11), bit32_lrotate(e, 7)) + bit32_band(e, f) + bit32_band(-1 - e, g) + h + K[j] + W[j]
+			local z = bit32_bxor(bit32_rrotate(e, 6), bit32_rrotate(e, 11), bit32_lrotate(e, 7))
+				+ bit32_band(e, f)
+				+ bit32_band(-1 - e, g)
+				+ h
+				+ K[j]
+				+ W[j]
 			h = g
 			g = f
 			f = e
@@ -174,7 +184,10 @@ local function sha256_feed_64(H, str, offs, size)
 			d = c
 			c = b
 			b = a
-			a = z + bit32_band(d, c) + bit32_band(a, bit32_bxor(d, c)) + bit32_bxor(bit32_rrotate(a, 2), bit32_rrotate(a, 13), bit32_lrotate(a, 10))
+			a = z
+				+ bit32_band(d, c)
+				+ bit32_band(a, bit32_bxor(d, c))
+				+ bit32_bxor(bit32_rrotate(a, 2), bit32_rrotate(a, 13), bit32_lrotate(a, 10))
 		end
 
 		h1, h2, h3, h4 = (a + h1) % 4294967296, (b + h2) % 4294967296, (c + h3) % 4294967296, (d + h4) % 4294967296
@@ -188,8 +201,10 @@ local function sha512_feed_128(H_lo, H_hi, str, offs, size)
 	-- offs >= 0, size >= 0, size is multiple of 128
 	-- W1_hi, W1_lo, W2_hi, W2_lo, ...   Wk_hi = W[2*k-1], Wk_lo = W[2*k]
 	local W, K_lo, K_hi = common_W, sha2_K_lo, sha2_K_hi
-	local h1_lo, h2_lo, h3_lo, h4_lo, h5_lo, h6_lo, h7_lo, h8_lo = H_lo[1], H_lo[2], H_lo[3], H_lo[4], H_lo[5], H_lo[6], H_lo[7], H_lo[8]
-	local h1_hi, h2_hi, h3_hi, h4_hi, h5_hi, h6_hi, h7_hi, h8_hi = H_hi[1], H_hi[2], H_hi[3], H_hi[4], H_hi[5], H_hi[6], H_hi[7], H_hi[8]
+	local h1_lo, h2_lo, h3_lo, h4_lo, h5_lo, h6_lo, h7_lo, h8_lo =
+		H_lo[1], H_lo[2], H_lo[3], H_lo[4], H_lo[5], H_lo[6], H_lo[7], H_lo[8]
+	local h1_hi, h2_hi, h3_hi, h4_hi, h5_hi, h6_hi, h7_hi, h8_hi =
+		H_hi[1], H_hi[2], H_hi[3], H_hi[4], H_hi[5], H_hi[6], H_hi[7], H_hi[8]
 	for pos = offs, offs + size - 1, 128 do
 		for j = 1, 16 * 2 do
 			pos = pos + 4
@@ -199,14 +214,26 @@ local function sha512_feed_128(H_lo, H_hi, str, offs, size)
 
 		for jj = 17 * 2, 80 * 2, 2 do
 			local a_lo, a_hi, b_lo, b_hi = W[jj - 30], W[jj - 31], W[jj - 4], W[jj - 5]
-			local tmp1 = bit32_bxor(bit32_rshift(a_lo, 1) + bit32_lshift(a_hi, 31), bit32_rshift(a_lo, 8) + bit32_lshift(a_hi, 24), bit32_rshift(a_lo, 7) + bit32_lshift(a_hi, 25)) % 4294967296 +
-				bit32_bxor(bit32_rshift(b_lo, 19) + bit32_lshift(b_hi, 13), bit32_lshift(b_lo, 3) + bit32_rshift(b_hi, 29), bit32_rshift(b_lo, 6) + bit32_lshift(b_hi, 26)) % 4294967296 +
-				W[jj - 14] + W[jj - 32]
+			local tmp1 = bit32_bxor(
+				bit32_rshift(a_lo, 1) + bit32_lshift(a_hi, 31),
+				bit32_rshift(a_lo, 8) + bit32_lshift(a_hi, 24),
+				bit32_rshift(a_lo, 7) + bit32_lshift(a_hi, 25)
+			) % 4294967296 + bit32_bxor(
+				bit32_rshift(b_lo, 19) + bit32_lshift(b_hi, 13),
+				bit32_lshift(b_lo, 3) + bit32_rshift(b_hi, 29),
+				bit32_rshift(b_lo, 6) + bit32_lshift(b_hi, 26)
+			) % 4294967296 + W[jj - 14] + W[jj - 32]
 
 			local tmp2 = tmp1 % 4294967296
-			W[jj - 1] = bit32_bxor(bit32_rshift(a_hi, 1) + bit32_lshift(a_lo, 31), bit32_rshift(a_hi, 8) + bit32_lshift(a_lo, 24), bit32_rshift(a_hi, 7)) +
-				bit32_bxor(bit32_rshift(b_hi, 19) + bit32_lshift(b_lo, 13), bit32_lshift(b_hi, 3) + bit32_rshift(b_lo, 29), bit32_rshift(b_hi, 6)) +
-				W[jj - 15] + W[jj - 33] + (tmp1 - tmp2) / 4294967296
+			W[jj - 1] = bit32_bxor(
+				bit32_rshift(a_hi, 1) + bit32_lshift(a_lo, 31),
+				bit32_rshift(a_hi, 8) + bit32_lshift(a_lo, 24),
+				bit32_rshift(a_hi, 7)
+			) + bit32_bxor(
+				bit32_rshift(b_hi, 19) + bit32_lshift(b_lo, 13),
+				bit32_lshift(b_hi, 3) + bit32_rshift(b_lo, 29),
+				bit32_rshift(b_hi, 6)
+			) + W[jj - 15] + W[jj - 33] + (tmp1 - tmp2) / 4294967296
 
 			W[jj] = tmp2
 		end
@@ -215,15 +242,18 @@ local function sha512_feed_128(H_lo, H_hi, str, offs, size)
 		local a_hi, b_hi, c_hi, d_hi, e_hi, f_hi, g_hi, h_hi = h1_hi, h2_hi, h3_hi, h4_hi, h5_hi, h6_hi, h7_hi, h8_hi
 		for j = 1, 80 do
 			local jj = 2 * j
-			local tmp1 = bit32_bxor(bit32_rshift(e_lo, 14) + bit32_lshift(e_hi, 18), bit32_rshift(e_lo, 18) + bit32_lshift(e_hi, 14), bit32_lshift(e_lo, 23) + bit32_rshift(e_hi, 9)) % 4294967296 +
-				(bit32_band(e_lo, f_lo) + bit32_band(-1 - e_lo, g_lo)) % 4294967296 +
-				h_lo + K_lo[j] + W[jj]
+			local tmp1 = bit32_bxor(
+				bit32_rshift(e_lo, 14) + bit32_lshift(e_hi, 18),
+				bit32_rshift(e_lo, 18) + bit32_lshift(e_hi, 14),
+				bit32_lshift(e_lo, 23) + bit32_rshift(e_hi, 9)
+			) % 4294967296 + (bit32_band(e_lo, f_lo) + bit32_band(-1 - e_lo, g_lo)) % 4294967296 + h_lo + K_lo[j] + W[jj]
 
 			local z_lo = tmp1 % 4294967296
-			local z_hi = bit32_bxor(bit32_rshift(e_hi, 14) + bit32_lshift(e_lo, 18), bit32_rshift(e_hi, 18) + bit32_lshift(e_lo, 14), bit32_lshift(e_hi, 23) + bit32_rshift(e_lo, 9)) +
-				bit32_band(e_hi, f_hi) + bit32_band(-1 - e_hi, g_hi) +
-				h_hi + K_hi[j] + W[jj - 1] +
-				(tmp1 - z_lo) / 4294967296
+			local z_hi = bit32_bxor(
+				bit32_rshift(e_hi, 14) + bit32_lshift(e_lo, 18),
+				bit32_rshift(e_hi, 18) + bit32_lshift(e_lo, 14),
+				bit32_lshift(e_hi, 23) + bit32_rshift(e_lo, 9)
+			) + bit32_band(e_hi, f_hi) + bit32_band(-1 - e_hi, g_hi) + h_hi + K_hi[j] + W[jj - 1] + (tmp1 - z_lo) / 4294967296
 
 			h_lo = g_lo
 			h_hi = g_hi
@@ -240,9 +270,23 @@ local function sha512_feed_128(H_lo, H_hi, str, offs, size)
 			c_hi = b_hi
 			b_lo = a_lo
 			b_hi = a_hi
-			tmp1 = z_lo + (bit32_band(d_lo, c_lo) + bit32_band(b_lo, bit32_bxor(d_lo, c_lo))) % 4294967296 + bit32_bxor(bit32_rshift(b_lo, 28) + bit32_lshift(b_hi, 4), bit32_lshift(b_lo, 30) + bit32_rshift(b_hi, 2), bit32_lshift(b_lo, 25) + bit32_rshift(b_hi, 7)) % 4294967296
+			tmp1 = z_lo
+				+ (bit32_band(d_lo, c_lo) + bit32_band(b_lo, bit32_bxor(d_lo, c_lo))) % 4294967296
+				+ bit32_bxor(
+						bit32_rshift(b_lo, 28) + bit32_lshift(b_hi, 4),
+						bit32_lshift(b_lo, 30) + bit32_rshift(b_hi, 2),
+						bit32_lshift(b_lo, 25) + bit32_rshift(b_hi, 7)
+					)
+					% 4294967296
 			a_lo = tmp1 % 4294967296
-			a_hi = z_hi + (bit32_band(d_hi, c_hi) + bit32_band(b_hi, bit32_bxor(d_hi, c_hi))) + bit32_bxor(bit32_rshift(b_hi, 28) + bit32_lshift(b_lo, 4), bit32_lshift(b_hi, 30) + bit32_rshift(b_lo, 2), bit32_lshift(b_hi, 25) + bit32_rshift(b_lo, 7)) + (tmp1 - a_lo) / 4294967296
+			a_hi = z_hi
+				+ (bit32_band(d_hi, c_hi) + bit32_band(b_hi, bit32_bxor(d_hi, c_hi)))
+				+ bit32_bxor(
+					bit32_rshift(b_hi, 28) + bit32_lshift(b_lo, 4),
+					bit32_lshift(b_hi, 30) + bit32_rshift(b_lo, 2),
+					bit32_lshift(b_hi, 25) + bit32_rshift(b_lo, 7)
+				)
+				+ (tmp1 - a_lo) / 4294967296
 		end
 
 		a_lo = h1_lo + a_lo
@@ -271,8 +315,10 @@ local function sha512_feed_128(H_lo, H_hi, str, offs, size)
 		h8_hi = (h8_hi + h_hi + (a_lo - h8_lo) / 4294967296) % 4294967296
 	end
 
-	H_lo[1], H_lo[2], H_lo[3], H_lo[4], H_lo[5], H_lo[6], H_lo[7], H_lo[8] = h1_lo, h2_lo, h3_lo, h4_lo, h5_lo, h6_lo, h7_lo, h8_lo
-	H_hi[1], H_hi[2], H_hi[3], H_hi[4], H_hi[5], H_hi[6], H_hi[7], H_hi[8] = h1_hi, h2_hi, h3_hi, h4_hi, h5_hi, h6_hi, h7_hi, h8_hi
+	H_lo[1], H_lo[2], H_lo[3], H_lo[4], H_lo[5], H_lo[6], H_lo[7], H_lo[8] =
+		h1_lo, h2_lo, h3_lo, h4_lo, h5_lo, h6_lo, h7_lo, h8_lo
+	H_hi[1], H_hi[2], H_hi[3], H_hi[4], H_hi[5], H_hi[6], H_hi[7], H_hi[8] =
+		h1_hi, h2_hi, h3_hi, h4_hi, h5_hi, h6_hi, h7_hi, h8_hi
 end
 
 local function md5_feed_64(H, str, offs, size)
@@ -299,7 +345,8 @@ local function md5_feed_64(H, str, offs, size)
 
 		s = 32 - 5
 		for j = 17, 32 do
-			local F = bit32_rrotate(bit32_band(d, b) + bit32_band(-1 - d, c) + a + K[j] + W[(5 * j - 4) % 16 + 1], s) + b
+			local F = bit32_rrotate(bit32_band(d, b) + bit32_band(-1 - d, c) + a + K[j] + W[(5 * j - 4) % 16 + 1], s)
+				+ b
 			s = md5_next_shift[s]
 			a = d
 			d = c
@@ -412,7 +459,57 @@ local function keccak_feed(lanes_lo, lanes_hi, str, offs, size, block_size_in_by
 			lanes_hi[j] = bit32_bxor(lanes_hi[j], ((d * 256 + c) * 256 + b) * 256 + a)
 		end
 
-		local L01_lo, L01_hi, L02_lo, L02_hi, L03_lo, L03_hi, L04_lo, L04_hi, L05_lo, L05_hi, L06_lo, L06_hi, L07_lo, L07_hi, L08_lo, L08_hi, L09_lo, L09_hi, L10_lo, L10_hi, L11_lo, L11_hi, L12_lo, L12_hi, L13_lo, L13_hi, L14_lo, L14_hi, L15_lo, L15_hi, L16_lo, L16_hi, L17_lo, L17_hi, L18_lo, L18_hi, L19_lo, L19_hi, L20_lo, L20_hi, L21_lo, L21_hi, L22_lo, L22_hi, L23_lo, L23_hi, L24_lo, L24_hi, L25_lo, L25_hi = lanes_lo[1], lanes_hi[1], lanes_lo[2], lanes_hi[2], lanes_lo[3], lanes_hi[3], lanes_lo[4], lanes_hi[4], lanes_lo[5], lanes_hi[5], lanes_lo[6], lanes_hi[6], lanes_lo[7], lanes_hi[7], lanes_lo[8], lanes_hi[8], lanes_lo[9], lanes_hi[9], lanes_lo[10], lanes_hi[10], lanes_lo[11], lanes_hi[11], lanes_lo[12], lanes_hi[12], lanes_lo[13], lanes_hi[13], lanes_lo[14], lanes_hi[14], lanes_lo[15], lanes_hi[15], lanes_lo[16], lanes_hi[16], lanes_lo[17], lanes_hi[17], lanes_lo[18], lanes_hi[18], lanes_lo[19], lanes_hi[19], lanes_lo[20], lanes_hi[20], lanes_lo[21], lanes_hi[21], lanes_lo[22], lanes_hi[22], lanes_lo[23], lanes_hi[23], lanes_lo[24], lanes_hi[24], lanes_lo[25], lanes_hi[25]
+		local L01_lo, L01_hi, L02_lo, L02_hi, L03_lo, L03_hi, L04_lo, L04_hi, L05_lo, L05_hi, L06_lo, L06_hi, L07_lo, L07_hi, L08_lo, L08_hi, L09_lo, L09_hi, L10_lo, L10_hi, L11_lo, L11_hi, L12_lo, L12_hi, L13_lo, L13_hi, L14_lo, L14_hi, L15_lo, L15_hi, L16_lo, L16_hi, L17_lo, L17_hi, L18_lo, L18_hi, L19_lo, L19_hi, L20_lo, L20_hi, L21_lo, L21_hi, L22_lo, L22_hi, L23_lo, L23_hi, L24_lo, L24_hi, L25_lo, L25_hi =
+			lanes_lo[1],
+			lanes_hi[1],
+			lanes_lo[2],
+			lanes_hi[2],
+			lanes_lo[3],
+			lanes_hi[3],
+			lanes_lo[4],
+			lanes_hi[4],
+			lanes_lo[5],
+			lanes_hi[5],
+			lanes_lo[6],
+			lanes_hi[6],
+			lanes_lo[7],
+			lanes_hi[7],
+			lanes_lo[8],
+			lanes_hi[8],
+			lanes_lo[9],
+			lanes_hi[9],
+			lanes_lo[10],
+			lanes_hi[10],
+			lanes_lo[11],
+			lanes_hi[11],
+			lanes_lo[12],
+			lanes_hi[12],
+			lanes_lo[13],
+			lanes_hi[13],
+			lanes_lo[14],
+			lanes_hi[14],
+			lanes_lo[15],
+			lanes_hi[15],
+			lanes_lo[16],
+			lanes_hi[16],
+			lanes_lo[17],
+			lanes_hi[17],
+			lanes_lo[18],
+			lanes_hi[18],
+			lanes_lo[19],
+			lanes_hi[19],
+			lanes_lo[20],
+			lanes_hi[20],
+			lanes_lo[21],
+			lanes_hi[21],
+			lanes_lo[22],
+			lanes_hi[22],
+			lanes_lo[23],
+			lanes_hi[23],
+			lanes_lo[24],
+			lanes_hi[24],
+			lanes_lo[25],
+			lanes_hi[25]
 
 		for round_idx = 1, 24 do
 			local C1_lo = bit32_bxor(L01_lo, L06_lo, L11_lo, L16_lo, L21_lo)
@@ -549,16 +646,66 @@ local function keccak_feed(lanes_lo, lanes_hi, str, offs, size, block_size_in_by
 
 			L01_lo = bit32_bxor(D_lo, L01_lo)
 			L01_hi = bit32_bxor(D_hi, L01_hi)
-			L01_lo, L02_lo, L03_lo, L04_lo, L05_lo = bit32_bxor(L01_lo, bit32_band(-1 - L02_lo, L03_lo)), bit32_bxor(L02_lo, bit32_band(-1 - L03_lo, L04_lo)), bit32_bxor(L03_lo, bit32_band(-1 - L04_lo, L05_lo)), bit32_bxor(L04_lo, bit32_band(-1 - L05_lo, L01_lo)), bit32_bxor(L05_lo, bit32_band(-1 - L01_lo, L02_lo))
-			L01_hi, L02_hi, L03_hi, L04_hi, L05_hi = bit32_bxor(L01_hi, bit32_band(-1 - L02_hi, L03_hi)), bit32_bxor(L02_hi, bit32_band(-1 - L03_hi, L04_hi)), bit32_bxor(L03_hi, bit32_band(-1 - L04_hi, L05_hi)), bit32_bxor(L04_hi, bit32_band(-1 - L05_hi, L01_hi)), bit32_bxor(L05_hi, bit32_band(-1 - L01_hi, L02_hi))
-			L06_lo, L07_lo, L08_lo, L09_lo, L10_lo = bit32_bxor(L09_lo, bit32_band(-1 - L10_lo, L06_lo)), bit32_bxor(L10_lo, bit32_band(-1 - L06_lo, L07_lo)), bit32_bxor(L06_lo, bit32_band(-1 - L07_lo, L08_lo)), bit32_bxor(L07_lo, bit32_band(-1 - L08_lo, L09_lo)), bit32_bxor(L08_lo, bit32_band(-1 - L09_lo, L10_lo))
-			L06_hi, L07_hi, L08_hi, L09_hi, L10_hi = bit32_bxor(L09_hi, bit32_band(-1 - L10_hi, L06_hi)), bit32_bxor(L10_hi, bit32_band(-1 - L06_hi, L07_hi)), bit32_bxor(L06_hi, bit32_band(-1 - L07_hi, L08_hi)), bit32_bxor(L07_hi, bit32_band(-1 - L08_hi, L09_hi)), bit32_bxor(L08_hi, bit32_band(-1 - L09_hi, L10_hi))
-			L11_lo, L12_lo, L13_lo, L14_lo, L15_lo = bit32_bxor(L12_lo, bit32_band(-1 - L13_lo, L14_lo)), bit32_bxor(L13_lo, bit32_band(-1 - L14_lo, L15_lo)), bit32_bxor(L14_lo, bit32_band(-1 - L15_lo, L11_lo)), bit32_bxor(L15_lo, bit32_band(-1 - L11_lo, L12_lo)), bit32_bxor(L11_lo, bit32_band(-1 - L12_lo, L13_lo))
-			L11_hi, L12_hi, L13_hi, L14_hi, L15_hi = bit32_bxor(L12_hi, bit32_band(-1 - L13_hi, L14_hi)), bit32_bxor(L13_hi, bit32_band(-1 - L14_hi, L15_hi)), bit32_bxor(L14_hi, bit32_band(-1 - L15_hi, L11_hi)), bit32_bxor(L15_hi, bit32_band(-1 - L11_hi, L12_hi)), bit32_bxor(L11_hi, bit32_band(-1 - L12_hi, L13_hi))
-			L16_lo, L17_lo, L18_lo, L19_lo, L20_lo = bit32_bxor(L20_lo, bit32_band(-1 - L16_lo, L17_lo)), bit32_bxor(L16_lo, bit32_band(-1 - L17_lo, L18_lo)), bit32_bxor(L17_lo, bit32_band(-1 - L18_lo, L19_lo)), bit32_bxor(L18_lo, bit32_band(-1 - L19_lo, L20_lo)), bit32_bxor(L19_lo, bit32_band(-1 - L20_lo, L16_lo))
-			L16_hi, L17_hi, L18_hi, L19_hi, L20_hi = bit32_bxor(L20_hi, bit32_band(-1 - L16_hi, L17_hi)), bit32_bxor(L16_hi, bit32_band(-1 - L17_hi, L18_hi)), bit32_bxor(L17_hi, bit32_band(-1 - L18_hi, L19_hi)), bit32_bxor(L18_hi, bit32_band(-1 - L19_hi, L20_hi)), bit32_bxor(L19_hi, bit32_band(-1 - L20_hi, L16_hi))
-			L21_lo, L22_lo, L23_lo, L24_lo, L25_lo = bit32_bxor(L23_lo, bit32_band(-1 - L24_lo, L25_lo)), bit32_bxor(L24_lo, bit32_band(-1 - L25_lo, L21_lo)), bit32_bxor(L25_lo, bit32_band(-1 - L21_lo, L22_lo)), bit32_bxor(L21_lo, bit32_band(-1 - L22_lo, L23_lo)), bit32_bxor(L22_lo, bit32_band(-1 - L23_lo, L24_lo))
-			L21_hi, L22_hi, L23_hi, L24_hi, L25_hi = bit32_bxor(L23_hi, bit32_band(-1 - L24_hi, L25_hi)), bit32_bxor(L24_hi, bit32_band(-1 - L25_hi, L21_hi)), bit32_bxor(L25_hi, bit32_band(-1 - L21_hi, L22_hi)), bit32_bxor(L21_hi, bit32_band(-1 - L22_hi, L23_hi)), bit32_bxor(L22_hi, bit32_band(-1 - L23_hi, L24_hi))
+			L01_lo, L02_lo, L03_lo, L04_lo, L05_lo =
+				bit32_bxor(L01_lo, bit32_band(-1 - L02_lo, L03_lo)),
+				bit32_bxor(L02_lo, bit32_band(-1 - L03_lo, L04_lo)),
+				bit32_bxor(L03_lo, bit32_band(-1 - L04_lo, L05_lo)),
+				bit32_bxor(L04_lo, bit32_band(-1 - L05_lo, L01_lo)),
+				bit32_bxor(L05_lo, bit32_band(-1 - L01_lo, L02_lo))
+			L01_hi, L02_hi, L03_hi, L04_hi, L05_hi =
+				bit32_bxor(L01_hi, bit32_band(-1 - L02_hi, L03_hi)),
+				bit32_bxor(L02_hi, bit32_band(-1 - L03_hi, L04_hi)),
+				bit32_bxor(L03_hi, bit32_band(-1 - L04_hi, L05_hi)),
+				bit32_bxor(L04_hi, bit32_band(-1 - L05_hi, L01_hi)),
+				bit32_bxor(L05_hi, bit32_band(-1 - L01_hi, L02_hi))
+			L06_lo, L07_lo, L08_lo, L09_lo, L10_lo =
+				bit32_bxor(L09_lo, bit32_band(-1 - L10_lo, L06_lo)),
+				bit32_bxor(L10_lo, bit32_band(-1 - L06_lo, L07_lo)),
+				bit32_bxor(L06_lo, bit32_band(-1 - L07_lo, L08_lo)),
+				bit32_bxor(L07_lo, bit32_band(-1 - L08_lo, L09_lo)),
+				bit32_bxor(L08_lo, bit32_band(-1 - L09_lo, L10_lo))
+			L06_hi, L07_hi, L08_hi, L09_hi, L10_hi =
+				bit32_bxor(L09_hi, bit32_band(-1 - L10_hi, L06_hi)),
+				bit32_bxor(L10_hi, bit32_band(-1 - L06_hi, L07_hi)),
+				bit32_bxor(L06_hi, bit32_band(-1 - L07_hi, L08_hi)),
+				bit32_bxor(L07_hi, bit32_band(-1 - L08_hi, L09_hi)),
+				bit32_bxor(L08_hi, bit32_band(-1 - L09_hi, L10_hi))
+			L11_lo, L12_lo, L13_lo, L14_lo, L15_lo =
+				bit32_bxor(L12_lo, bit32_band(-1 - L13_lo, L14_lo)),
+				bit32_bxor(L13_lo, bit32_band(-1 - L14_lo, L15_lo)),
+				bit32_bxor(L14_lo, bit32_band(-1 - L15_lo, L11_lo)),
+				bit32_bxor(L15_lo, bit32_band(-1 - L11_lo, L12_lo)),
+				bit32_bxor(L11_lo, bit32_band(-1 - L12_lo, L13_lo))
+			L11_hi, L12_hi, L13_hi, L14_hi, L15_hi =
+				bit32_bxor(L12_hi, bit32_band(-1 - L13_hi, L14_hi)),
+				bit32_bxor(L13_hi, bit32_band(-1 - L14_hi, L15_hi)),
+				bit32_bxor(L14_hi, bit32_band(-1 - L15_hi, L11_hi)),
+				bit32_bxor(L15_hi, bit32_band(-1 - L11_hi, L12_hi)),
+				bit32_bxor(L11_hi, bit32_band(-1 - L12_hi, L13_hi))
+			L16_lo, L17_lo, L18_lo, L19_lo, L20_lo =
+				bit32_bxor(L20_lo, bit32_band(-1 - L16_lo, L17_lo)),
+				bit32_bxor(L16_lo, bit32_band(-1 - L17_lo, L18_lo)),
+				bit32_bxor(L17_lo, bit32_band(-1 - L18_lo, L19_lo)),
+				bit32_bxor(L18_lo, bit32_band(-1 - L19_lo, L20_lo)),
+				bit32_bxor(L19_lo, bit32_band(-1 - L20_lo, L16_lo))
+			L16_hi, L17_hi, L18_hi, L19_hi, L20_hi =
+				bit32_bxor(L20_hi, bit32_band(-1 - L16_hi, L17_hi)),
+				bit32_bxor(L16_hi, bit32_band(-1 - L17_hi, L18_hi)),
+				bit32_bxor(L17_hi, bit32_band(-1 - L18_hi, L19_hi)),
+				bit32_bxor(L18_hi, bit32_band(-1 - L19_hi, L20_hi)),
+				bit32_bxor(L19_hi, bit32_band(-1 - L20_hi, L16_hi))
+			L21_lo, L22_lo, L23_lo, L24_lo, L25_lo =
+				bit32_bxor(L23_lo, bit32_band(-1 - L24_lo, L25_lo)),
+				bit32_bxor(L24_lo, bit32_band(-1 - L25_lo, L21_lo)),
+				bit32_bxor(L25_lo, bit32_band(-1 - L21_lo, L22_lo)),
+				bit32_bxor(L21_lo, bit32_band(-1 - L22_lo, L23_lo)),
+				bit32_bxor(L22_lo, bit32_band(-1 - L23_lo, L24_lo))
+			L21_hi, L22_hi, L23_hi, L24_hi, L25_hi =
+				bit32_bxor(L23_hi, bit32_band(-1 - L24_hi, L25_hi)),
+				bit32_bxor(L24_hi, bit32_band(-1 - L25_hi, L21_hi)),
+				bit32_bxor(L25_hi, bit32_band(-1 - L21_hi, L22_hi)),
+				bit32_bxor(L21_hi, bit32_band(-1 - L22_hi, L23_hi)),
+				bit32_bxor(L22_hi, bit32_band(-1 - L23_hi, L24_hi))
 			L01_lo = bit32_bxor(L01_lo, RC_lo[round_idx])
 			L01_hi = L01_hi + RC_hi[round_idx] -- RC_hi[] is either 0 or 0x80000000, so we could use fast addition instead of slow XOR
 		end
@@ -645,7 +792,7 @@ do
 		return result, value
 	end
 
-	local idx, step, p, one, sqrt_hi, sqrt_lo = 0, {4, 1, 2, -2, 2}, 4, {1}, sha2_H_hi, sha2_H_lo
+	local idx, step, p, one, sqrt_hi, sqrt_lo = 0, { 4, 1, 2, -2, 2 }, 4, { 1 }, sha2_H_hi, sha2_H_lo
 	repeat
 		p = p + step[p % 6]
 		local d = 1
@@ -743,7 +890,8 @@ local function sha256ext(width, message)
 	local Array256 = sha2_H_ext256[width] -- # == 8
 	local length, tail = 0.0, ""
 	local H = table.create(8)
-	H[1], H[2], H[3], H[4], H[5], H[6], H[7], H[8] = Array256[1], Array256[2], Array256[3], Array256[4], Array256[5], Array256[6], Array256[7], Array256[8]
+	H[1], H[2], H[3], H[4], H[5], H[6], H[7], H[8] =
+		Array256[1], Array256[2], Array256[3], Array256[4], Array256[5], Array256[6], Array256[7], Array256[8]
 
 	local function partial(message_part)
 		if message_part then
@@ -807,9 +955,12 @@ local function sha256ext(width, message)
 end
 
 local function sha512ext(width, message)
-
 	-- Create an instance (private objects for current calculation)
-	local length, tail, H_lo, H_hi = 0.0, "", table.pack(table.unpack(sha2_H_ext512_lo[width])), not HEX64 and table.pack(table.unpack(sha2_H_ext512_hi[width]))
+	local length, tail, H_lo, H_hi =
+		0.0,
+		"",
+		table.pack(table.unpack(sha2_H_ext512_lo[width])),
+		not HEX64 and table.pack(table.unpack(sha2_H_ext512_hi[width]))
 
 	local function partial(message_part)
 		if message_part then
@@ -857,7 +1008,8 @@ local function sha512ext(width, message)
 					end
 				else
 					for j = 1, max_reg do
-						H_lo[j] = string.format("%08x", H_hi[j] % 4294967296) .. string.format("%08x", H_lo[j] % 4294967296)
+						H_lo[j] = string.format("%08x", H_hi[j] % 4294967296)
+							.. string.format("%08x", H_lo[j] % 4294967296)
 					end
 
 					H_hi = nil
@@ -881,7 +1033,6 @@ local function sha512ext(width, message)
 end
 
 local function md5(message)
-
 	-- Create an instance (private objects for current calculation)
 	local H, length, tail = table.create(4), 0.0, ""
 	H[1], H[2], H[3], H[4] = md5_sha1_H[1], md5_sha1_H[2], md5_sha1_H[3], md5_sha1_H[4]
@@ -1040,7 +1191,14 @@ local function keccak(block_size_in_bytes, digest_size_in_bytes, is_SHAKE, messa
 				local offs = 0
 				if tail ~= "" and #tail + partLength >= block_size_in_bytes then
 					offs = block_size_in_bytes - #tail
-					keccak_feed(lanes_lo, lanes_hi, tail .. string.sub(message_part, 1, offs), 0, block_size_in_bytes, block_size_in_bytes)
+					keccak_feed(
+						lanes_lo,
+						lanes_hi,
+						tail .. string.sub(message_part, 1, offs),
+						0,
+						block_size_in_bytes,
+						block_size_in_bytes
+					)
 					tail = ""
 				end
 
@@ -1056,7 +1214,11 @@ local function keccak(block_size_in_bytes, digest_size_in_bytes, is_SHAKE, messa
 			if tail then
 				-- append the following bits to the message: for usual SHA3: 011(0*)1, for SHAKE: 11111(0*)1
 				local gap_start = is_SHAKE and 31 or 6
-				tail = tail .. (#tail + 1 == block_size_in_bytes and string.char(gap_start + 128) or string.char(gap_start) .. string.rep("\0", (-2 - #tail) % block_size_in_bytes) .. "\128")
+				tail = tail
+					.. (
+						#tail + 1 == block_size_in_bytes and string.char(gap_start + 128)
+						or string.char(gap_start) .. string.rep("\0", (-2 - #tail) % block_size_in_bytes) .. "\128"
+					)
 				keccak_feed(lanes_lo, lanes_hi, tail, 0, #tail, block_size_in_bytes)
 				tail = nil
 
@@ -1080,12 +1242,18 @@ local function keccak(block_size_in_bytes, digest_size_in_bytes, is_SHAKE, messa
 						end
 					else
 						for j = 1, qwords_qty do
-							qwords[j] = string.format("%08x", lanes_hi[lanes_used + j] % 4294967296) .. string.format("%08x", lanes_lo[lanes_used + j] % 4294967296)
+							qwords[j] = string.format("%08x", lanes_hi[lanes_used + j] % 4294967296)
+								.. string.format("%08x", lanes_lo[lanes_used + j] % 4294967296)
 						end
 					end
 
 					lanes_used = lanes_used + qwords_qty
-					return string.gsub(table.concat(qwords, "", 1, qwords_qty), "(..)(..)(..)(..)(..)(..)(..)(..)", "%8%7%6%5%4%3%2%1"), qwords_qty * 8
+					return string.gsub(
+						table.concat(qwords, "", 1, qwords_qty),
+						"(..)(..)(..)(..)(..)(..)(..)(..)",
+						"%8%7%6%5%4%3%2%1"
+					),
+						qwords_qty * 8
 				end
 
 				local parts = {} -- digest parts
@@ -1133,7 +1301,6 @@ local function keccak(block_size_in_bytes, digest_size_in_bytes, is_SHAKE, messa
 				else
 					result = get_next_part_of_digest(digest_size_in_bytes)
 				end
-
 			end
 
 			return result
@@ -1159,13 +1326,19 @@ local function hex2bin(hex_string)
 end
 
 local base64_symbols = {
-	["+"] = 62, ["-"] = 62, [62] = "+";
-	["/"] = 63, ["_"] = 63, [63] = "/";
-	["="] = -1, ["."] = -1, [-1] = "=";
+	["+"] = 62,
+	["-"] = 62,
+	[62] = "+",
+	["/"] = 63,
+	["_"] = 63,
+	[63] = "/",
+	["="] = -1,
+	["."] = -1,
+	[-1] = "=",
 }
 
 local symbol_index = 0
-for j, pair in ipairs{"AZ", "az", "09"} do
+for j, pair in ipairs({ "AZ", "az", "09" }) do
 	for ascii = string.byte(pair), string.byte(pair, 2) do
 		local ch = string.char(ascii)
 		base64_symbols[ch] = symbol_index
@@ -1179,13 +1352,12 @@ local function bin2base64(binary_string)
 	local length = 0
 
 	for pos = 1, #binary_string, 3 do
-		local c1, c2, c3, c4 = string.byte(string.sub(binary_string, pos, pos + 2) .. '\0', 1, -1)
+		local c1, c2, c3, c4 = string.byte(string.sub(binary_string, pos, pos + 2) .. "\0", 1, -1)
 		length = length + 1
-		result[length] =
-			base64_symbols[math.floor(c1 / 4)] ..
-			base64_symbols[c1 % 4 * 16 + math.floor(c2 / 16)] ..
-			base64_symbols[c3 and c2 % 16 * 4 + math.floor(c3 / 64) or -1] ..
-			base64_symbols[c4 and c3 % 64 or -1]
+		result[length] = base64_symbols[math.floor(c1 / 4)]
+			.. base64_symbols[c1 % 4 * 16 + math.floor(c2 / 16)]
+			.. base64_symbols[c3 and c2 % 16 * 4 + math.floor(c3 / 64) or -1]
+			.. base64_symbols[c4 and c3 % 64 or -1]
 	end
 
 	return table.concat(result)
@@ -1245,7 +1417,8 @@ local function hmac(hash_func, key, message, AsBinary)
 
 	local function partial(message_part)
 		if not message_part then
-			result = result or hash_func(pad_and_xor(key, block_size, 0x5C) .. (string.gsub(append(), "%x%x", HexToBinFunction)))
+			result = result
+				or hash_func(pad_and_xor(key, block_size, 0x5C) .. (string.gsub(append(), "%x%x", HexToBinFunction)))
 			return result
 		elseif result then
 			error("Adding more chunks is not allowed after receiving the result", 2)
@@ -1272,60 +1445,60 @@ local sha = {
 	-- SHA2 hash functions:
 	sha224 = function(message)
 		return sha256ext(224, message)
-	end;
+	end,
 
 	sha256 = function(message)
 		return sha256ext(256, message)
-	end;
+	end,
 
 	sha512_224 = function(message)
 		return sha512ext(224, message)
-	end;
+	end,
 
 	sha512_256 = function(message)
 		return sha512ext(256, message)
-	end;
+	end,
 
 	sha384 = function(message)
 		return sha512ext(384, message)
-	end;
+	end,
 
 	sha512 = function(message)
 		return sha512ext(512, message)
-	end;
+	end,
 
 	-- SHA3 hash functions:
 	sha3_224 = function(message)
 		return keccak((1600 - 2 * 224) / 8, 224 / 8, false, message)
-	end;
+	end,
 
 	sha3_256 = function(message)
 		return keccak((1600 - 2 * 256) / 8, 256 / 8, false, message)
-	end;
+	end,
 
 	sha3_384 = function(message)
 		return keccak((1600 - 2 * 384) / 8, 384 / 8, false, message)
-	end;
+	end,
 
 	sha3_512 = function(message)
 		return keccak((1600 - 2 * 512) / 8, 512 / 8, false, message)
-	end;
+	end,
 
 	shake128 = function(message, digest_size_in_bytes)
 		return keccak((1600 - 2 * 128) / 8, digest_size_in_bytes, true, message)
-	end;
+	end,
 
 	shake256 = function(message, digest_size_in_bytes)
 		return keccak((1600 - 2 * 256) / 8, digest_size_in_bytes, true, message)
-	end;
+	end,
 
 	-- misc utilities:
-	hmac = hmac; -- HMAC(hash_func, key, message) is applicable to any hash function from this module except SHAKE*
-	hex_to_bin = hex2bin; -- converts hexadecimal representation to binary string
-	base64_to_bin = base642bin; -- converts base64 representation to binary string
-	bin_to_base64 = bin2base64;
-	base64_encode = Base64.Encode;
-	base64_decode = Base64.Decode;
+	hmac = hmac, -- HMAC(hash_func, key, message) is applicable to any hash function from this module except SHAKE*
+	hex_to_bin = hex2bin, -- converts hexadecimal representation to binary string
+	base64_to_bin = base642bin, -- converts base64 representation to binary string
+	bin_to_base64 = bin2base64,
+	base64_encode = Base64.Encode,
+	base64_decode = Base64.Decode,
 	-- converts binary string to base64 representation
 }
 

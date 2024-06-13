@@ -6,7 +6,6 @@ local RunService = game:GetService("RunService")
 
 local isServer = RunService:IsServer()
 
-
 if isServer then
 	return require(script.GameAnalytics)
 else

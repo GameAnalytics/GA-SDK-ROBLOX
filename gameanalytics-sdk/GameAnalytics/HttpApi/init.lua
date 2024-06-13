@@ -28,8 +28,18 @@ local http_api = {
 
 local HTTP = game:GetService("HttpService")
 local logger = require(script.Parent.Logger)
-local baseUrl = (RunService:IsStudio() and "https" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/" .. http_api.version
-local remoteConfigsBaseUrl = (RunService:IsStudio() and "https" or http_api.protocol) .. "://" .. (RunService:IsStudio() and "sandbox-" or "") .. http_api.hostName .. "/remote_configs/" .. http_api.remoteConfigsVersion
+local baseUrl = (RunService:IsStudio() and "https" or http_api.protocol)
+	.. "://"
+	.. (RunService:IsStudio() and "sandbox-" or "")
+	.. http_api.hostName
+	.. "/"
+	.. http_api.version
+local remoteConfigsBaseUrl = (RunService:IsStudio() and "https" or http_api.protocol)
+	.. "://"
+	.. (RunService:IsStudio() and "sandbox-" or "")
+	.. http_api.hostName
+	.. "/remote_configs/"
+	.. http_api.remoteConfigsVersion
 
 local function getInitAnnotations(build, playerData, playerId)
 	local initAnnotations = {
@@ -75,7 +85,7 @@ local function processRequestResponse(response, requestId)
 	if statusCode == 200 then
 		return http_api.EGAHTTPApiResponse.Ok
 	elseif statusCode == 201 then
-			return http_api.EGAHTTPApiResponse.Created
+		return http_api.EGAHTTPApiResponse.Created
 	elseif statusCode == 0 or statusCode == 401 then
 		logger:d(requestId .. " request. 401 - Unauthorized.")
 		return http_api.EGAHTTPApiResponse.Unauthorized
@@ -91,7 +101,13 @@ local function processRequestResponse(response, requestId)
 end
 
 function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
-	local url = remoteConfigsBaseUrl .. "/" .. http_api.initializeUrlPath .. "?game_key=" .. gameKey .. "&interval_seconds=0&configs_hash=" .. (playerData.ConfigsHash or "")
+	local url = remoteConfigsBaseUrl
+		.. "/"
+		.. http_api.initializeUrlPath
+		.. "?game_key="
+		.. gameKey
+		.. "&interval_seconds=0&configs_hash="
+		.. (playerData.ConfigsHash or "")
 	if RunService:IsStudio() then
 		url = baseUrl .. "/5c6bcb5402204249437fb5a7a80a4959/" .. self.initializeUrlPath
 	end
@@ -99,7 +115,7 @@ function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 	logger:d("Sending 'init' URL: " .. url)
 
 	local payload = HTTP:JSONEncode(getInitAnnotations(build, playerData, playerId))
-	payload = payload:gsub("\"country_code\":\"unknown\"", "\"country_code\":null")
+	payload = payload:gsub('"country_code":"unknown"', '"country_code":null')
 	local authorization = encode(payload, secretKey)
 
 	logger:d("init payload: " .. payload)
@@ -129,8 +145,14 @@ function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 	local requestResponseEnum = processRequestResponse(res, "Init")
 
 	-- if not 200 result
-	if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.Created and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
-		logger:d("Failed Init Call. URL: " .. url .. ", JSONString: " .. payload .. ", Authorization: " .. authorization)
+	if
+		requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok
+		and requestResponseEnum ~= http_api.EGAHTTPApiResponse.Created
+		and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest
+	then
+		logger:d(
+			"Failed Init Call. URL: " .. url .. ", JSONString: " .. payload .. ", Authorization: " .. authorization
+		)
 		return {
 			statusCode = requestResponseEnum,
 			body = nil,
@@ -161,7 +183,10 @@ function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 	end
 
 	-- validate Init call values
-	local validatedInitValues = validation:validateAndCleanInitRequestResponse(responseBody, requestResponseEnum == http_api.EGAHTTPApiResponse.Created)
+	local validatedInitValues = validation:validateAndCleanInitRequestResponse(
+		responseBody,
+		requestResponseEnum == http_api.EGAHTTPApiResponse.Created
+	)
 
 	if not validatedInitValues then
 		return {
@@ -193,7 +218,7 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
 
 	-- make JSON string from data
 	local payload = HTTP:JSONEncode(eventArray)
-	payload = payload:gsub("\"country_code\":\"unknown\"", "\"country_code\":null")
+	payload = payload:gsub('"country_code":"unknown"', '"country_code":null')
 	local authorization = encode(payload, secretKey)
 
 	local res
@@ -217,13 +242,18 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
 		}
 	end
 
-
 	logger:d("body: " .. res.Body)
 	local requestResponseEnum = processRequestResponse(res, "Events")
 
 	-- if not 200 result
-	if requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok and requestResponseEnum ~= http_api.EGAHTTPApiResponse.Created and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest then
-		logger:d("Failed Events Call. URL: " .. url .. ", JSONString: " .. payload .. ", Authorization: " .. authorization)
+	if
+		requestResponseEnum ~= http_api.EGAHTTPApiResponse.Ok
+		and requestResponseEnum ~= http_api.EGAHTTPApiResponse.Created
+		and requestResponseEnum ~= http_api.EGAHTTPApiResponse.BadRequest
+	then
+		logger:d(
+			"Failed Events Call. URL: " .. url .. ", JSONString: " .. payload .. ", Authorization: " .. authorization
+		)
 		return {
 			statusCode = requestResponseEnum,
 			body = nil,
