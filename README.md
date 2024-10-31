@@ -13,6 +13,11 @@ If you have any issues or feedback regarding the SDK, please contact our friendl
 Changelog
 ---------
 <!--(CHANGELOG_TOP)-->
+**2.2.5**
+* Add "custom_fields" to events
+* Added types to the public facing api
+* Applied StyLua to codebase
+
 **2.2.4**
 * removed LocalScript that was added in 2.2.3, causing errors on requiring GameAnalyticsClient module
 
