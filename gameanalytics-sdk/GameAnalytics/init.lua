@@ -236,7 +236,7 @@ function ga:addBusinessEvent(playerId: number | BusinessEventOptions, options: B
 		local itemType = options["itemType"] or ""
 		local itemId = options["itemId"] or ""
 		local cartType = options["cartType"] or ""
-		local USDSpent = math.floor((amount * 0.7) * 0.35)
+		local USDSpent = math.floor((amount * 0.7) * 0.38)
 		local gamepassId = options["gamepassId"] or nil
 		local customFields = options["customFields"]
 
