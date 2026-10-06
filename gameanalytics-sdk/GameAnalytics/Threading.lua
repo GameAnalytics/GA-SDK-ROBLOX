@@ -8,7 +8,6 @@ local threading = {
 }
 
 local logger = require(script.Parent.Logger)
-local RunService = game:GetService("RunService")
 
 local function getScheduledBlock()
 	local now = tick()
@@ -60,11 +59,6 @@ local function run()
 
 	--Safely Close
 	game:BindToClose(function()
-		-- waiting bug fix to work inside studio
-		if RunService:IsStudio() then
-			return
-		end
-
 		--Give game.Players.PlayerRemoving time to to its thang
 		task.wait(1)
 

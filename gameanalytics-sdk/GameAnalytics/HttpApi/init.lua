@@ -1,4 +1,3 @@
-local RunService = game:GetService("RunService")
 local validation = require(script.Parent.Validation)
 local version = require(script.Parent.Version)
 
@@ -9,6 +8,7 @@ local http_api = {
 	hostName = "api.gameanalytics.com",
 	version = "v2",
 	remoteConfigsVersion = "v1",
+	remoteConfigsSupportedVersion = 3,
 	initializeUrlPath = "init",
 	eventsUrlPath = "events",
 	EGAHTTPApiResponse = {
@@ -28,15 +28,14 @@ local http_api = {
 
 local HTTP = game:GetService("HttpService")
 local logger = require(script.Parent.Logger)
-local baseUrl = (RunService:IsStudio() and "https" or http_api.protocol)
+
+function http_api.request(options)
+	return HTTP:RequestAsync(options)
+end
+
+local baseUrl = http_api.protocol .. "://" .. http_api.hostName .. "/" .. http_api.version
+local remoteConfigsBaseUrl = http_api.protocol
 	.. "://"
-	.. (RunService:IsStudio() and "sandbox-" or "")
-	.. http_api.hostName
-	.. "/"
-	.. http_api.version
-local remoteConfigsBaseUrl = (RunService:IsStudio() and "https" or http_api.protocol)
-	.. "://"
-	.. (RunService:IsStudio() and "sandbox-" or "")
 	.. http_api.hostName
 	.. "/remote_configs/"
 	.. http_api.remoteConfigsVersion
@@ -63,12 +62,7 @@ local function encode(payload, secretKey)
 	end
 
 	--Encode
-	local payloadHmac = HashLib.hmac(
-		HashLib.sha256,
-		RunService:IsStudio() and "16813a12f718bc5c620f56944e1abc3ea13ccbac" or secretKey,
-		payload,
-		true
-	)
+	local payloadHmac = HashLib.hmac(HashLib.sha256, secretKey, payload, true)
 
 	return HashLib.base64_encode(payloadHmac)
 end
@@ -100,17 +94,19 @@ local function processRequestResponse(response, requestId)
 	end
 end
 
+function http_api:getInitUrl(gameKey, configsHash)
+	return string.format(
+		"%s/%s?game_key=%s&interval_seconds=0&configs_hash=%s&config_vsn_supported=%d",
+		remoteConfigsBaseUrl,
+		self.initializeUrlPath,
+		gameKey,
+		configsHash or "",
+		self.remoteConfigsSupportedVersion
+	)
+end
+
 function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
-	local url = remoteConfigsBaseUrl
-		.. "/"
-		.. http_api.initializeUrlPath
-		.. "?game_key="
-		.. gameKey
-		.. "&interval_seconds=0&configs_hash="
-		.. (playerData.ConfigsHash or "")
-	if RunService:IsStudio() then
-		url = baseUrl .. "/5c6bcb5402204249437fb5a7a80a4959/" .. self.initializeUrlPath
-	end
+	local url = self:getInitUrl(gameKey, playerData.RemoteConfigs.hash)
 
 	logger:d("Sending 'init' URL: " .. url)
 
@@ -122,7 +118,7 @@ function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 
 	local res
 	local success, err = pcall(function()
-		res = HTTP:RequestAsync({
+		res = http_api.request({
 			Url = url,
 			Method = "POST",
 			Headers = {
@@ -161,15 +157,16 @@ function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 
 	--Response
 	local responseBody
-	success = pcall(function()
+	success, err = pcall(function()
 		responseBody = HTTP:JSONDecode(res.Body)
 	end)
 
 	if not success then
-		logger:d("Failed Init Call. Json decoding failed: " .. err)
+		logger:d("Failed Init Call. Json decoding failed: " .. tostring(err))
 		return {
 			statusCode = http_api.EGAHTTPApiResponse.JsonDecodeFailed,
 			body = nil,
+			reason = res.Body,
 		}
 	end
 
@@ -195,10 +192,9 @@ function http_api:initRequest(gameKey, secretKey, build, playerData, playerId)
 		}
 	end
 
-	-- all ok
 	return {
 		statusCode = requestResponseEnum,
-		body = responseBody,
+		body = validatedInitValues,
 	}
 end
 
@@ -210,9 +206,6 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
 
 	-- Generate URL
 	local url = baseUrl .. "/" .. gameKey .. "/" .. self.eventsUrlPath
-	if RunService:IsStudio() then
-		url = baseUrl .. "/5c6bcb5402204249437fb5a7a80a4959/" .. self.eventsUrlPath
-	end
 
 	logger:d("Sending 'events' URL: " .. url)
 
@@ -223,7 +216,7 @@ function http_api:sendEventsInArray(gameKey, secretKey, eventArray)
 
 	local res
 	local success, err = pcall(function()
-		res = HTTP:RequestAsync({
+		res = http_api.request({
 			Url = url,
 			Method = "POST",
 			Headers = {

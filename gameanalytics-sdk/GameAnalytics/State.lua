@@ -3,6 +3,8 @@ local logger = require(script.Parent.Logger)
 local http_api = require(script.Parent.HttpApi)
 local store = require(script.Parent.Store)
 local events = require(script.Parent.Events)
+local RemoteConfigs = require(script.Parent.RemoteConfigs)
+local Remotes = require(script.Parent.Remotes)
 local HTTP = game:GetService("HttpService")
 
 local state = {
@@ -15,10 +17,7 @@ local state = {
 	ReportErrors = true,
 	UseCustomUserId = false,
 	AutomaticSendBusinessEvents = true,
-	ConfigsHash = "",
 }
-
-local GameAnalyticsRemoteConfigs
 
 local function getClientTsAdjusted(playerId)
 	local PlayerData = store:GetPlayerDataFromCache(playerId)
@@ -35,41 +34,17 @@ local function getClientTsAdjusted(playerId)
 	end
 end
 
-local function populateConfigurations(player)
-	local PlayerData = store:GetPlayerDataFromCache(player.UserId)
-	local sdkConfig = PlayerData.SdkConfig
+local function populateConfigurations(player, PlayerData)
+	local remoteConfigs = PlayerData.RemoteConfigs
 
-	if sdkConfig["configs"] then
-		local configurations = sdkConfig["configs"]
+	remoteConfigs.values, remoteConfigs.tracking, remoteConfigs.types =
+		RemoteConfigs.build(PlayerData.SdkConfig["configs"], getClientTsAdjusted(player.UserId))
+	remoteConfigs.ready = true
 
-		for _, configuration in pairs(configurations) do
-			if configuration then
-				local key = configuration["key"] or ""
-				local start_ts = configuration["start_ts"] or 0
-				local end_ts = configuration["end_ts"] or math.huge
-				local client_ts_adjusted = getClientTsAdjusted(player.UserId)
+	logger:i("Remote configs populated with " .. #remoteConfigs.tracking .. " configurations")
 
-				if
-					#key > 0
-					and configuration["value"]
-					and client_ts_adjusted > start_ts
-					and client_ts_adjusted < end_ts
-				then
-					PlayerData.Configurations[key] = configuration["value"]
-					logger:d(
-						"configuration added: key=" .. configuration["key"] .. ", value=" .. configuration["value"]
-					)
-				end
-			end
-		end
-	end
-
-	logger:i("Remote configs populated")
-
-	PlayerData.RemoteConfigsIsReady = true
-	GameAnalyticsRemoteConfigs = GameAnalyticsRemoteConfigs
-		or game:GetService("ReplicatedStorage"):WaitForChild("GameAnalyticsRemoteConfigs")
-	GameAnalyticsRemoteConfigs:FireClient(player, PlayerData.Configurations)
+	Remotes.fireRemoteConfigs(player, remoteConfigs.values, remoteConfigs.types)
+	Remotes.fireRemoteConfigsUpdated(player)
 end
 
 function state:sessionIsStarted(playerId)
@@ -101,6 +76,7 @@ function state:validateAndFixCurrentDimensions(playerId)
 			"Invalid dimension01 found in variable. Setting to nil. Invalid dimension: "
 				.. PlayerData.CurrentCustomDimension01
 		)
+		PlayerData.CurrentCustomDimension01 = ""
 	end
 
 	-- validate that there are no current dimension02 not in list
@@ -109,6 +85,7 @@ function state:validateAndFixCurrentDimensions(playerId)
 			"Invalid dimension02 found in variable. Setting to nil. Invalid dimension: "
 				.. PlayerData.CurrentCustomDimension02
 		)
+		PlayerData.CurrentCustomDimension02 = ""
 	end
 
 	-- validate that there are no current dimension03 not in list
@@ -117,6 +94,7 @@ function state:validateAndFixCurrentDimensions(playerId)
 			"Invalid dimension03 found in variable. Setting to nil. Invalid dimension: "
 				.. PlayerData.CurrentCustomDimension03
 		)
+		PlayerData.CurrentCustomDimension03 = ""
 	end
 end
 
@@ -203,26 +181,19 @@ function state:startNewSession(player, teleportData, customFields)
 
 		responseBody["time_offset"] = timeOffsetSeconds
 
-		if not (statusCode == http_api.EGAHTTPApiResponse.Created) then
+		if statusCode ~= http_api.EGAHTTPApiResponse.Created then
 			local sdkConfig = PlayerData.SdkConfig
-
-			if sdkConfig["configs"] then
-				responseBody["configs"] = sdkConfig["configs"]
-			end
-
-			if sdkConfig["ab_id"] then
-				responseBody["ab_id"] = sdkConfig["ab_id"]
-			end
-
-			if sdkConfig["ab_variant_id"] then
-				responseBody["ab_variant_id"] = sdkConfig["ab_variant_id"]
+			for _, field in ipairs({ "configs", "configs_hash", "ab_id", "ab_variant_id" }) do
+				responseBody[field] = sdkConfig[field]
 			end
 		end
 
 		PlayerData.SdkConfig = responseBody
 		PlayerData.InitAuthorized = true
 	elseif statusCode == http_api.EGAHTTPApiResponse.Unauthorized then
-		logger:w("Initialize SDK failed - Unauthorized")
+		logger:w(
+			"Initialize SDK failed - GameAnalytics rejected the game key or secret key (401). Check the keys passed to initServer/initialize against your game's settings on gameanalytics.com."
+		)
 		PlayerData.InitAuthorized = false
 	else
 		-- log the status if no connection
@@ -237,6 +208,16 @@ function state:startNewSession(player, teleportData, customFields)
 			or statusCode == http_api.EGAHTTPApiResponse.JsonDecodeFailed
 		then
 			logger:i("Init call (session start) failed - bad response. Could be bad response from proxy or GA servers.")
+			if statusCode == http_api.EGAHTTPApiResponse.JsonDecodeFailed then
+				events:addSdkErrorEvent(
+					player.UserId,
+					"http",
+					"init_http",
+					"fail_http_json_decode",
+					"",
+					initResult.reason or ""
+				)
+			end
 		elseif
 			statusCode == http_api.EGAHTTPApiResponse.BadRequest
 			or statusCode == http_api.EGAHTTPApiResponse.UnknownResponseCode
@@ -249,12 +230,11 @@ function state:startNewSession(player, teleportData, customFields)
 
 	-- set offset in state (memory) from current config (config could be from cache etc.)
 	PlayerData.ClientServerTimeOffset = PlayerData.SdkConfig["time_offset"] or 0
-	PlayerData.ConfigsHash = PlayerData.SdkConfig["configs_hash"] or ""
-	PlayerData.AbId = PlayerData.SdkConfig["ab_id"] or ""
-	PlayerData.AbVariantId = PlayerData.SdkConfig["ab_variant_id"] or ""
+	PlayerData.RemoteConfigs.hash = PlayerData.SdkConfig["configs_hash"] or ""
+	PlayerData.RemoteConfigs.abId = PlayerData.SdkConfig["ab_id"] or ""
+	PlayerData.RemoteConfigs.abVariantId = PlayerData.SdkConfig["ab_variant_id"] or ""
 
-	-- populate configurations
-	populateConfigurations(player)
+	populateConfigurations(player, PlayerData)
 
 	if not state:isEnabled(player.UserId) then
 		logger:w("Could not start session: SDK is disabled.")
@@ -284,19 +264,34 @@ function state:endSession(playerId, customFields)
 	end
 end
 
-function state:getRemoteConfigsStringValue(playerId, key, defaultValue)
+local function remoteConfigsFor(playerId)
 	local PlayerData = store:GetPlayerDataFromCache(playerId)
-	return PlayerData.Configurations[key] or defaultValue
+	return if PlayerData then PlayerData.RemoteConfigs else RemoteConfigs.newRecord()
+end
+
+function state:getRemoteConfigsStringValue(playerId, key, defaultValue)
+	return RemoteConfigs.getValueAsString(remoteConfigsFor(playerId).values, key, defaultValue)
+end
+
+function state:getRemoteConfigsJsonValue(playerId, key, defaultValue)
+	local remoteConfigs = remoteConfigsFor(playerId)
+	return RemoteConfigs.getValueAsJson(remoteConfigs.values, remoteConfigs.types, key, defaultValue)
+end
+
+function state:getAbId(playerId)
+	return remoteConfigsFor(playerId).abId
+end
+
+function state:getAbVariantId(playerId)
+	return remoteConfigsFor(playerId).abVariantId
 end
 
 function state:isRemoteConfigsReady(playerId)
-	local PlayerData = store:GetPlayerDataFromCache(playerId)
-	return PlayerData.RemoteConfigsIsReady
+	return remoteConfigsFor(playerId).ready
 end
 
 function state:getRemoteConfigsContentAsString(playerId)
-	local PlayerData = store:GetPlayerDataFromCache(playerId)
-	return HTTP:JSONEncode(PlayerData.Configurations)
+	return RemoteConfigs.getContentAsString(remoteConfigsFor(playerId).values)
 end
 
 return state

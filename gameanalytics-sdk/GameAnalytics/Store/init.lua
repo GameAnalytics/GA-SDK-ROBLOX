@@ -1,9 +1,21 @@
 local DS = game:GetService("DataStoreService")
-local RunService = game:GetService("RunService")
 local DSQ = require(script.DataStoreQueue)
+local logger = require(script.Parent.Logger)
+local RemoteConfigs = require(script.Parent.RemoteConfigs)
+
+-- GetDataStore throws in an unpublished place (and when Studio API access is
+-- off), so resolve it defensively: the SDK keeps working with in-memory data.
+local function getPlayerDataStore()
+	local success, ds = pcall(DS.GetDataStore, DS, "GA_PlayerDS_1.0.0")
+	if not success then
+		logger:w("DataStore unavailable, player data will not persist: " .. tostring(ds))
+		return nil
+	end
+	return ds
+end
 
 local store = {
-	PlayerDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_PlayerDS_1.0.0"),
+	PlayerDS = getPlayerDataStore(),
 	AutoSaveData = 180, --Set to 0 to disable
 	BasePlayerData = {
 		Sessions = 0,
@@ -12,14 +24,10 @@ local store = {
 		CurrentCustomDimension01 = "",
 		CurrentCustomDimension02 = "",
 		CurrentCustomDimension03 = "",
-		ConfigsHash = "",
-		AbId = "",
-		AbVariantId = "",
+		RemoteConfigs = RemoteConfigs.newRecord(),
 		InitAuthorized = false,
 		SdkConfig = {},
 		ClientServerTimeOffset = 0,
-		Configurations = {},
-		RemoteConfigsIsReady = false,
 		PlayerTeleporting = false,
 		OwnedGamepasses = nil, --nil means a completely new player. {} means player with no game passes
 		CountryCode = "",
@@ -43,13 +51,18 @@ local store = {
 }
 
 function store:GetPlayerData(Player)
+	if not store.PlayerDS then
+		return {}
+	end
+
 	local key = Player.UserId
 	local success, PlayerData = DSQ.AddRequest(key, function()
-		return RunService:IsStudio() and {} or (store.PlayerDS:GetAsync(key) or {})
+		return store.PlayerDS:GetAsync(key) or {}
 	end, 7) -- Add to a queue with 7s delay between each request
 
 	if not success then
-		PlayerData = {}
+		logger:w("Failed to load player data for " .. tostring(key) .. ", this session will not persist")
+		PlayerData = { LoadFailed = true }
 	end
 	return PlayerData
 end
@@ -66,11 +79,11 @@ end
 function store:GetErrorDataStore(scope)
 	local ErrorDS
 	local success = pcall(function()
-		ErrorDS = RunService:IsStudio() and {} or DS:GetDataStore("GA_ErrorDS_1.0.0", scope)
+		ErrorDS = DS:GetDataStore("GA_ErrorDS_1.0.0", scope)
 	end)
 
 	if not success then
-		ErrorDS = {}
+		return nil
 	end
 
 	return ErrorDS
@@ -81,7 +94,7 @@ function store:SavePlayerData(Player)
 	local PlayerData = store:GetPlayerDataFromCache(Player.UserId)
 	local SavePlayerData = {}
 
-	if not PlayerData then
+	if not PlayerData or not store.PlayerDS or PlayerData.LoadFailed then
 		return
 	end
 
@@ -92,25 +105,22 @@ function store:SavePlayerData(Player)
 
 	--Save
 	local key = Player.UserId
-	if not RunService:IsStudio() then
-		DSQ.AddRequest(key, function()
-			return store.PlayerDS:SetAsync(key, SavePlayerData)
-		end, 7)
-	end
+	DSQ.AddRequest(key, function()
+		return store.PlayerDS:SetAsync(key, SavePlayerData)
+	end, 7)
 end
 
 function store:IncrementErrorCount(ErrorDS, ErrorKey, step)
-	if not ErrorKey then
-		return
+	if not ErrorKey or not ErrorDS then
+		return nil
 	end
 
-	local count = 0
-	--Increment count
-	if not RunService:IsStudio() then
-		--Increment count
-		_, count = DSQ.AddRequest(ErrorKey, function()
-			return ErrorDS:IncrementAsync(ErrorKey, step)
-		end, 7)
+	local success, count = DSQ.AddRequest(ErrorKey, function()
+		return ErrorDS:IncrementAsync(ErrorKey, step)
+	end, 7)
+
+	if not success or type(count) ~= "number" then
+		return nil
 	end
 	return count
 end
