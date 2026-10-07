@@ -1,5 +1,6 @@
 local DataStoreManager = {}
 DataStoreManager.QR = true
+DataStoreManager.MaxAttempts = 3
 DataStoreManager.Queue = {}
 DataStoreManager.Process = 0
 local LastRequest = {}
@@ -21,7 +22,9 @@ task.spawn(function()
 			end
 			task.delay(remain, function()
 				local Success, Error, ds
+				local attempts = 0
 				repeat
+					attempts += 1
 					LastRequest[Request.Key] = DateTime.now().UnixTimestamp
 					Success, Error, ds = pcall(Request.Func)
 
@@ -31,7 +34,7 @@ task.spawn(function()
 					if Success and Error then
 						break
 					end
-					if not Request.Delay then
+					if not Request.Delay or attempts >= DataStoreManager.MaxAttempts then
 						break
 					end
 					task.wait(Request.Delay)

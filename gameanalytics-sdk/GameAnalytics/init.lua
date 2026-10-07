@@ -19,11 +19,10 @@ local utilities = require(script.Utilities)
 local Players = game:GetService("Players")
 local MKT = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalizationService = game:GetService("LocalizationService")
 local ScriptContext = game:GetService("ScriptContext")
-local Postie = require(script.Postie)
-local OnPlayerReadyEvent
+local Remotes = require(script.Remotes)
+ga.OnRemoteConfigsUpdated = Remotes.OnRemoteConfigsUpdated
 local ProductCache = {}
 local ONE_HOUR_IN_SECONDS = 3600
 local MaxErrorsPerHour = 10
@@ -43,7 +42,7 @@ type CustomDimension = types.CustomDimension
 type ProductInfo = types.ProductInfo
 type ProcessReceiptInfo = types.ProcessReceiptInfo
 type TeleportData = types.TeleportData
-type RemoteConfigs = types.RemoteConfigs
+type RemoteConfigsOptions = types.RemoteConfigsOptions
 type GameAnalyticsOptions = types.GameAnalyticsOptions
 
 local function addToInitializationQueue(func, ...)
@@ -236,7 +235,7 @@ function ga:addBusinessEvent(playerId: number | BusinessEventOptions, options: B
 		local itemType = options["itemType"] or ""
 		local itemId = options["itemId"] or ""
 		local cartType = options["cartType"] or ""
-		local USDSpent = math.floor((amount * 0.7) * 0.35)
+		local USDSpent = math.floor((amount * 0.7) * 0.38)
 		local gamepassId = options["gamepassId"] or nil
 		local customFields = options["customFields"]
 
@@ -566,10 +565,12 @@ function ga:addGameAnalyticsTeleportData(playerIds: { number }, teleportData: Te
 	return teleportData
 end
 
-function ga:getRemoteConfigsValueAsString(playerId: number | RemoteConfigs, options: RemoteConfigs)
-	local key = options["key"] or ""
-	local defaultValue = options["defaultValue"] or nil
-	return state:getRemoteConfigsStringValue(playerId, key, defaultValue)
+function ga:getRemoteConfigsValueAsString(playerId: number, options: RemoteConfigsOptions)
+	return state:getRemoteConfigsStringValue(playerId, options.key or "", options.defaultValue)
+end
+
+function ga:getRemoteConfigsValueAsJson(playerId: number, options: RemoteConfigsOptions)
+	return state:getRemoteConfigsJsonValue(playerId, options.key or "", options.defaultValue)
 end
 
 function ga:isRemoteConfigsReady(playerId: number)
@@ -578,6 +579,14 @@ end
 
 function ga:getRemoteConfigsContentAsString(playerId: number)
 	return state:getRemoteConfigsContentAsString(playerId)
+end
+
+function ga:getABTestingId(playerId: number)
+	return state:getAbId(playerId)
+end
+
+function ga:getABTestingVariantId(playerId: number)
+	return state:getAbVariantId(playerId)
 end
 
 function ga:PlayerJoined(Player: Player)
@@ -603,7 +612,7 @@ function ga:PlayerJoined(Player: Player)
 	end
 
 	local PlayerPlatform = "unknown"
-	local isGetPlatformSuccessful, platform = Postie.invokeClient("getPlatform", Player, 5)
+	local isGetPlatformSuccessful, platform = Remotes.requestPlatform(Player)
 	if isGetPlatformSuccessful then
 		PlayerPlatform = platform
 	end
@@ -650,7 +659,7 @@ function ga:PlayerJoined(Player: Player)
 
 	local PlayerCustomUserId = ""
 	if state.UseCustomUserId then
-		local isGetCustomUserIdSuccessful, customUserId = Postie.invokeClient("getCustomUserId", Player, 5)
+		local isGetCustomUserIdSuccessful, customUserId = Remotes.requestCustomUserId(Player)
 		if isGetCustomUserIdSuccessful then
 			PlayerCustomUserId = customUserId
 		end
@@ -663,8 +672,7 @@ function ga:PlayerJoined(Player: Player)
 
 	ga:startNewSession(Player, gaData)
 
-	OnPlayerReadyEvent = OnPlayerReadyEvent or ReplicatedStorage:WaitForChild("OnPlayerReadyEvent")
-	OnPlayerReadyEvent:Fire(Player)
+	Remotes.firePlayerReady(Player)
 
 	--Validate
 	if state.AutomaticSendBusinessEvents then
@@ -915,20 +923,6 @@ function ga:initialize(options: GameAnalyticsOptions)
 	end)
 end
 
-if not ReplicatedStorage:FindFirstChild("GameAnalyticsRemoteConfigs") then
-	--Create
-	local f = Instance.new("RemoteEvent")
-	f.Name = "GameAnalyticsRemoteConfigs"
-	f.Parent = ReplicatedStorage
-end
-
-if not ReplicatedStorage:FindFirstChild("OnPlayerReadyEvent") then
-	--Create
-	local f = Instance.new("BindableEvent")
-	f.Name = "OnPlayerReadyEvent"
-	f.Parent = ReplicatedStorage
-end
-
 task.spawn(function()
 	local currentHour = math.floor(os.time() / 3600)
 	ErrorDS = store:GetErrorDataStore(currentHour)
@@ -946,8 +940,11 @@ task.spawn(function()
 		for _, key in pairs(errorCountCacheKeys) do
 			local errorCount = errorCountCache[key]
 			local step = errorCount.currentCount - errorCount.countInDS
-			errorCountCache[key].countInDS = store:IncrementErrorCount(ErrorDS, key, step)
-			errorCountCache[key].currentCount = errorCountCache[key].countInDS
+			local newCount = store:IncrementErrorCount(ErrorDS, key, step)
+			if newCount then
+				errorCountCache[key].countInDS = newCount
+				errorCountCache[key].currentCount = newCount
+			end
 		end
 	end
 end)
@@ -1034,14 +1031,7 @@ end
 
 --Error Logging
 ScriptContext.Error:Connect(ErrorHandlerFromServer)
-if not ReplicatedStorage:FindFirstChild("GameAnalyticsError") then
-	--Create
-	local f = Instance.new("RemoteEvent")
-	f.Name = "GameAnalyticsError"
-	f.Parent = ReplicatedStorage
-end
-
-ReplicatedStorage.GameAnalyticsError.OnServerEvent:Connect(function(player, message, trace, scriptName)
+Remotes.onClientError(function(player, message, trace, scriptName)
 	ErrorHandlerFromClient(message, trace, scriptName, player)
 end)
 

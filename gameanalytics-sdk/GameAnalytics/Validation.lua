@@ -167,16 +167,37 @@ function validation:validateAndCleanInitRequestResponse(initResponse, configsCre
 
 	local validatedDict = {}
 
-	-- validate server_ts
-	local serverTsNumber = initResponse["server_ts"] or -1
-	if serverTsNumber > 0 then
-		validatedDict["server_ts"] = serverTsNumber
+	local serverTs = initResponse["server_ts"]
+	if serverTs ~= nil then
+		if typeof(serverTs) ~= "number" then
+			logger:w("validateInitRequestResponse failed - invalid type in 'server_ts' field.")
+			return nil
+		end
+		if serverTs > 0 then
+			validatedDict["server_ts"] = serverTs
+		end
 	end
 
 	if configsCreated then
-		validatedDict["configs"] = initResponse["configs"] or {}
-		validatedDict["ab_id"] = initResponse["ab_id"] or ""
-		validatedDict["ab_variant_id"] = initResponse["ab_variant_id"] or ""
+		local configs = initResponse["configs"]
+		if configs ~= nil then
+			if typeof(configs) ~= "table" then
+				logger:w("validateInitRequestResponse failed - invalid type in 'configs' field.")
+				return nil
+			end
+			validatedDict["configs"] = configs
+		end
+
+		for _, field in ipairs({ "configs_hash", "ab_id", "ab_variant_id" }) do
+			local value = initResponse[field]
+			if value ~= nil then
+				if typeof(value) ~= "string" then
+					logger:w("validateInitRequestResponse failed - invalid type in '" .. field .. "' field.")
+					return nil
+				end
+				validatedDict[field] = value
+			end
+		end
 	end
 
 	return validatedDict
@@ -490,8 +511,8 @@ end
 function validation:validateDesignEvent(eventId)
 	if not validation:validateEventIdLength(eventId) then
 		logger:w(
-			"Validation fail - design event - eventId: Cannot be (null) or empty. Only 5 event parts allowed seperated by :. Each part need to be 32 characters or less. String: "
-				.. eventId
+			"Validation fail - design event - eventId: Cannot be (null) or empty. Only 5 event parts allowed seperated by :. Each part need to be 64 characters or less. String: "
+				.. tostring(eventId)
 		)
 		return false
 	end
@@ -499,7 +520,7 @@ function validation:validateDesignEvent(eventId)
 	if not validation:validateEventIdCharacters(eventId) then
 		logger:w(
 			"Validation fail - design event - eventId: Non valid characters. Only allowed A-z, 0-9, -_., ()!?. String: "
-				.. eventId
+				.. tostring(eventId)
 		)
 		return false
 	end

@@ -4,6 +4,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0]
+
+**Breaking changes**
+- Studio is no longer sandboxed: play-tests send real events with your keys. Use test keys
+- `build` defaults to `game.PlaceVersion` when not set; add place versions to experiment build lists
+- Robux to USD rate updated from 0.0035 to 0.0038, reported revenue rises about 8.6%
+- Remote config values are always strings; use `getRemoteConfigsValueAsJson` for structured values
+
+**Remote configs v3**
+- Remote configs v3 with A/B test ids on init and events
+- Added `getRemoteConfigsValueAsJson`, `getABTestingId` and `getABTestingVariantId` on the server
+- Added `OnRemoteConfigsUpdated` server signal; use it instead of `OnPlayerReadyEvent` (#131)
+- Added client remote configs API on `GameAnalyticsClient` with its own `OnRemoteConfigsUpdated` signal
+- Getters return the default for unknown players instead of erroring; init responses are validated
+- `RemoteConfigs` options type renamed `RemoteConfigsOptions`; old name kept as a deprecated alias
+
+**Studio plugin**
+- New Creator Store plugin installs, updates, configures and validates the SDK without Rojo or Wally
+- Keys never enter the place; the plugin generates the server snippet for your own script
+- Plugin build attached to every GitHub release
+- Rejected keys on init are reported in plain language instead of a raw 401
+
+**DataStores**
+- SDK loads in unpublished places and without DataStores, falling back to in-memory data
+- DataStore requests give up after 3 attempts; a failed load never overwrites the stored record
+
+**Fixes**
+- Invalid custom dimensions are cleared instead of only logged
+- Fixed nil concatenation on a nil design event id and on undecodable init responses
+- Failed error count writes no longer overwrite the in-memory count
+- `sdk_error` fields capped at 8192 characters
+
+**Development**
+- Jest Roblox test suite, run through `run-in-roblox`
+- Toolchain moved from Aftman to Rokit; StyLua and luau-lsp configs added
+
 ## [2.2.6]
 
 - Fixed a bug with teleport data not being validated properly before extrating analytics data

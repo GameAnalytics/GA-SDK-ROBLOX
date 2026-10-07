@@ -1,8 +1,10 @@
+local DEFAULT_BUILD = tostring(game.PlaceVersion)
+
 local events = {
 	ProcessEventsInterval = 8,
 	GameKey = "",
 	SecretKey = "",
-	Build = "",
+	Build = DEFAULT_BUILD,
 	_availableResourceCurrencies = {},
 	_availableResourceItemTypes = {},
 }
@@ -29,6 +31,14 @@ local CategoryError = "error"
 local CategorySdkError = "sdk_error"
 local MAX_EVENTS_TO_SEND_IN_ONE_BATCH = 500
 local MAX_AGGREGATED_EVENTS = 2000
+local MAX_SDK_ERROR_FIELD_LENGTH = 8192
+
+local function truncate(value, limit)
+	if typeof(value) == "string" and #value > limit then
+		return string.sub(value, 1, limit)
+	end
+	return value
+end
 
 local function addCustomFieldsToEvent(eventData, customFields)
 	if not (eventData and customFields) then
@@ -90,14 +100,6 @@ end
 
 local DUMMY_SESSION_ID = HTTP:GenerateGUID(false):lower()
 
-local function Length(Table)
-	local counter = 0
-	for _, _ in pairs(Table) do
-		counter += 1
-	end
-	return counter
-end
-
 local function getEventAnnotations(playerId)
 	local PlayerData
 	local id
@@ -150,16 +152,19 @@ local function getEventAnnotations(playerId)
 		annotations["build"] = events.Build
 	end
 
-	if PlayerData.Configurations and Length(PlayerData.Configurations) > 0 then
-		annotations["configurations"] = PlayerData.Configurations
-	end
+	local remoteConfigs = PlayerData.RemoteConfigs
+	if remoteConfigs then
+		if #remoteConfigs.tracking > 0 then
+			annotations["configurations_v3"] = remoteConfigs.tracking
+		end
 
-	if not utilities:isStringNullOrEmpty(PlayerData.AbId) then
-		annotations["ab_id"] = PlayerData.AbId
-	end
+		if not utilities:isStringNullOrEmpty(remoteConfigs.abId) then
+			annotations["ab_id"] = remoteConfigs.abId
+		end
 
-	if not utilities:isStringNullOrEmpty(PlayerData.AbVariantId) then
-		annotations["ab_variant_id"] = PlayerData.AbVariantId
+		if not utilities:isStringNullOrEmpty(remoteConfigs.abVariantId) then
+			annotations["ab_variant_id"] = remoteConfigs.abVariantId
+		end
 	end
 
 	return annotations
@@ -638,11 +643,11 @@ function events:addSdkErrorEvent(playerId, category, area, action, parameter, re
 	eventData["error_action"] = action
 
 	if not utilities:isStringNullOrEmpty(parameter) then
-		eventData["error_parameter"] = parameter
+		eventData["error_parameter"] = truncate(parameter, MAX_SDK_ERROR_FIELD_LENGTH)
 	end
 
 	if not utilities:isStringNullOrEmpty(reason) then
-		eventData["reason"] = reason
+		eventData["reason"] = truncate(reason, MAX_SDK_ERROR_FIELD_LENGTH)
 	end
 
 	logger:i(

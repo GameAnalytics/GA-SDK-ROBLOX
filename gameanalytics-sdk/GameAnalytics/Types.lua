@@ -7,6 +7,7 @@ export type BusinessEventOptions = EventOptions & {
 	itemType: string,
 	itemId: string,
 	cartType: string?,
+	gamepassId: number?,
 }
 
 export type ResourceEventOptions = EventOptions & {
@@ -49,7 +50,11 @@ export type ProcessReceiptInfo = {
 }
 
 export type TeleportData = { [string]: any }
-export type RemoteConfigs = { [string]: any }
+export type RemoteConfigsOptions = {
+	key: string,
+	defaultValue: any?,
+}
+export type RemoteConfigs = RemoteConfigsOptions -- deprecated
 
 export type GameAnalyticsOptions = {
 	enableInfoLog: boolean?,
