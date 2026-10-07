@@ -36,10 +36,6 @@ All notable changes to this project will be documented in this file.
 - Failed error count writes no longer overwrite the in-memory count
 - `sdk_error` fields capped at 8192 characters
 
-**Development**
-- Jest Roblox test suite, run through `run-in-roblox`
-- Toolchain moved from Aftman to Rokit; StyLua and luau-lsp configs added
-
 ## [2.2.6]
 
 - Fixed a bug with teleport data not being validated properly before extrating analytics data
