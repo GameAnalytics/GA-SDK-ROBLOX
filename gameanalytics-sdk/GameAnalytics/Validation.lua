@@ -159,9 +159,8 @@ function validation:validateKeys(gameKey, secretKey)
 end
 
 function validation:validateAndCleanInitRequestResponse(initResponse, configsCreated)
-	-- make sure we have a valid dict
-	if not initResponse then
-		logger:w("validateInitRequestResponse failed - no response dictionary.")
+	if typeof(initResponse) ~= "table" then
+		logger:w("validateInitRequestResponse failed - response is not a dictionary.")
 		return nil
 	end
 
@@ -511,7 +510,7 @@ end
 function validation:validateDesignEvent(eventId)
 	if not validation:validateEventIdLength(eventId) then
 		logger:w(
-			"Validation fail - design event - eventId: Cannot be (null) or empty. Only 5 event parts allowed seperated by :. Each part need to be 64 characters or less. String: "
+			"Validation fail - design event - eventId: Cannot be (null) or empty. Only 5 event parts allowed separated by :. Each part needs to be 64 characters or less. String: "
 				.. tostring(eventId)
 		)
 		return false

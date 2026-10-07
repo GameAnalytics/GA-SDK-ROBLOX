@@ -14,10 +14,20 @@ function RemoteConfigs.newRecord()
 	}
 end
 
+local function bound(value, default)
+	if value == nil then
+		return default
+	end
+	if typeof(value) ~= "number" then
+		return nil
+	end
+	return value
+end
+
 local function isActive(configuration, nowTs)
-	local startTs = configuration.start_ts or -math.huge
-	local endTs = configuration.end_ts or math.huge
-	return nowTs > startTs and nowTs < endTs
+	local startTs = bound(configuration.start_ts, -math.huge)
+	local endTs = bound(configuration.end_ts, math.huge)
+	return startTs ~= nil and endTs ~= nil and nowTs > startTs and nowTs < endTs
 end
 
 local function isComplete(configuration)
